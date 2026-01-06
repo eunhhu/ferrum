@@ -1,4 +1,10 @@
-import { ActivityBar, Sidebar, EditorArea, Panel, StatusBar } from "./components/layout";
+import {
+  ActivityBar,
+  Sidebar,
+  EditorArea,
+  Panel,
+  StatusBar,
+} from "./components/layout";
 
 function App() {
   return (
