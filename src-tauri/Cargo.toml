@@ -1,24 +1,54 @@
 [package]
 name = "ferrum"
-version = "0.1.0"
-description = "A Tauri App"
-authors = ["you"]
+description = "Ferrum IDE - A high-performance code editor"
+version.workspace = true
 edition = "2021"
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+authors = ["eunhhu"]
+license = "MIT"
 
 [lib]
-# The `_lib` suffix may seem redundant but it is necessary
-# to make the lib name unique and wouldn't conflict with the bin name.
-# This seems to be only an issue on Windows, see https://github.com/rust-lang/cargo/issues/8519
 name = "ferrum_lib"
 crate-type = ["staticlib", "cdylib", "rlib"]
 
 [build-dependencies]
-tauri-build = { version = "2", features = [] }
+tauri-build.workspace = true
 
 [dependencies]
-tauri = { version = "2", features = [] }
-tauri-plugin-opener = "2"
-serde = { version = "1", features = ["derive"] }
-serde_json = "1"
+# Workspace crates
+ferrum_core.workspace = true
+ferrum_editor.workspace = true
+ferrum_buffer.workspace = true
+ferrum_fs.workspace = true
+ferrum_lsp.workspace = true
+ferrum_git.workspace = true
+ferrum_search.workspace = true
+ferrum_ui.workspace = true
+ferrum_settings.workspace = true
+ferrum_ipc.workspace = true
+
+# Tauri
+tauri.workspace = true
+tauri-plugin-opener.workspace = true
+tauri-plugin-shell.workspace = true
+tauri-plugin-fs.workspace = true
+tauri-plugin-dialog.workspace = true
+tauri-plugin-clipboard-manager.workspace = true
+tauri-plugin-window-state.workspace = true
+
+# Runtime
+tokio.workspace = true
+parking_lot.workspace = true
+
+# Serialization
+serde.workspace = true
+serde_json.workspace = true
+
+# Logging
+tracing.workspace = true
+tracing-subscriber.workspace = true
+
+# Utilities
+once_cell.workspace = true
+
+[dev-dependencies]
+pretty_assertions.workspace = true

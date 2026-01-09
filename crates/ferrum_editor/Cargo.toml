@@ -1,0 +1,24 @@
+[package]
+name = "ferrum_editor"
+description = "Editor logic and state management"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+ferrum_core.workspace = true
+ferrum_buffer.workspace = true
+
+tokio.workspace = true
+async-trait.workspace = true
+parking_lot.workspace = true
+dashmap.workspace = true
+
+serde.workspace = true
+tracing.workspace = true
+indexmap.workspace = true
+
+[dev-dependencies]
+pretty_assertions.workspace = true

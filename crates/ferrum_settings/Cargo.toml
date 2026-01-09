@@ -1,0 +1,21 @@
+[package]
+name = "ferrum_settings"
+description = "Application settings management"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+ferrum_core.workspace = true
+ferrum_ui.workspace = true
+
+serde.workspace = true
+serde_json.workspace = true
+parking_lot.workspace = true
+tracing.workspace = true
+
+[dev-dependencies]
+pretty_assertions.workspace = true
+tempfile = "3"

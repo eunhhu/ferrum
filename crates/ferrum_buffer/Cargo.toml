@@ -1,0 +1,29 @@
+[package]
+name = "ferrum_buffer"
+description = "Text buffer implementation with rope data structure and undo/redo"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+ferrum_core.workspace = true
+
+ropey.workspace = true
+tree-sitter.workspace = true
+
+serde.workspace = true
+parking_lot.workspace = true
+smallvec.workspace = true
+tracing.workspace = true
+
+[dev-dependencies]
+pretty_assertions.workspace = true
+insta.workspace = true
+proptest.workspace = true
+criterion.workspace = true
+
+[[bench]]
+name = "buffer_ops"
+harness = false

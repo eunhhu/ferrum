@@ -1,14 +1,26 @@
-// Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
-#[tauri::command]
-fn greet(name: &str) -> String {
-    format!("Hello, {}! You've been greeted from Rust!", name)
-}
+//! Ferrum IDE
+//!
+//! A high-performance code editor built with Tauri and SolidJS.
 
+mod app;
+mod commands;
+mod state;
+
+use ferrum_core::telemetry::{self, TelemetryConfig};
+use tracing::info;
+
+/// Initialize and run the Tauri application
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    tauri::Builder::default()
-        .plugin(tauri_plugin_opener::init())
-        .invoke_handler(tauri::generate_handler![greet])
+    // Initialize telemetry
+    if let Err(e) = telemetry::init(TelemetryConfig::development()) {
+        eprintln!("Failed to initialize telemetry: {}", e);
+    }
+
+    info!("Starting Ferrum IDE");
+
+    // Build and run the app
+    app::build()
         .run(tauri::generate_context!())
-        .expect("error while running tauri application");
+        .expect("error while running ferrum");
 }

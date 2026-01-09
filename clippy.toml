@@ -1,0 +1,21 @@
+# Clippy configuration
+
+# Cognitive complexity threshold
+cognitive-complexity-threshold = 25
+
+# Maximum number of lines in a function
+too-many-lines-threshold = 100
+
+# Maximum number of arguments
+too-many-arguments-threshold = 7
+
+# Type complexity threshold
+type-complexity-threshold = 250
+
+# Allowed names that would otherwise trigger warnings
+allowed-idents-below-min-chars = ["id", "x", "y", "i", "n", "cx", "tx", "rx"]
+
+# Disallowed methods
+disallowed-methods = [
+    { path = "std::env::set_var", reason = "Use a safer alternative" },
+]

@@ -1,0 +1,135 @@
+[workspace]
+resolver = "2"
+members = [
+    "src-tauri",
+    "crates/ferrum_core",
+    "crates/ferrum_editor",
+    "crates/ferrum_buffer",
+    "crates/ferrum_fs",
+    "crates/ferrum_lsp",
+    "crates/ferrum_terminal",
+    "crates/ferrum_git",
+    "crates/ferrum_search",
+    "crates/ferrum_ui",
+    "crates/ferrum_settings",
+    "crates/ferrum_ipc",
+    "crates/ferrum_collab",
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+authors = ["eunhhu"]
+license = "MIT"
+repository = "https://github.com/eunhhu/ferrum"
+rust-version = "1.92"
+
+[workspace.dependencies]
+# Workspace crates
+ferrum_core = { path = "crates/ferrum_core" }
+ferrum_editor = { path = "crates/ferrum_editor" }
+ferrum_buffer = { path = "crates/ferrum_buffer" }
+ferrum_fs = { path = "crates/ferrum_fs" }
+ferrum_lsp = { path = "crates/ferrum_lsp" }
+ferrum_terminal = { path = "crates/ferrum_terminal" }
+ferrum_git = { path = "crates/ferrum_git" }
+ferrum_search = { path = "crates/ferrum_search" }
+ferrum_ui = { path = "crates/ferrum_ui" }
+ferrum_settings = { path = "crates/ferrum_settings" }
+ferrum_ipc = { path = "crates/ferrum_ipc" }
+ferrum_collab = { path = "crates/ferrum_collab" }
+
+# Tauri
+tauri = { version = "2", features = ["devtools"] }
+tauri-build = { version = "2" }
+tauri-plugin-opener = "2"
+tauri-plugin-shell = "2"
+tauri-plugin-fs = "2"
+tauri-plugin-dialog = "2"
+tauri-plugin-clipboard-manager = "2"
+tauri-plugin-notification = "2"
+tauri-plugin-window-state = "2"
+
+# Async runtime
+tokio = { version = "1.43", features = ["full", "tracing"] }
+async-trait = "0.1"
+futures = "0.3"
+parking_lot = "0.12"
+
+# Serialization
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+rmp-serde = "1"  # MessagePack
+
+# Error handling
+thiserror = "2"
+anyhow = "1"
+
+# Logging & Tracing
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter", "json"] }
+tracing-appender = "0.2"
+
+# Editor core
+ropey = "1"  # Rope data structure
+tree-sitter = "0.24"
+
+# LSP
+lsp-types = "0.97"
+tower-lsp = "0.20"
+
+# Git
+git2 = "0.19"
+
+# Search
+nucleo = "0.5"  # Fuzzy matching (faster than skim)
+ignore = "0.4"  # .gitignore parsing + walking
+
+# Terminal
+portable-pty = "0.8"
+alacritty_terminal = "0.24"
+
+# File watching
+notify = "7"
+notify-debouncer-full = "0.4"
+
+# Utilities
+uuid = { version = "1", features = ["v4", "serde"] }
+chrono = { version = "0.4", features = ["serde"] }
+once_cell = "1"
+dashmap = "6"
+smallvec = { version = "1", features = ["serde"] }
+indexmap = { version = "2", features = ["serde"] }
+
+# Testing
+pretty_assertions = "1"
+insta = { version = "1", features = ["json", "yaml"] }
+proptest = "1"
+criterion = "0.5"
+
+[profile.dev]
+opt-level = 0
+debug = true
+split-debuginfo = "unpacked"
+incremental = true
+
+[profile.dev.package."*"]
+opt-level = 2  # Optimize dependencies for faster runtime
+
+[profile.dev.build-override]
+opt-level = 3  # Optimize proc-macros for faster compilation
+
+[profile.release]
+opt-level = 3
+lto = "thin"
+codegen-units = 1
+strip = "debuginfo"
+
+[profile.test]
+opt-level = 1
+debug = true
+
+[profile.bench]
+opt-level = 3
+lto = "thin"
+codegen-units = 1

@@ -1,0 +1,34 @@
+[build]
+# Use incremental compilation for faster builds
+incremental = true
+
+# macOS uses default linker (no lld required)
+# Uncomment below if you have lld installed via Homebrew
+# [target.aarch64-apple-darwin]
+# rustflags = ["-C", "link-arg=-fuse-ld=lld"]
+#
+# [target.x86_64-apple-darwin]
+# rustflags = ["-C", "link-arg=-fuse-ld=lld"]
+
+# Alias for common commands
+[alias]
+t = "test"
+b = "build"
+c = "check"
+r = "run"
+br = "build --release"
+rr = "run --release"
+
+# Test all crates
+ta = "test --workspace"
+# Check all crates
+ca = "check --workspace"
+# Clippy all crates
+cl = "clippy --workspace -- -D warnings"
+
+# Run benchmarks
+bench = "bench --package ferrum_buffer"
+
+[env]
+# Enable backtraces in debug mode
+RUST_BACKTRACE = "1"

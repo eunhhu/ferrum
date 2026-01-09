@@ -1,0 +1,21 @@
+[package]
+name = "ferrum_terminal"
+description = "Terminal emulator integration"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+ferrum_core.workspace = true
+
+portable-pty.workspace = true
+tokio.workspace = true
+parking_lot.workspace = true
+
+serde.workspace = true
+tracing.workspace = true
+
+[dev-dependencies]
+pretty_assertions.workspace = true

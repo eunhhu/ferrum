@@ -4,17 +4,24 @@
   "version": "0.1.0",
   "identifier": "com.eunhhu.ferrum",
   "build": {
-    "beforeDevCommand": "bun run vite dev",
+    "beforeDevCommand": "npm run vite",
     "devUrl": "http://localhost:1420",
-    "beforeBuildCommand": "bun run vite build",
+    "beforeBuildCommand": "npm run vite:build",
     "frontendDist": "../dist"
   },
   "app": {
     "windows": [
       {
         "title": "Ferrum",
-        "width": 800,
-        "height": 600
+        "width": 1280,
+        "height": 800,
+        "minWidth": 800,
+        "minHeight": 600,
+        "resizable": true,
+        "fullscreen": false,
+        "decorations": true,
+        "transparent": false,
+        "center": true
       }
     ],
     "security": {
@@ -30,6 +37,24 @@
       "icons/128x128@2x.png",
       "icons/icon.icns",
       "icons/icon.ico"
-    ]
+    ],
+    "category": "DeveloperTool",
+    "shortDescription": "A high-performance code editor",
+    "longDescription": "Ferrum IDE - A high-performance code editor built with Tauri and SolidJS"
+  },
+  "plugins": {
+    "fs": {
+      "all": true,
+      "scope": ["**"]
+    },
+    "shell": {
+      "all": true
+    },
+    "dialog": {
+      "all": true
+    },
+    "clipboard-manager": {
+      "all": true
+    }
   }
 }
