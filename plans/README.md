@@ -93,6 +93,13 @@
   - Plugin Manifest
   - 마켓플레이스
 
+- **[frontend-optimization.md](./technical/frontend-optimization.md)** ✅ - Frontend 성능 최적화
+  - SolidJS Fine-grained Signals
+  - 컴포넌트 렌더링 최적화
+  - CSS Containment
+  - WAAPI 애니메이션 (Motion One)
+  - GPU 가속 레이아웃 전환
+
 ---
 
 ## 🎯 프로젝트 비전
@@ -230,10 +237,11 @@
 3. ✅ **Visual Coding** - Code↔Visual 동기화, PixiJS, 노드 시스템 (10주)
 4. ✅ **Additional Features** - 12개 혁신 기능 (Navigation Trail, Dependency Highlight 등)
 
-### Technical (1개)
-✅ **Plugin System** - QuickJS 런타임, API, 권한, Marketplace (8주)
+### Technical (2개)
+1. ✅ **Plugin System** - QuickJS 런타임, API, 권한, Marketplace (8주)
+2. ✅ **Frontend Optimization** - SolidJS 렌더링, 애니메이션, 성능 최적화
 
-**총 10개 핵심 설계 문서 완성**
+**총 11개 핵심 설계 문서 완성**
 
 ---
 
@@ -253,7 +261,7 @@
 
 ### 에디터 엔진
 - Rope 데이터 구조로 O(log n) 편집
-- 증분 업데이트 (전체 재계산 방지)
+- **Tree-sitter 증분 파싱** (변경된 부분만 재파싱)
 - 뷰포트 클리핑 (보이는 부분만 렌더링)
 - 캐싱 (Depth Map, Syntax Highlights)
 
@@ -261,13 +269,37 @@
 - 배치 업데이트 (여러 변경을 한 번에)
 - 델타 전송 (전체가 아닌 변경분만)
 - 디바운싱 (빈번한 이벤트 제한)
-- 우선순위 큐 (중요한 이벤트 먼저)
+- **SharedArrayBuffer** (대용량 데이터 zero-copy)
+- **MessagePack** (JSON보다 빠른 직렬화)
+
+### Frontend (SolidJS)
+- **Fine-grained Signals** (개별 컴포넌트 내부 상태 관리)
+- **Optimistic Updates** (낙관적 업데이트로 즉각 반응)
+- **Virtual List** (대량 아이템 렌더링)
+- **CSS Containment** (레이아웃 격리)
+- **WAAPI/Motion One** (GPU 가속 애니메이션)
+
+### LSP
+- **별도 OS 스레드** (UI 블로킹 방지)
+- 120초 타임아웃 + 진행 상황 표시
+- **동시 요청** (completion, hover, definition 병렬)
+
+### 검색
+- **스트리밍 결과** (첫 결과 즉시 표시)
+- 배치 전송 (16ms/10개 단위)
+- ignore 크레이트 병렬 처리
 
 ### Visual Coding
-- 뷰포트 클리핑 (PixiJS)
+- **PixiJS 배경 레이어** (DOM 대신 WebGL)
+- 뷰포트 클리핑
 - LOD (Level of Detail)
 - Object Pooling
-- WebGPU 활용
+- **좌표 동기화** (DisplayMap ↔ PixiJS)
+
+### Context Action Palette
+- **백그라운드 예측** (Tab 누르기 전 미리 계산)
+- **Tree-sitter Queries** (빠른 노드 분석)
+- 캐시 기반 즉시 반환
 
 ---
 
@@ -339,6 +371,6 @@
 
 ---
 
-**Last Updated**: 2024-01-09
-**Version**: 1.0.0 (Design Phase)
-**Total Documents**: 10 (완성)
+**Last Updated**: 2026-01-10
+**Version**: 1.1.0 (Design Phase - Performance Optimizations Added)
+**Total Documents**: 11 (완성)

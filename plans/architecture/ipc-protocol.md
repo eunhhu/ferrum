@@ -1031,7 +1031,184 @@ function Editor(props: { bufferId: string }) {
 
 ---
 
-## 13. 성능 벤치마크 목표
+## 13. Shared Memory (고성능 대용량 데이터 전송)
+
+### 13.1 문제점
+
+**기존 JSON IPC의 한계:**
+- Visual Coding의 수만 개 노드 위치 데이터
+- 대용량 파일 텍스트
+- 고빈도 업데이트 (60fps 애니메이션)
+
+이러한 데이터를 JSON으로 직렬화하면:
+- 직렬화/역직렬화 오버헤드
+- 메모리 복사 비용
+- GC 압박 (JavaScript 측)
+
+### 13.2 해결책: SharedArrayBuffer
+
+**Tauri v2 + SharedArrayBuffer를 활용한 Zero-copy 데이터 공유**
+
+```rust
+// Rust (Backend)
+use std::sync::atomic::{AtomicUsize, Ordering};
+
+pub struct SharedBuffer {
+    // 공유 메모리 영역
+    data: SharedMemory,
+    // 동기화용 atomic
+    version: AtomicUsize,
+}
+
+pub struct VisualCodingSharedState {
+    // 노드 위치 데이터 (Float32Array 형태)
+    // [x0, y0, x1, y1, x2, y2, ...]
+    node_positions: SharedBuffer,
+
+    // 연결선 데이터
+    // [src0, dst0, src1, dst1, ...]
+    edge_data: SharedBuffer,
+
+    // 노드 상태 (선택, 호버 등)
+    node_states: SharedBuffer,
+}
+
+impl VisualCodingSharedState {
+    pub fn update_node_position(&self, node_idx: usize, x: f32, y: f32) {
+        let offset = node_idx * 2;
+        unsafe {
+            let ptr = self.node_positions.data.as_ptr() as *mut f32;
+            *ptr.add(offset) = x;
+            *ptr.add(offset + 1) = y;
+        }
+        self.node_positions.version.fetch_add(1, Ordering::Release);
+    }
+
+    pub fn get_shared_buffer_handle(&self) -> SharedBufferHandle {
+        // Frontend로 전달할 핸들 생성
+        SharedBufferHandle {
+            positions_ptr: self.node_positions.data.as_ptr() as usize,
+            positions_len: self.node_positions.data.len(),
+            edges_ptr: self.edge_data.data.as_ptr() as usize,
+            edges_len: self.edge_data.data.len(),
+            states_ptr: self.node_states.data.as_ptr() as usize,
+            states_len: self.node_states.data.len(),
+        }
+    }
+}
+```
+
+```typescript
+// TypeScript (Frontend)
+class SharedVisualCodingBuffer {
+    private nodePositions: Float32Array;
+    private edgeData: Uint32Array;
+    private nodeStates: Uint8Array;
+    private lastVersion: number = 0;
+
+    async initialize() {
+        // Rust에서 SharedArrayBuffer 핸들 획득
+        const handle = await invoke<SharedBufferHandle>('get_visual_coding_shared_buffer');
+
+        // SharedArrayBuffer 매핑
+        this.nodePositions = new Float32Array(
+            new SharedArrayBuffer(handle.positions_len * 4)
+        );
+        this.edgeData = new Uint32Array(
+            new SharedArrayBuffer(handle.edges_len * 4)
+        );
+        this.nodeStates = new Uint8Array(
+            new SharedArrayBuffer(handle.states_len)
+        );
+
+        // Rust와 메모리 공유 설정
+        await invoke('map_shared_buffer', {
+            positions: this.nodePositions.buffer,
+            edges: this.edgeData.buffer,
+            states: this.nodeStates.buffer
+        });
+    }
+
+    // Zero-copy 읽기
+    getNodePosition(nodeIdx: number): { x: number; y: number } {
+        const offset = nodeIdx * 2;
+        return {
+            x: this.nodePositions[offset],
+            y: this.nodePositions[offset + 1]
+        };
+    }
+
+    // 배치 읽기 (PixiJS 렌더링용)
+    getAllPositions(): Float32Array {
+        return this.nodePositions; // 복사 없이 직접 반환
+    }
+}
+```
+
+### 13.3 External Buffer (대용량 파일)
+
+**대용량 파일 텍스트를 위한 External Buffer:**
+
+```rust
+// Rust
+use tauri::ipc::Response;
+
+#[tauri::command]
+fn read_large_file(path: String) -> Response {
+    let content = std::fs::read(&path).unwrap();
+
+    // External Buffer로 반환 (zero-copy)
+    Response::new(content)
+}
+```
+
+```typescript
+// TypeScript
+async function openLargeFile(path: string): Promise<Uint8Array> {
+    // ArrayBuffer로 직접 수신 (JSON 파싱 없음)
+    const buffer = await invoke<ArrayBuffer>('read_large_file', { path });
+    return new Uint8Array(buffer);
+}
+```
+
+### 13.4 MessagePack for Structured Data
+
+**JSON 대신 MessagePack 사용 (더 작고 빠른 직렬화):**
+
+```rust
+// Rust
+use rmp_serde::{Serializer, Deserializer};
+
+#[tauri::command]
+fn get_syntax_tree_msgpack(buffer_id: String) -> Vec<u8> {
+    let tree = get_syntax_tree(buffer_id);
+    rmp_serde::to_vec(&tree).unwrap()
+}
+```
+
+```typescript
+// TypeScript
+import { decode } from '@msgpack/msgpack';
+
+async function getSyntaxTree(bufferId: string): Promise<SyntaxTree> {
+    const bytes = await invoke<Uint8Array>('get_syntax_tree_msgpack', { bufferId });
+    return decode(bytes) as SyntaxTree;
+}
+```
+
+### 13.5 적용 시나리오
+
+| 시나리오 | 데이터 크기 | 방식 |
+|----------|------------|------|
+| 일반 명령/이벤트 | < 1KB | JSON IPC |
+| 중간 크기 구조체 | 1KB ~ 100KB | MessagePack |
+| 대용량 파일 | > 100KB | External Buffer |
+| 실시간 동기화 데이터 | 수만 개 요소 | SharedArrayBuffer |
+| 60fps 애니메이션 | 빈번한 업데이트 | SharedArrayBuffer |
+
+---
+
+## 14. 성능 벤치마크 목표
 
 | 작업 | 목표 레이턴시 |
 |------|---------------|
@@ -1040,10 +1217,12 @@ function Editor(props: { bufferId: string }) {
 | 파일 저장 (1MB) | < 50ms |
 | LSP 자동완성 | < 200ms |
 | 프로젝트 검색 (10K 파일) | < 500ms |
+| Visual Coding 노드 렌더링 (10K) | < 16ms |
+| SharedBuffer 동기화 | < 1ms |
 
 ---
 
-## 14. 구현 체크리스트
+## 15. 구현 체크리스트
 
 ### Phase 1: 기본 IPC (Week 1-2)
 - [ ] Tauri Command 구조

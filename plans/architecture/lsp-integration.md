@@ -499,9 +499,241 @@ impl LspClient {
 
 ---
 
-## 6. 요청/응답 처리 (Zed 참고)
+## 6. 별도 OS 스레드에서 LSP 처리 (UI 블로킹 방지)
 
-### 6.1 요청 전송
+### 6.1 핵심 아키텍처
+
+**대규모 프로젝트에서 인덱싱 중일 때 UI가 멈추지 않도록 LSP Client를 별도의 OS 스레드에서 돌리고, Rust의 tokio 채널을 통해 비동기적으로 결과를 수집합니다.**
+
+```rust
+use std::thread;
+use tokio::sync::{mpsc, oneshot};
+
+/// LSP 요청/응답을 별도 OS 스레드에서 처리
+pub struct ThreadedLspClient {
+    // 요청 전송 채널
+    request_tx: mpsc::Sender<LspRequest>,
+    // 알림 수신 채널 (진단, 진행 상황 등)
+    notification_rx: mpsc::Receiver<LspNotification>,
+    // 스레드 핸들
+    thread_handle: thread::JoinHandle<()>,
+}
+
+pub struct LspRequest {
+    pub id: RequestId,
+    pub method: String,
+    pub params: serde_json::Value,
+    // 응답을 받을 oneshot 채널
+    pub response_tx: oneshot::Sender<Result<serde_json::Value, LspError>>,
+}
+
+pub struct LspNotification {
+    pub method: String,
+    pub params: serde_json::Value,
+}
+
+impl ThreadedLspClient {
+    pub fn spawn(
+        server_command: &str,
+        root_path: &Path,
+    ) -> Result<Self> {
+        let (request_tx, mut request_rx) = mpsc::channel::<LspRequest>(128);
+        let (notification_tx, notification_rx) = mpsc::channel::<LspNotification>(256);
+
+        let command = server_command.to_string();
+        let root = root_path.to_path_buf();
+
+        // 별도 OS 스레드에서 LSP 서버와 통신
+        let thread_handle = thread::spawn(move || {
+            // 이 스레드 전용 tokio 런타임
+            let rt = tokio::runtime::Builder::new_current_thread()
+                .enable_all()
+                .build()
+                .unwrap();
+
+            rt.block_on(async move {
+                // LSP 서버 프로세스 시작
+                let mut child = Command::new(&command)
+                    .current_dir(&root)
+                    .stdin(Stdio::piped())
+                    .stdout(Stdio::piped())
+                    .stderr(Stdio::piped())
+                    .spawn()
+                    .expect("Failed to start LSP server");
+
+                let stdin = child.stdin.take().unwrap();
+                let stdout = child.stdout.take().unwrap();
+
+                let (json_tx, mut json_rx) = mpsc::channel::<LspMessage>(64);
+                let pending_requests: Arc<Mutex<HashMap<RequestId, oneshot::Sender<_>>>> =
+                    Arc::new(Mutex::new(HashMap::new()));
+
+                // stdout 읽기 태스크
+                let pending_ref = pending_requests.clone();
+                let notif_tx = notification_tx.clone();
+                tokio::spawn(async move {
+                    let mut reader = BufReader::new(stdout);
+                    loop {
+                        match read_lsp_message(&mut reader).await {
+                            Ok(msg) => match msg {
+                                LspMessage::Response { id, result, error } => {
+                                    if let Some(tx) = pending_ref.lock().unwrap().remove(&id) {
+                                        let response = match error {
+                                            Some(e) => Err(e.into()),
+                                            None => Ok(result.unwrap_or(serde_json::Value::Null)),
+                                        };
+                                        let _ = tx.send(response);
+                                    }
+                                }
+                                LspMessage::Notification { method, params } => {
+                                    let _ = notif_tx.send(LspNotification { method, params }).await;
+                                }
+                                _ => {}
+                            },
+                            Err(_) => break,
+                        }
+                    }
+                });
+
+                // stdin 쓰기 태스크
+                let mut stdin = BufWriter::new(stdin);
+                tokio::spawn(async move {
+                    while let Some(msg) = json_rx.recv().await {
+                        write_lsp_message(&mut stdin, &msg).await.ok();
+                    }
+                });
+
+                // 요청 처리 루프
+                while let Some(request) = request_rx.recv().await {
+                    // oneshot 채널 등록
+                    pending_requests.lock().unwrap()
+                        .insert(request.id.clone(), request.response_tx);
+
+                    // 요청 전송
+                    let msg = LspMessage::Request {
+                        id: request.id,
+                        method: request.method,
+                        params: request.params,
+                    };
+                    let _ = json_tx.send(msg).await;
+                }
+            });
+        });
+
+        Ok(Self {
+            request_tx,
+            notification_rx,
+            thread_handle,
+        })
+    }
+
+    /// 비동기 요청 (메인 스레드를 블로킹하지 않음)
+    pub async fn request<P, R>(&self, method: &str, params: P) -> Result<R>
+    where
+        P: Serialize,
+        R: DeserializeOwned,
+    {
+        let (tx, rx) = oneshot::channel();
+        let request_id = RequestId::new();
+
+        self.request_tx.send(LspRequest {
+            id: request_id,
+            method: method.to_string(),
+            params: serde_json::to_value(params)?,
+            response_tx: tx,
+        }).await?;
+
+        // 타임아웃 (120초)
+        let result = tokio::time::timeout(
+            Duration::from_secs(120),
+            rx
+        ).await??;
+
+        Ok(serde_json::from_value(result?)?)
+    }
+
+    /// 알림 스트림 (진단 등)
+    pub fn notifications(&mut self) -> &mut mpsc::Receiver<LspNotification> {
+        &mut self.notification_rx
+    }
+}
+```
+
+### 6.2 프로젝트 인덱싱 중 진행 상황 표시
+
+```rust
+impl LspManager {
+    pub fn setup_progress_handler(&mut self, app_handle: AppHandle) {
+        let mut client = self.client.lock().unwrap();
+
+        // 별도 태스크에서 알림 수신
+        tokio::spawn(async move {
+            while let Some(notification) = client.notifications().recv().await {
+                match notification.method.as_str() {
+                    "$/progress" => {
+                        let params: ProgressParams = serde_json::from_value(notification.params).unwrap();
+                        match params.value {
+                            ProgressParamsValue::WorkDone(work_done) => {
+                                // UI에 진행 상황 표시
+                                app_handle.emit_all("lsp-progress", LspProgressEvent {
+                                    token: params.token,
+                                    kind: match work_done {
+                                        WorkDoneProgress::Begin(b) => "begin",
+                                        WorkDoneProgress::Report(r) => "report",
+                                        WorkDoneProgress::End(_) => "end",
+                                    },
+                                    title: work_done.title(),
+                                    message: work_done.message(),
+                                    percentage: work_done.percentage(),
+                                }).ok();
+                            }
+                        }
+                    }
+                    "textDocument/publishDiagnostics" => {
+                        // 진단 처리
+                        let params: PublishDiagnosticsParams =
+                            serde_json::from_value(notification.params).unwrap();
+                        app_handle.emit_all("lsp-diagnostics", params).ok();
+                    }
+                    _ => {}
+                }
+            }
+        });
+    }
+}
+```
+
+### 6.3 동시 요청 처리 (병렬 완성/호버/정의)
+
+```rust
+impl LspClient {
+    /// 여러 LSP 기능을 동시에 요청 (성능 최적화)
+    pub async fn get_cursor_info(
+        &self,
+        buffer: &TextBuffer,
+        position: Position,
+    ) -> CursorInfo {
+        // 3개 요청을 동시에 실행
+        let (completion, hover, definition) = tokio::join!(
+            self.completion(buffer, position),
+            self.hover(buffer, position),
+            self.goto_definition(buffer, position),
+        );
+
+        CursorInfo {
+            completion: completion.ok(),
+            hover: hover.ok(),
+            definition: definition.ok(),
+        }
+    }
+}
+```
+
+---
+
+## 7. 요청/응답 처리 (Zed 참고)
+
+### 7.1 요청 전송
 
 ```rust
 impl LspClient {

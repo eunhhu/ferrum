@@ -13,10 +13,24 @@ ferrum_core.workspace = true
 ropey.workspace = true
 tree-sitter.workspace = true
 
+# Tree-sitter language grammars
+tree-sitter-rust.workspace = true
+tree-sitter-typescript.workspace = true
+tree-sitter-javascript.workspace = true
+tree-sitter-python.workspace = true
+tree-sitter-go.workspace = true
+tree-sitter-json.workspace = true
+tree-sitter-toml.workspace = true
+tree-sitter-html.workspace = true
+tree-sitter-css.workspace = true
+tree-sitter-markdown.workspace = true
+
 serde.workspace = true
 parking_lot.workspace = true
 smallvec.workspace = true
 tracing.workspace = true
+once_cell.workspace = true
+tokio = { workspace = true, features = ["sync"] }
 
 [dev-dependencies]
 pretty_assertions.workspace = true
