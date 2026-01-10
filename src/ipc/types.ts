@@ -103,3 +103,52 @@ export interface Settings {
   terminal: TerminalSettings;
   ui: UISettings;
 }
+
+// Buffer metrics
+export interface BufferMetrics {
+  line_count: number;
+  char_count: number;
+  is_dirty: boolean;
+  version: number;
+}
+
+// Project types
+export interface ProjectInfo {
+  path: string;
+  name: string;
+  file_count: number;
+  has_git: boolean;
+}
+
+export interface FileTreeNode {
+  name: string;
+  path: string;
+  is_dir: boolean;
+  is_hidden: boolean;
+  children: FileTreeNode[] | null;
+  depth: number;
+}
+
+// Syntax highlighting types
+export interface HighlightSpan {
+  start: number;
+  end: number;
+  kind: string;
+  css_class: string;
+}
+
+export interface SyntaxError {
+  start: number;
+  end: number;
+  start_line: number;
+  start_column: number;
+  end_line: number;
+  end_column: number;
+  message: string;
+}
+
+export interface ParseResult {
+  highlights: HighlightSpan[];
+  errors: SyntaxError[];
+  parse_time_us: number;
+}

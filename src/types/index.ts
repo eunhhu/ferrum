@@ -11,10 +11,10 @@ export interface FileNode {
   name: string;
   path: string;
   type: "file" | "directory";
-  children?: FileNode[];
-  isExpanded?: boolean;
-  isHidden?: boolean;
-  gitStatus?: GitFileStatus;
+  children?: FileNode[] | undefined;
+  isExpanded?: boolean | undefined;
+  isHidden?: boolean | undefined;
+  gitStatus?: GitFileStatus | undefined;
 }
 
 export interface EditorTab {
@@ -24,9 +24,9 @@ export interface EditorTab {
   content: string;
   isDirty: boolean;
   language: string;
-  bufferId?: string;
-  isPreview?: boolean;
-  isPinned?: boolean;
+  bufferId?: string | undefined;
+  isPreview?: boolean | undefined;
+  isPinned?: boolean | undefined;
 }
 
 export interface PanelTab {

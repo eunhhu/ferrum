@@ -1,5 +1,9 @@
 // Test setup file for Vitest
 import "@testing-library/jest-dom/vitest";
+import type { Mock, vi as Vi } from "vitest";
+
+// These are provided by vitest in test context
+declare const vi: typeof Vi;
 
 // Mock Tauri APIs
 vi.mock("@tauri-apps/api/core", () => ({

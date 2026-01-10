@@ -26,15 +26,34 @@ pub fn build() -> tauri::Builder<tauri::Wry> {
         })
         // Commands
         .invoke_handler(tauri::generate_handler![
+            // File operations
             commands::file::read_file,
             commands::file::write_file,
             commands::file::list_directory,
+            // Buffer operations
             commands::buffer::create_buffer,
             commands::buffer::buffer_insert,
             commands::buffer::buffer_delete,
+            commands::buffer::buffer_replace,
             commands::buffer::buffer_content,
+            commands::buffer::buffer_undo,
+            commands::buffer::buffer_redo,
+            commands::buffer::buffer_get_line,
+            commands::buffer::buffer_metrics,
+            // Project operations
+            commands::project::open_project,
+            commands::project::get_file_tree,
+            commands::project::expand_directory,
+            commands::project::watch_directory,
+            commands::project::get_recent_projects,
+            // Search operations
             commands::search::search_files,
             commands::search::search_text,
+            // Syntax highlighting
+            commands::syntax::get_highlights,
+            commands::syntax::detect_language,
+            commands::syntax::get_supported_languages,
+            // Settings
             commands::settings::get_settings,
             commands::settings::update_settings,
         ])

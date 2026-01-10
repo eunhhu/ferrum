@@ -61,3 +61,68 @@ html, body, #root {
 ::selection {
   @apply bg-accent/40;
 }
+
+/* Syntax Highlighting Classes */
+.hl-keyword { color: var(--color-syntax-keyword); }
+.hl-keyword-control { color: var(--color-syntax-keyword); }
+.hl-keyword-function { color: var(--color-syntax-keyword); }
+.hl-keyword-operator { color: var(--color-syntax-keyword); }
+.hl-keyword-return { color: var(--color-syntax-keyword); font-weight: 500; }
+
+.hl-string { color: var(--color-syntax-string); }
+.hl-string-special { color: #d7ba7d; }
+
+.hl-number { color: var(--color-syntax-number); }
+
+.hl-comment { color: var(--color-syntax-comment); font-style: italic; }
+.hl-comment-doc { color: #608b4e; font-style: italic; }
+
+.hl-function { color: var(--color-syntax-function); }
+.hl-function-method { color: var(--color-syntax-function); }
+.hl-function-builtin { color: #4ec9b0; }
+.hl-function-macro { color: #dcdcaa; font-weight: 500; }
+
+.hl-type { color: var(--color-syntax-type); }
+.hl-type-builtin { color: var(--color-syntax-type); }
+
+.hl-variable { color: var(--color-syntax-variable); }
+.hl-variable-builtin { color: #569cd6; }
+.hl-variable-parameter { color: #9cdcfe; }
+
+.hl-property { color: #9cdcfe; }
+.hl-operator { color: #d4d4d4; }
+
+.hl-punctuation { color: #d4d4d4; }
+.hl-punctuation-bracket { color: #ffd700; }
+.hl-punctuation-delimiter { color: #d4d4d4; }
+
+.hl-constant { color: #569cd6; }
+.hl-constant-builtin { color: #569cd6; }
+
+.hl-label { color: #c586c0; }
+.hl-namespace { color: #4ec9b0; }
+.hl-attribute { color: #9cdcfe; }
+
+.hl-tag { color: #569cd6; }
+.hl-tag-delimiter { color: #808080; }
+
+.hl-embedded { background-color: rgba(0, 0, 0, 0.1); }
+.hl-error { text-decoration: wavy underline #f44747; }
+
+/* Cursor blink animation */
+@keyframes cursor-blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+.animate-blink {
+  animation: cursor-blink 1s ease-in-out infinite;
+}
+
+/* Editor styles */
+.editor-container {
+  font-family: "Fira Code", "JetBrains Mono", Menlo, Monaco, "Courier New", monospace;
+  font-size: 13px;
+  line-height: 20px;
+  tab-size: 4;
+}

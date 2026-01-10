@@ -115,3 +115,135 @@ pub fn buffer_content(
         language: buffer.language_id(),
     })
 }
+
+/// Undo the last edit
+#[tauri::command]
+pub fn buffer_undo(
+    state: State<'_, AppState>,
+    buffer_id: String,
+) -> Result<BufferInfo, String> {
+    let id: BufferId = buffer_id
+        .parse()
+        .map_err(|_| "Invalid buffer ID".to_string())?;
+
+    let buffer = state
+        .editor
+        .buffer(id)
+        .ok_or_else(|| "Buffer not found".to_string())?;
+
+    buffer.undo();
+
+    Ok(BufferInfo {
+        id: buffer.id().to_string(),
+        content: buffer.to_string(),
+        version: buffer.version(),
+        is_dirty: buffer.is_dirty(),
+        language: buffer.language_id(),
+    })
+}
+
+/// Redo the last undone edit
+#[tauri::command]
+pub fn buffer_redo(
+    state: State<'_, AppState>,
+    buffer_id: String,
+) -> Result<BufferInfo, String> {
+    let id: BufferId = buffer_id
+        .parse()
+        .map_err(|_| "Invalid buffer ID".to_string())?;
+
+    let buffer = state
+        .editor
+        .buffer(id)
+        .ok_or_else(|| "Buffer not found".to_string())?;
+
+    buffer.redo();
+
+    Ok(BufferInfo {
+        id: buffer.id().to_string(),
+        content: buffer.to_string(),
+        version: buffer.version(),
+        is_dirty: buffer.is_dirty(),
+        language: buffer.language_id(),
+    })
+}
+
+/// Replace text in a range
+#[tauri::command]
+pub fn buffer_replace(
+    state: State<'_, AppState>,
+    buffer_id: String,
+    start: usize,
+    end: usize,
+    text: String,
+) -> Result<BufferInfo, String> {
+    let id: BufferId = buffer_id
+        .parse()
+        .map_err(|_| "Invalid buffer ID".to_string())?;
+
+    let buffer = state
+        .editor
+        .buffer(id)
+        .ok_or_else(|| "Buffer not found".to_string())?;
+
+    buffer.replace(start, end, &text).map_err(|e| e.to_string())?;
+
+    Ok(BufferInfo {
+        id: buffer.id().to_string(),
+        content: buffer.to_string(),
+        version: buffer.version(),
+        is_dirty: buffer.is_dirty(),
+        language: buffer.language_id(),
+    })
+}
+
+/// Get a specific line from the buffer
+#[tauri::command]
+pub fn buffer_get_line(
+    state: State<'_, AppState>,
+    buffer_id: String,
+    line: usize,
+) -> Result<Option<String>, String> {
+    let id: BufferId = buffer_id
+        .parse()
+        .map_err(|_| "Invalid buffer ID".to_string())?;
+
+    let buffer = state
+        .editor
+        .buffer(id)
+        .ok_or_else(|| "Buffer not found".to_string())?;
+
+    Ok(buffer.line(line))
+}
+
+/// Get buffer metrics (line count, character count)
+#[tauri::command]
+pub fn buffer_metrics(
+    state: State<'_, AppState>,
+    buffer_id: String,
+) -> Result<BufferMetrics, String> {
+    let id: BufferId = buffer_id
+        .parse()
+        .map_err(|_| "Invalid buffer ID".to_string())?;
+
+    let buffer = state
+        .editor
+        .buffer(id)
+        .ok_or_else(|| "Buffer not found".to_string())?;
+
+    Ok(BufferMetrics {
+        line_count: buffer.len_lines(),
+        char_count: buffer.len_chars(),
+        is_dirty: buffer.is_dirty(),
+        version: buffer.version(),
+    })
+}
+
+/// Buffer metrics response
+#[derive(Debug, Serialize, Deserialize)]
+pub struct BufferMetrics {
+    pub line_count: usize,
+    pub char_count: usize,
+    pub is_dirty: bool,
+    pub version: u64,
+}

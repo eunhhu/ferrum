@@ -26,6 +26,27 @@ impl FileSearcher {
         }
     }
 
+    /// Set the root directory and index all files
+    pub fn set_root(&mut self, root: &PathBuf) {
+        use ignore::WalkBuilder;
+
+        self.files.clear();
+
+        let walker = WalkBuilder::new(root)
+            .hidden(false)
+            .git_ignore(true)
+            .git_global(true)
+            .git_exclude(true)
+            .max_depth(Some(20))
+            .build();
+
+        for entry in walker.filter_map(Result::ok) {
+            if entry.file_type().map(|ft| ft.is_file()).unwrap_or(false) {
+                self.files.push(entry.into_path());
+            }
+        }
+    }
+
     /// Set the file list
     pub fn set_files(&mut self, files: Vec<PathBuf>) {
         self.files = files;

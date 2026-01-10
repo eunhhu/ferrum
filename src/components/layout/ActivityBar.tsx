@@ -25,7 +25,7 @@ function ActivityIcon(props: { type: string }) {
 
   return (
     <svg class="w-6 h-6" viewBox="0 0 24 24" fill="currentColor">
-      <path d={icons[props.type] || icons.files} />
+      <path d={icons[props.type] || icons["files"]} />
     </svg>
   );
 }

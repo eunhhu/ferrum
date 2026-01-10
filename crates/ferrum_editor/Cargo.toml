@@ -15,6 +15,7 @@ tokio.workspace = true
 async-trait.workspace = true
 parking_lot.workspace = true
 dashmap.workspace = true
+ropey.workspace = true
 
 serde.workspace = true
 tracing.workspace = true

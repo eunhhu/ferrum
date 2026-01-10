@@ -1,9 +1,10 @@
 import { Show } from "solid-js";
 import { editorStore } from "../../stores";
 import { EditorTabs } from "../editor/EditorTabs";
+import { Editor } from "../editor/Editor";
 
 export function EditorArea() {
-  const { tabs, getActiveTab } = editorStore;
+  const { tabs, getActiveTab, updateContent, setCursorPosition } = editorStore;
 
   return (
     <div class="flex-1 flex flex-col bg-bg-primary min-w-0">
@@ -20,12 +21,20 @@ export function EditorArea() {
         }
       >
         <EditorTabs />
-        <div class="flex-1 overflow-auto p-4 font-mono text-sm">
+        <div class="flex-1 overflow-hidden">
           <Show when={getActiveTab()}>
             {(tab) => (
-              <pre class="whitespace-pre-wrap text-text-primary">
-                {tab().content || "Empty file"}
-              </pre>
+              <Editor
+                bufferId={tab().bufferId || tab().id}
+                content={tab().content || ""}
+                language={tab().language}
+                onContentChange={(content) => {
+                  updateContent(tab().id, content);
+                }}
+                onCursorChange={(line, column) => {
+                  setCursorPosition({ line, column });
+                }}
+              />
             )}
           </Show>
         </div>

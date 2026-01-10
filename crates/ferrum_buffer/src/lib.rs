@@ -16,3 +16,9 @@ pub use edit::{Edit, EditKind};
 pub use history::History;
 pub use position::{Point, Position};
 pub use selection::{Selection, SelectionSet};
+
+// Re-export syntax types
+pub use syntax::{
+    AsyncParseResult, AsyncSyntaxManager, Highlight, HighlightKind, LanguageId, ParseResult,
+    SyntaxError, SyntaxManager,
+};
