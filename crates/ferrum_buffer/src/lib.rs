@@ -4,6 +4,7 @@
 //! Provides efficient editing operations, undo/redo, and integration
 //! with tree-sitter for syntax parsing.
 
+pub mod anchor;
 pub mod buffer;
 pub mod edit;
 pub mod history;
@@ -11,6 +12,7 @@ pub mod position;
 pub mod selection;
 pub mod syntax;
 
+pub use anchor::{Anchor, AnchorBias, AnchorId, AnchorSet};
 pub use buffer::Buffer;
 pub use edit::{Edit, EditKind};
 pub use history::History;

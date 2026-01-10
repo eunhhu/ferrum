@@ -129,6 +129,26 @@ export async function bufferMetrics(bufferId: string): Promise<BufferMetrics> {
   });
 }
 
+export async function bufferSave(bufferId: string): Promise<BufferInfo> {
+  return await invoke<BufferInfo>("buffer_save", {
+    buffer_id: bufferId,
+  });
+}
+
+export async function bufferSaveAs(
+  bufferId: string,
+  path: string
+): Promise<BufferInfo> {
+  return await invoke<BufferInfo>("buffer_save_as", {
+    buffer_id: bufferId,
+    path,
+  });
+}
+
+export async function openFileBuffer(path: string): Promise<BufferInfo> {
+  return await invoke<BufferInfo>("open_file_buffer", { path });
+}
+
 // Project operations
 export async function openProject(path: string): Promise<ProjectInfo> {
   return await invoke<ProjectInfo>("open_project", { path });
@@ -175,4 +195,304 @@ export async function detectLanguage(path: string): Promise<string> {
 
 export async function getSupportedLanguages(): Promise<string[]> {
   return await invoke<string[]>("get_supported_languages");
+}
+
+// LSP operations
+export interface LspStatus {
+  language: string;
+  running: boolean;
+  initialized: boolean;
+}
+
+export interface LspLocation {
+  uri: string;
+  range: {
+    start: { line: number; character: number };
+    end: { line: number; character: number };
+  };
+}
+
+export interface LspCompletionItem {
+  label: string;
+  kind: number;
+  detail: string | null;
+  documentation: string | null;
+  insert_text: string | null;
+  sort_text: string | null;
+}
+
+export interface LspHoverResult {
+  contents: string;
+  range: {
+    start: { line: number; character: number };
+    end: { line: number; character: number };
+  } | null;
+}
+
+export interface LspSymbolInfo {
+  name: string;
+  kind: number;
+  range: {
+    start: { line: number; character: number };
+    end: { line: number; character: number };
+  };
+  selection_range: {
+    start: { line: number; character: number };
+    end: { line: number; character: number };
+  };
+  children: LspSymbolInfo[] | null;
+}
+
+export interface LspDiagnostic {
+  range: {
+    start: { line: number; character: number };
+    end: { line: number; character: number };
+  };
+  severity: number;
+  code: string | null;
+  source: string | null;
+  message: string;
+}
+
+export async function lspStart(
+  language: string,
+  rootPath: string
+): Promise<LspStatus> {
+  return await invoke<LspStatus>("lsp_start", {
+    language,
+    root_path: rootPath,
+  });
+}
+
+export async function lspStop(language: string): Promise<void> {
+  return await invoke<void>("lsp_stop", { language });
+}
+
+export async function lspStatus(language: string): Promise<LspStatus> {
+  return await invoke<LspStatus>("lsp_status", { language });
+}
+
+export async function lspCompletion(
+  filePath: string,
+  line: number,
+  character: number
+): Promise<LspCompletionItem[]> {
+  return await invoke<LspCompletionItem[]>("lsp_completion", {
+    file_path: filePath,
+    line,
+    character,
+  });
+}
+
+export async function lspHover(
+  filePath: string,
+  line: number,
+  character: number
+): Promise<LspHoverResult | null> {
+  return await invoke<LspHoverResult | null>("lsp_hover", {
+    file_path: filePath,
+    line,
+    character,
+  });
+}
+
+export async function lspGotoDefinition(
+  filePath: string,
+  line: number,
+  character: number
+): Promise<LspLocation[]> {
+  return await invoke<LspLocation[]>("lsp_goto_definition", {
+    file_path: filePath,
+    line,
+    character,
+  });
+}
+
+export async function lspReferences(
+  filePath: string,
+  line: number,
+  character: number,
+  includeDeclaration: boolean = true
+): Promise<LspLocation[]> {
+  return await invoke<LspLocation[]>("lsp_references", {
+    file_path: filePath,
+    line,
+    character,
+    include_declaration: includeDeclaration,
+  });
+}
+
+export async function lspDocumentSymbols(
+  filePath: string
+): Promise<LspSymbolInfo[]> {
+  return await invoke<LspSymbolInfo[]>("lsp_document_symbols", {
+    file_path: filePath,
+  });
+}
+
+export async function lspDiagnostics(filePath: string): Promise<LspDiagnostic[]> {
+  return await invoke<LspDiagnostic[]>("lsp_diagnostics", {
+    file_path: filePath,
+  });
+}
+
+export async function lspDidOpen(
+  filePath: string,
+  languageId: string,
+  version: number,
+  content: string
+): Promise<void> {
+  return await invoke<void>("lsp_did_open", {
+    file_path: filePath,
+    language_id: languageId,
+    version,
+    content,
+  });
+}
+
+export async function lspDidChange(
+  filePath: string,
+  version: number,
+  content: string
+): Promise<void> {
+  return await invoke<void>("lsp_did_change", {
+    file_path: filePath,
+    version,
+    content,
+  });
+}
+
+export async function lspDidSave(filePath: string): Promise<void> {
+  return await invoke<void>("lsp_did_save", { file_path: filePath });
+}
+
+export async function lspDidClose(filePath: string): Promise<void> {
+  return await invoke<void>("lsp_did_close", { file_path: filePath });
+}
+
+// Terminal operations
+export interface TerminalInfo {
+  id: string;
+  rows: number;
+  cols: number;
+  cwd: string | null;
+  running: boolean;
+}
+
+export async function terminalCreate(
+  cwd?: string,
+  shell?: string,
+  rows?: number,
+  cols?: number
+): Promise<TerminalInfo> {
+  return await invoke<TerminalInfo>("terminal_create", {
+    cwd,
+    shell,
+    rows,
+    cols,
+  });
+}
+
+export async function terminalWrite(id: string, data: number[]): Promise<void> {
+  return await invoke<void>("terminal_write", { id, data });
+}
+
+export async function terminalResize(
+  id: string,
+  rows: number,
+  cols: number
+): Promise<void> {
+  return await invoke<void>("terminal_resize", { id, rows, cols });
+}
+
+export async function terminalKill(id: string): Promise<void> {
+  return await invoke<void>("terminal_kill", { id });
+}
+
+export async function terminalInfo(id: string): Promise<TerminalInfo> {
+  return await invoke<TerminalInfo>("terminal_info", { id });
+}
+
+export async function terminalList(): Promise<string[]> {
+  return await invoke<string[]>("terminal_list");
+}
+
+// Git operations
+export interface GitFileChange {
+  path: string;
+  status: string;
+  staged: boolean;
+}
+
+export interface GitStatusResponse {
+  branch: string | null;
+  upstream: string | null;
+  ahead: number;
+  behind: number;
+  changes: GitFileChange[];
+  is_clean: boolean;
+}
+
+export interface GitCommitInfo {
+  id: string;
+  short_id: string;
+  message: string;
+  author: string;
+  email: string;
+  time: number;
+}
+
+export interface GitBranchInfo {
+  name: string;
+  is_current: boolean;
+  is_remote: boolean;
+  upstream: string | null;
+}
+
+export async function gitStatus(path: string): Promise<GitStatusResponse> {
+  return await invoke<GitStatusResponse>("git_status", { path });
+}
+
+export async function gitStage(repoPath: string, filePath: string): Promise<void> {
+  return await invoke<void>("git_stage", { repo_path: repoPath, file_path: filePath });
+}
+
+export async function gitUnstage(repoPath: string, filePath: string): Promise<void> {
+  return await invoke<void>("git_unstage", { repo_path: repoPath, file_path: filePath });
+}
+
+export async function gitStageAll(repoPath: string): Promise<void> {
+  return await invoke<void>("git_stage_all", { repo_path: repoPath });
+}
+
+export async function gitCommit(repoPath: string, message: string): Promise<GitCommitInfo> {
+  return await invoke<GitCommitInfo>("git_commit", { repo_path: repoPath, message });
+}
+
+export async function gitLog(repoPath: string, limit?: number): Promise<GitCommitInfo[]> {
+  return await invoke<GitCommitInfo[]>("git_log", { repo_path: repoPath, limit });
+}
+
+export async function gitBranches(repoPath: string): Promise<GitBranchInfo[]> {
+  return await invoke<GitBranchInfo[]>("git_branches", { repo_path: repoPath });
+}
+
+export async function gitCheckout(repoPath: string, branch: string): Promise<void> {
+  return await invoke<void>("git_checkout", { repo_path: repoPath, branch });
+}
+
+export async function gitDiscard(repoPath: string, filePath: string): Promise<void> {
+  return await invoke<void>("git_discard", { repo_path: repoPath, file_path: filePath });
+}
+
+export async function gitDiffFile(
+  repoPath: string,
+  filePath: string,
+  staged: boolean
+): Promise<string> {
+  return await invoke<string>("git_diff_file", {
+    repo_path: repoPath,
+    file_path: filePath,
+    staged,
+  });
 }

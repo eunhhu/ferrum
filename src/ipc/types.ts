@@ -152,3 +152,24 @@ export interface ParseResult {
   errors: SyntaxError[];
   parse_time_us: number;
 }
+
+// Display map types
+export interface DisplayPoint {
+  row: number;
+  column: number;
+}
+
+export interface Fold {
+  start: number;
+  end: number;
+  placeholder: string;
+}
+
+export interface DisplayMapConfig {
+  tab_width: number;
+  soft_wrap: boolean;
+  wrap_width: number | null;
+  show_invisibles: boolean;
+}
+
+// Note: LSP types are defined in commands.ts to avoid duplication

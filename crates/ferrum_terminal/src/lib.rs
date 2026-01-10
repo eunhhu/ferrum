@@ -5,4 +5,5 @@
 pub mod pty;
 pub mod session;
 
-pub use session::TerminalSession;
+pub use pty::{Pty, PtyEvent, TerminalSize};
+pub use session::{TerminalConfig, TerminalSession};

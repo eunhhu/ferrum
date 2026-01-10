@@ -247,3 +247,92 @@ pub struct BufferMetrics {
     pub is_dirty: bool,
     pub version: u64,
 }
+
+/// Save buffer to file
+#[tauri::command]
+pub async fn buffer_save(
+    state: State<'_, AppState>,
+    buffer_id: String,
+) -> Result<BufferInfo, String> {
+    let id: BufferId = buffer_id
+        .parse()
+        .map_err(|_| "Invalid buffer ID".to_string())?;
+
+    let buffer = state
+        .editor
+        .buffer(id)
+        .ok_or_else(|| "Buffer not found".to_string())?;
+
+    let path = buffer
+        .file_path()
+        .ok_or_else(|| "Buffer has no file path".to_string())?;
+
+    let content = buffer.to_string();
+    tokio::fs::write(&path, &content)
+        .await
+        .map_err(|e| format!("Failed to save file: {}", e))?;
+
+    buffer.mark_saved();
+
+    Ok(BufferInfo {
+        id: buffer.id().to_string(),
+        content,
+        version: buffer.version(),
+        is_dirty: buffer.is_dirty(),
+        language: buffer.language_id(),
+    })
+}
+
+/// Save buffer to a new file path
+#[tauri::command]
+pub async fn buffer_save_as(
+    state: State<'_, AppState>,
+    buffer_id: String,
+    path: String,
+) -> Result<BufferInfo, String> {
+    let id: BufferId = buffer_id
+        .parse()
+        .map_err(|_| "Invalid buffer ID".to_string())?;
+
+    let buffer = state
+        .editor
+        .buffer(id)
+        .ok_or_else(|| "Buffer not found".to_string())?;
+
+    let content = buffer.to_string();
+    tokio::fs::write(&path, &content)
+        .await
+        .map_err(|e| format!("Failed to save file: {}", e))?;
+
+    buffer.set_file_path(&path);
+    buffer.mark_saved();
+
+    Ok(BufferInfo {
+        id: buffer.id().to_string(),
+        content,
+        version: buffer.version(),
+        is_dirty: buffer.is_dirty(),
+        language: buffer.language_id(),
+    })
+}
+
+/// Open a file and create a buffer for it
+#[tauri::command]
+pub async fn open_file_buffer(
+    state: State<'_, AppState>,
+    path: String,
+) -> Result<BufferInfo, String> {
+    let content = tokio::fs::read_to_string(&path)
+        .await
+        .map_err(|e| format!("Failed to read file: {}", e))?;
+
+    let buffer = state.editor.open_file(&path, &content);
+
+    Ok(BufferInfo {
+        id: buffer.id().to_string(),
+        content: buffer.to_string(),
+        version: buffer.version(),
+        is_dirty: buffer.is_dirty(),
+        language: buffer.language_id(),
+    })
+}

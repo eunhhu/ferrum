@@ -20,11 +20,18 @@ ferrum_editor.workspace = true
 ferrum_buffer.workspace = true
 ferrum_fs.workspace = true
 ferrum_lsp.workspace = true
+ferrum_terminal.workspace = true
 ferrum_git.workspace = true
 ferrum_search.workspace = true
 ferrum_ui.workspace = true
 ferrum_settings.workspace = true
 ferrum_ipc.workspace = true
+
+# Terminal
+dashmap.workspace = true
+
+# Git
+git2.workspace = true
 
 # Tauri
 tauri.workspace = true
