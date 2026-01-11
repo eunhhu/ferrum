@@ -1,6 +1,5 @@
 //! Terminal session management
 
-use ferrum_core::prelude::*;
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 

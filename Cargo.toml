@@ -72,16 +72,16 @@ tracing-appender = "0.2"
 
 # Editor core
 ropey = "1"  # Rope data structure
-tree-sitter = "0.24"
+tree-sitter = "0.23"  # Use 0.23 for language grammar compatibility
 
-# Tree-sitter language grammars (compatible with tree-sitter 0.24)
-tree-sitter-rust = "0.24"
+# Tree-sitter language grammars (compatible with tree-sitter 0.23)
+tree-sitter-rust = "0.23"
 tree-sitter-typescript = "0.23"
 tree-sitter-javascript = "0.23"
 tree-sitter-python = "0.23"
 tree-sitter-go = "0.23"
-tree-sitter-json = "0.24"
-tree-sitter-toml-ng = "0.7"  # Uses tree-sitter 0.24 compatible API
+tree-sitter-json = "0.23"
+tree-sitter-toml-ng = "0.6"  # Uses tree-sitter 0.23 compatible API
 tree-sitter-html = "0.23"
 tree-sitter-css = "0.23"
 tree-sitter-md = "0.3"

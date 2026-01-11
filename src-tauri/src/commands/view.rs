@@ -2,7 +2,6 @@
 
 use crate::state::AppState;
 use ferrum_core::prelude::*;
-use ferrum_editor::depth::DepthRegion;
 use ferrum_editor::fold::FoldState;
 use std::collections::HashMap;
 use tauri::State;

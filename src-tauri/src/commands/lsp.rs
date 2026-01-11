@@ -46,6 +46,7 @@ pub struct HoverResult {
 /// Diagnostic severity
 #[derive(Debug, Clone, Copy, Serialize, Deserialize)]
 #[repr(u8)]
+#[allow(dead_code)]
 pub enum DiagnosticSeverity {
   Error = 1,
   Warning = 2,

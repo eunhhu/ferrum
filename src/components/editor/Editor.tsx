@@ -63,8 +63,9 @@ export function Editor(props: EditorProps) {
   let editorRef: HTMLDivElement | undefined;
   let textareaRef: HTMLTextAreaElement | undefined;
 
-  // State
+  // State - get initial content (captured once at component creation)
   const [state, setState] = createStore<EditorState>({
+    // eslint-disable-next-line solid/reactivity -- intentional: capture initial content
     lines: props.content.split("\n"),
     cursor: { line: 0, column: 0, offset: 0 },
     selectionAnchor: null,

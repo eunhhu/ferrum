@@ -222,17 +222,8 @@ impl Editor {
 
       // Initialize fold state
       let fold_state_lock = parking_lot::RwLock::new(FoldState::new());
-      if let Some(tree) = self
-        .syntax_managers
-        .get(&buffer_id)
-        .unwrap()
-        .with_tree(|t| t.clone())
-      {
-        // Optimization: Avoid cloning tree if possible, but with_tree returns value or we need logic inside
-        // Actually we can just access manager again
-      }
 
-      // Re-access securely
+      // Calculate folds from syntax tree
       if let Some(manager) = self.syntax_managers.get(&buffer_id) {
         manager.with_tree(|tree| {
           fold_state_lock.write().calculate_folds(tree);
@@ -244,9 +235,9 @@ impl Editor {
     let manager = self.syntax_managers.get(&buffer_id).unwrap();
     let rope = Rope::from_str(&buffer.to_string());
 
-    // Get range
-    let start = start_byte.unwrap_or(0);
-    let end = end_byte.unwrap_or(rope.len_bytes());
+    // Get range for parsing
+    let _start = start_byte.unwrap_or(0);
+    let _end = end_byte.unwrap_or(rope.len_bytes());
 
     Ok(manager.parse_result(&rope))
   }

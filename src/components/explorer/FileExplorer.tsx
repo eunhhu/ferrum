@@ -20,8 +20,19 @@ const extColors: Record<string, string> = {
 };
 
 function FileIcon(props: { name: string; type: "file" | "directory"; isExpanded?: boolean | undefined }) {
-  if (props.type === "directory") {
-    return (
+  const isDirectory = () => props.type === "directory";
+  const ext = () => props.name.split(".").pop()?.toLowerCase() || "";
+  const color = () => extColors[ext()] || "#9da5b4";
+
+  return (
+    <Show
+      when={isDirectory()}
+      fallback={
+        <svg class="w-4 h-4 flex-shrink-0" viewBox="0 0 24 24" fill={color()}>
+          <path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm4 18H6V4h7v5h5v11z" />
+        </svg>
+      }
+    >
       <svg class="w-4 h-4 flex-shrink-0" viewBox="0 0 24 24" fill="currentColor">
         <Show
           when={props.isExpanded}
@@ -32,16 +43,7 @@ function FileIcon(props: { name: string; type: "file" | "directory"; isExpanded?
           <path fill="#dcb67a" d="M20 6h-8l-2-2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm0 12H4V8h16v10z" />
         </Show>
       </svg>
-    );
-  }
-
-  const ext = props.name.split(".").pop()?.toLowerCase() || "";
-  const color = extColors[ext] || "#9da5b4";
-
-  return (
-    <svg class="w-4 h-4 flex-shrink-0" viewBox="0 0 24 24" fill={color}>
-      <path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm4 18H6V4h7v5h5v11z" />
-    </svg>
+    </Show>
   );
 }
 

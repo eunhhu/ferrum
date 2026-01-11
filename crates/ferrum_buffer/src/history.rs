@@ -127,6 +127,8 @@ mod tests {
   #[test]
   fn test_history_undo_redo() {
     let mut history = History::new();
+    // Disable merging for this test
+    history.set_merge_enabled(false);
 
     let edit1 = Edit::new(EditKind::Insert, 0, 5, String::new(), "Hello".to_string());
     let edit2 = Edit::new(EditKind::Insert, 5, 6, String::new(), " World".to_string());

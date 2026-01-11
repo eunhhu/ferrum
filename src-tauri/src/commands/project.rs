@@ -7,8 +7,7 @@ use ferrum_fs::watcher::FsEvent;
 use ferrum_fs::FileWatcher;
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
-use std::sync::Arc;
-use tauri::{AppHandle, Emitter, Manager, State, Window};
+use tauri::{AppHandle, Emitter, State};
 
 /// Project info response
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -245,7 +244,7 @@ pub async fn unwatch_directory(state: State<'_, AppState>, path: String) -> Resu
 
 /// Get recent projects
 #[tauri::command]
-pub fn get_recent_projects(state: State<'_, AppState>) -> Vec<ProjectInfo> {
+pub fn get_recent_projects(_state: State<'_, AppState>) -> Vec<ProjectInfo> {
   // TODO: Load from settings/persistence
   Vec::new()
 }

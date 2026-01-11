@@ -1,6 +1,8 @@
 //! Collaboration session
 
 use ferrum_core::id::SessionId;
+#[allow(unused_imports)]
+use ferrum_core::prelude;
 use parking_lot::RwLock;
 
 use crate::crdt::Operation;

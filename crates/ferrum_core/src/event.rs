@@ -8,9 +8,8 @@ use parking_lot::RwLock;
 use serde::{Deserialize, Serialize};
 use std::any::{Any, TypeId};
 use std::collections::HashMap;
-use std::sync::Arc;
 
-use crate::id::{BufferId, FileId, TabId, ViewId, WindowId};
+use crate::id::{BufferId, FileId, TabId, WindowId};
 
 /// Event bus for publishing and subscribing to events
 pub struct EventBus {
@@ -252,6 +251,7 @@ pub fn global_event_bus() -> &'static EventBus {
 mod tests {
   use super::*;
   use std::sync::atomic::{AtomicUsize, Ordering};
+  use std::sync::Arc;
 
   #[test]
   fn test_event_bus_publish_subscribe() {

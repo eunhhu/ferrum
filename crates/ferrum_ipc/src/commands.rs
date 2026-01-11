@@ -3,8 +3,6 @@
 //! This module will contain all Tauri commands exposed to the frontend.
 //! Commands are organized by domain.
 
-use crate::response::{IpcError, IpcResponse};
-use ferrum_core::prelude::*;
 use serde::{Deserialize, Serialize};
 
 // Re-export for use in command definitions

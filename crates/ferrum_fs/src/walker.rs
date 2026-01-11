@@ -2,7 +2,7 @@
 
 use ferrum_core::prelude::*;
 use ignore::WalkBuilder;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 
 use crate::file_info::FileInfo;
 

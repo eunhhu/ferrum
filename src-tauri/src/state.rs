@@ -28,6 +28,7 @@ impl WatcherState {
 /// Global application state
 pub struct AppState {
   pub editor: Arc<Editor>,
+  #[allow(dead_code)]
   pub lsp: Arc<LspManager>,
   pub file_searcher: Arc<RwLock<FileSearcher>>,
   pub settings: Arc<RwLock<Settings>>,

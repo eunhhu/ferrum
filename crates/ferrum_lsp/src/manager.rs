@@ -1,7 +1,6 @@
 //! LSP server manager (placeholder)
 
 use dashmap::DashMap;
-use ferrum_core::prelude::*;
 use std::sync::Arc;
 
 use crate::client::LspClient;

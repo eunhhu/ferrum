@@ -71,7 +71,7 @@ impl LanguageId {
       Self::Python => Some(tree_sitter_python::LANGUAGE.into()),
       Self::Go => Some(tree_sitter_go::LANGUAGE.into()),
       Self::Json => Some(tree_sitter_json::LANGUAGE.into()),
-      Self::Toml => Some(tree_sitter_toml_ng::LANGUAGE.into()),
+      Self::Toml => Some(tree_sitter_toml_ng::language()),
       Self::Html => Some(tree_sitter_html::LANGUAGE.into()),
       Self::Css => Some(tree_sitter_css::LANGUAGE.into()),
       Self::Markdown => Some(tree_sitter_md::LANGUAGE.into()),
@@ -470,7 +470,7 @@ impl SyntaxManager {
 
     // Try to match the node against query patterns
     let node_kind = node.kind();
-    for (i, name) in query.capture_names().iter().enumerate() {
+    for (_i, name) in query.capture_names().iter().enumerate() {
       // Simple matching based on node kind to capture name mapping
       if let Some(kind) = self.match_node_to_highlight(node_kind, name) {
         if node.start_byte() >= range.start && node.end_byte() <= range.end {
@@ -846,6 +846,9 @@ mod tests {
   #[test]
   fn test_syntax_manager_creation() {
     let manager = SyntaxManager::new(LanguageId::Rust);
+    if let Err(e) = &manager {
+      eprintln!("Error creating Rust manager: {}", e);
+    }
     assert!(manager.is_ok());
 
     let manager = SyntaxManager::new(LanguageId::Unknown);

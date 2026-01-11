@@ -1,10 +1,7 @@
 //! Git Tauri commands
 
-use crate::state::AppState;
-use ferrum_git::{FileStatus, GitStatus, Repository};
+use ferrum_git::{FileStatus, Repository};
 use serde::{Deserialize, Serialize};
-use std::path::PathBuf;
-use tauri::State;
 
 /// Git file change info
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -45,6 +42,7 @@ pub struct GitBranchInfo {
   pub upstream: Option<String>,
 }
 
+#[allow(dead_code)]
 fn status_to_string(status: FileStatus) -> String {
   match status {
     FileStatus::Modified => "modified".to_string(),
@@ -177,7 +175,7 @@ pub async fn git_unstage(repo_path: String, file_path: String) -> Result<(), Str
   let head_commit = head
     .peel_to_commit()
     .map_err(|e| format!("Failed to get HEAD commit: {}", e))?;
-  let head_tree = head_commit
+  let _head_tree = head_commit
     .tree()
     .map_err(|e| format!("Failed to get HEAD tree: {}", e))?;
 

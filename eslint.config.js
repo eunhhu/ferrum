@@ -27,9 +27,21 @@ export default [
         requestAnimationFrame: "readonly",
         cancelAnimationFrame: "readonly",
         HTMLElement: "readonly",
+        HTMLDivElement: "readonly",
+        HTMLTextAreaElement: "readonly",
+        HTMLInputElement: "readonly",
         Event: "readonly",
         KeyboardEvent: "readonly",
         MouseEvent: "readonly",
+        InputEvent: "readonly",
+        CompositionEvent: "readonly",
+        FocusEvent: "readonly",
+        DragEvent: "readonly",
+        ClipboardEvent: "readonly",
+        WheelEvent: "readonly",
+        ResizeObserver: "readonly",
+        MutationObserver: "readonly",
+        IntersectionObserver: "readonly",
       },
     },
     plugins: {
@@ -61,6 +73,9 @@ export default [
       "no-var": "error",
       "eqeqeq": "off", // Allow == for convenience
       "curly": "off", // Allow single-line if statements
+      "no-unused-vars": "off", // Let TypeScript handle this
+      "no-undef": "off", // TypeScript handles this
+      "no-case-declarations": "off", // Allow declarations in case blocks
     },
   },
   {

@@ -1,7 +1,7 @@
 //! Syntax highlighting commands
 
 use crate::state::AppState;
-use ferrum_buffer::syntax::{Highlight, HighlightKind, LanguageId, SyntaxError};
+use ferrum_buffer::syntax::{Highlight, LanguageId, SyntaxError};
 use ferrum_core::prelude::*;
 use serde::{Deserialize, Serialize};
 use tauri::State;

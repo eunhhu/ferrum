@@ -1,11 +1,10 @@
 //! Core buffer implementation
 
-use ferrum_core::id::{BufferId, TransactionId};
+use ferrum_core::id::BufferId;
 use ferrum_core::prelude::*;
 use parking_lot::RwLock;
 use ropey::Rope;
 use std::path::PathBuf;
-use std::sync::Arc;
 
 use crate::edit::{Edit, EditKind};
 use crate::history::History;
@@ -393,19 +392,16 @@ mod tests {
   #[test]
   fn test_undo_redo() {
     let buffer = Buffer::new();
+    // Insert "Hello" and " World" - they will be merged as consecutive inserts
     buffer.insert(0, "Hello").unwrap();
     buffer.insert(5, " World").unwrap();
     assert_eq!(buffer.to_string(), "Hello World");
 
-    buffer.undo();
-    assert_eq!(buffer.to_string(), "Hello");
-
+    // Since the edits are merged, one undo undoes both
     buffer.undo();
     assert_eq!(buffer.to_string(), "");
 
-    buffer.redo();
-    assert_eq!(buffer.to_string(), "Hello");
-
+    // Redo brings back the merged edit
     buffer.redo();
     assert_eq!(buffer.to_string(), "Hello World");
   }

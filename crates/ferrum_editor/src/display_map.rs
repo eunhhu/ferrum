@@ -10,11 +10,10 @@
 //! - Code folding (hiding collapsed regions)
 //! - Invisible character display
 
-use ferrum_buffer::{Point, Position};
+use ferrum_buffer::Point;
 use parking_lot::RwLock;
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
-use std::ops::Range;
 
 /// A point in display space
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
@@ -346,15 +345,16 @@ mod tests {
 
     // Tab at column 0 should expand to 4 spaces
     let text = "\thello";
-    let buffer_point = Point::new(0, 1); // After the tab
+    let buffer_point = Point::new(0, 1); // After the tab (at 'h')
     let display = dm.buffer_to_display(buffer_point, text);
     assert_eq!(display.column, 4);
 
-    // Tab at column 2 should expand to column 4
+    // Tab after "ab" expands from col 2 to col 4
     let text2 = "ab\tc";
-    let buffer_point2 = Point::new(0, 3); // At 'c'
+    let buffer_point2 = Point::new(0, 3); // At 'c' (buffer column 3)
     let display2 = dm.buffer_to_display(buffer_point2, text2);
-    assert_eq!(display2.column, 5); // 2 + 2 (tab to 4) + 1 = 5
+    // a=col0, b=col1, tab fills to col4, c starts at col4
+    assert_eq!(display2.column, 4);
   }
 
   #[test]
@@ -381,8 +381,7 @@ mod tests {
 
     assert_eq!(dm.display_width("hello"), 5);
     assert_eq!(dm.display_width("\t"), 4);
-    assert_eq!(dm.display_width("a\tb"), 6); // 1 + 3 + 1 = 5? No: a=1, tab fills to 4, b=1 = 5
-    // Actually: a at col 0 (width 1), tab from col 1 to col 4 (width 3), b at col 4 (width 1) = total 5
+    // a at col 0 (width 1), tab from col 1 fills to next tab stop at col 4 (adds 3), b at col 4 (width 1) = total 5
     assert_eq!(dm.display_width("a\tb"), 5);
   }
 }

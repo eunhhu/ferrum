@@ -1,53 +1,8 @@
-; Rust highlights.scm
-
-; Keywords
-[
-  "as"
-  "async"
-  "await"
-  "break"
-  "const"
-  "continue"
-  "crate"
-  "dyn"
-  "else"
-  "enum"
-  "extern"
-  "fn"
-  "for"
-  "if"
-  "impl"
-  "in"
-  "let"
-  "loop"
-  "macro_rules!"
-  "match"
-  "mod"
-  "move"
-  "mut"
-  "pub"
-  "ref"
-  "return"
-  "static"
-  "struct"
-  "trait"
-  "type"
-  "union"
-  "unsafe"
-  "use"
-  "where"
-  "while"
-] @keyword
-
-"return" @keyword.return
-["if" "else" "match"] @keyword.control
-["for" "while" "loop"] @keyword.repeat
-"fn" @keyword.function
+; Rust highlights.scm - Compatible with tree-sitter-rust 0.23
 
 ; Types
 (type_identifier) @type
 (primitive_type) @type.builtin
-(self) @variable.builtin
 
 ; Functions
 (function_item name: (identifier) @function)
@@ -58,7 +13,6 @@
 ; Variables
 (identifier) @variable
 (field_identifier) @property
-(parameter (identifier) @variable.parameter)
 
 ; Literals
 (string_literal) @string
@@ -72,55 +26,10 @@
 ; Comments
 (line_comment) @comment
 (block_comment) @comment
-((line_comment) @comment.documentation
-  (#match? @comment.documentation "^///"))
-((line_comment) @comment.documentation
-  (#match? @comment.documentation "^//!"))
 
 ; Attributes
 (attribute_item) @attribute
 (inner_attribute_item) @attribute
-
-; Operators
-[
-  "+"
-  "-"
-  "*"
-  "/"
-  "%"
-  "="
-  "=="
-  "!="
-  "<"
-  ">"
-  "<="
-  ">="
-  "&&"
-  "||"
-  "!"
-  "&"
-  "|"
-  "^"
-  "~"
-  "<<"
-  ">>"
-  "+="
-  "-="
-  "*="
-  "/="
-  "%="
-  "&="
-  "|="
-  "^="
-  "<<="
-  ">>="
-  ".."
-  "..="
-  "=>"
-  "->"
-  "::"
-  "?"
-] @operator
 
 ; Punctuation
 ["(" ")" "[" "]" "{" "}"] @punctuation.bracket
@@ -129,3 +38,6 @@
 ; Namespaces
 (mod_item name: (identifier) @namespace)
 (scoped_identifier path: (identifier) @namespace)
+
+; Self
+(self) @variable.builtin

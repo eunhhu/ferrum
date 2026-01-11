@@ -16,6 +16,7 @@ pub struct WorkspaceFolder {
 pub struct Workspace {
   id: WorkspaceId,
   folders: RwLock<Vec<WorkspaceFolder>>,
+  #[allow(dead_code)]
   settings_path: RwLock<Option<PathBuf>>,
 }
 

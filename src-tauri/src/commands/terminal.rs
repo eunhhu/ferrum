@@ -1,13 +1,11 @@
 //! Terminal Tauri commands
 
-use crate::state::AppState;
 use dashmap::DashMap;
 use ferrum_terminal::{Pty, PtyEvent, TerminalSize};
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 use std::sync::Arc;
-use tauri::{AppHandle, Emitter, Manager, State};
-use tokio::sync::mpsc;
+use tauri::{AppHandle, Emitter, Manager};
 
 /// Terminal session info
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -51,7 +49,6 @@ impl Default for TerminalManager {
 #[tauri::command]
 pub async fn terminal_create(
   app: AppHandle,
-  state: State<'_, AppState>,
   cwd: Option<String>,
   shell: Option<String>,
   rows: Option<u16>,

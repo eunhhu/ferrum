@@ -1,7 +1,6 @@
 //! Settings management
 
 use ferrum_core::prelude::*;
-use parking_lot::RwLock;
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 

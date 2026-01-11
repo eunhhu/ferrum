@@ -3,7 +3,7 @@
 use serde::{Deserialize, Serialize};
 use smallvec::SmallVec;
 
-use crate::position::{Point, Position};
+use crate::position::Position;
 
 /// A single selection with anchor and head
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
@@ -236,7 +236,7 @@ impl SelectionSet {
 
     // Merge overlapping selections
     let mut merged: SmallVec<[Selection; 4]> = SmallVec::new();
-    let mut primary_offset = self.selections[self.primary].start().offset;
+    let primary_offset = self.selections[self.primary].start().offset;
 
     for selection in self.selections.drain(..) {
       if let Some(last) = merged.last_mut() {
@@ -268,6 +268,7 @@ impl Default for SelectionSet {
 #[cfg(test)]
 mod tests {
   use super::*;
+  use crate::position::Point;
 
   fn pos(offset: usize) -> Position {
     Position::new(Point::zero(), offset)
@@ -295,7 +296,7 @@ mod tests {
 
   #[test]
   fn test_selection_set_merge() {
-    let mut set = SelectionSet::from_selections([
+    let set = SelectionSet::from_selections([
       Selection::new(pos(0), pos(5)),
       Selection::new(pos(3), pos(8)),   // Overlaps with first
       Selection::new(pos(10), pos(15)), // Separate

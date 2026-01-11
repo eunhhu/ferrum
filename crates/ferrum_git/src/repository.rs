@@ -14,7 +14,7 @@ impl Repository {
   /// Open a repository at a path
   pub fn open(path: impl AsRef<Path>) -> Result<Self> {
     let path = path.as_ref();
-    let inner = Git2Repo::discover(path).map_err(|e| Error::NotGitRepo {
+    let inner = Git2Repo::discover(path).map_err(|_e| Error::NotGitRepo {
       path: path.to_path_buf(),
     })?;
 

@@ -26,7 +26,8 @@ export function Terminal(props: TerminalProps) {
   let containerRef: HTMLDivElement | undefined;
   let inputRef: HTMLInputElement | undefined;
 
-  const [terminalId, setTerminalId] = createSignal<string | null>(props.id ?? null);
+  const initialId = () => props.id ?? null;
+  const [terminalId, setTerminalId] = createSignal<string | null>(initialId());
   const [lines, setLines] = createSignal<string[]>([]);
   const [currentLine, setCurrentLine] = createSignal("");
   const [error, setError] = createSignal<string | null>(null);
