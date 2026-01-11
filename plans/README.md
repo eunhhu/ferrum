@@ -204,7 +204,7 @@
 - [ ] Env Manager
 - [ ] Componentify
 - [ ] Error Flow Visualization
-- [ ] Plugin System (QuickJS)
+- [ ] Plugin System (WASM)
 - [ ] Plugin API (Editor, UI, FS)
 
 #### Phase 5: AI (Week 33-36)
@@ -309,18 +309,21 @@
 1. `overview.md` - 프로젝트 전체 개요
 2. `research/zed-analysis.md` - 참고 아키텍처 (Zed)
 
-### 아키텍처 설계 (기술 파악)
-3. `architecture/editor-engine.md` - 에디터 엔진 (가장 중요)
-4. `architecture/ipc-protocol.md` - Frontend-Backend 통신
-5. `architecture/lsp-integration.md` - LSP 통합
-6. `architecture/state-management.md` - 상태 관리
+### 3.1 핵심 시스템
+- **[editor-engine.md](./architecture/editor-engine.md)** ✅ - 에디터 엔진 설계
+- **[ipc-protocol.md](./architecture/ipc-protocol.md)** ✅ - Tauri IPC 프로토콜 (MsgPack, SAB 최적화)
+- **[lsp-integration.md](./architecture/lsp-integration.md)** ✅ - LSP 통합
+- **[state-management.md](./architecture/state-management.md)** ✅ - 상태 관리
 
 ### 핵심 기능 (차별화 포인트)
 7. `specs/tree-viewer.md` - Tree Viewer (가장 혁신적)
 8. `specs/context-action-palette.md` - Context Action Palette
 9. `specs/visual-coding.md` - Visual Coding
 10. `specs/additional-features.md` - 기타 12개 혁신 기능
-11. `technical/plugin-system.md` - Plugin System
+
+### 5. Technical (기술 설계)
+- **[plugin-system.md](./technical/plugin-system.md)** ✅ - Plugin System (WASM)
+- **[frontend-optimization.md](./technical/frontend-optimization.md)** ✅ - Frontend 성능 최적화
 
 ---
 

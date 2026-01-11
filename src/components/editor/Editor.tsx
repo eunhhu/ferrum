@@ -23,11 +23,15 @@ import {
 import { createStore } from "solid-js/store";
 import type { HighlightSpan } from "../../ipc/types";
 import * as ipc from "../../ipc/commands";
+import { textMeasurer } from "../../utils/textMeasurer";
+import { insertText, deleteBackwards, deleteRange } from "../../utils/editorHelpers";
 
 // Constants
 const LINE_HEIGHT = 20; // pixels
-const CHAR_WIDTH = 8.4; // approximate for monospace font
-const VISIBLE_LINE_BUFFER = 5; // Extra lines to render above/below viewport
+const VISIBLE_LINE_BUFFER = 5;
+const GUTTER_WIDTH = 50;
+const CONTENT_PADDING = 10;
+const LEFT_OFFSET = GUTTER_WIDTH + CONTENT_PADDING;
 
 interface EditorProps {
   bufferId: string;
@@ -43,19 +47,15 @@ interface Cursor {
   offset: number;
 }
 
-interface Selection {
-  start: Cursor;
-  end: Cursor;
-  direction: "forward" | "backward";
-}
-
 interface EditorState {
   lines: string[];
   cursor: Cursor;
-  selection: Selection | null;
+  selectionAnchor: Cursor | null; // For drag selection
+  isDragging: boolean;
   scrollTop: number;
   scrollLeft: number;
   highlights: HighlightSpan[];
+  compositionText: string | null;
 }
 
 export function Editor(props: EditorProps) {
@@ -67,10 +67,12 @@ export function Editor(props: EditorProps) {
   const [state, setState] = createStore<EditorState>({
     lines: props.content.split("\n"),
     cursor: { line: 0, column: 0, offset: 0 },
-    selection: null,
+    selectionAnchor: null,
+    isDragging: false,
     scrollTop: 0,
     scrollLeft: 0,
     highlights: [],
+    compositionText: null,
   });
 
   const [isFocused, setIsFocused] = createSignal(false);
@@ -126,16 +128,97 @@ export function Editor(props: EditorProps) {
 
   // Handle text input
   function handleInput(e: InputEvent) {
+    // If composing, do nothing (wait for compositionEnd)
+    if (state.compositionText !== null && e.inputType === "insertText") {
+        return;
+    }
+
     const target = e.target as HTMLTextAreaElement;
-    const newContent = target.value;
+    if (e.inputType === "insertText" && e.data) {
+      applyEdit(e.data);
+      target.value = "";
+    } else if (e.inputType === "insertLineBreak") {
+        applyEdit("\n");
+        target.value = "";
+    } else if (e.inputType === "deleteContentBackward") {
+        applyBackspace();
+    }
+  }
 
+  function handleCompositionStart() {
+    setState("compositionText", "");
+  }
+
+  function handleCompositionUpdate(e: CompositionEvent) {
+    setState("compositionText", e.data);
+  }
+
+  function handleCompositionEnd(e: CompositionEvent) {
+    const text = e.data;
+    setState("compositionText", null);
+    if (text) {
+        applyEdit(text);
+    }
+    if (textareaRef) textareaRef.value = "";
+  }
+
+  function applyEdit(text: string) {
     batch(() => {
-      setState("lines", newContent.split("\n"));
-      updateCursorFromTextarea();
-    });
+        let currentLines = state.lines;
+        let startLine = state.cursor.line;
+        let startCol = state.cursor.column;
 
-    props.onContentChange?.(newContent);
-    scheduleHighlightUpdate();
+        // If selection exists, delete it first
+        if (state.selectionAnchor) {
+            const { newLines, endLine, endColumn } = deleteRange(
+                currentLines, 
+                state.selectionAnchor.line, state.selectionAnchor.column,
+                state.cursor.line, state.cursor.column
+            );
+            currentLines = newLines;
+            startLine = endLine;
+            startCol = endColumn;
+            setState("selectionAnchor", null); // Clear selection
+        }
+
+        const { newLines, endLine, endColumn } = insertText(currentLines, text, startLine, startCol);
+        setState("lines", newLines);
+        setState("cursor", { line: endLine, column: endColumn, offset: 0 });
+        props.onContentChange?.(newLines.join("\n"));
+        scheduleHighlightUpdate();
+    });
+  }
+
+  function applyBackspace() {
+    batch(() => {
+        let newLines = state.lines;
+        let endLine = state.cursor.line;
+        let endColumn = state.cursor.column;
+
+        if (state.selectionAnchor) {
+             // Delete selection
+             const result = deleteRange(
+                state.lines, 
+                state.selectionAnchor.line, state.selectionAnchor.column,
+                state.cursor.line, state.cursor.column
+            );
+            newLines = result.newLines;
+            endLine = result.endLine;
+            endColumn = result.endColumn;
+            setState("selectionAnchor", null);
+        } else {
+            // Normal backspace
+            const result = deleteBackwards(state.lines, state.cursor.line, state.cursor.column);
+            newLines = result.newLines;
+            endLine = result.endLine;
+            endColumn = result.endColumn;
+        }
+
+        setState("lines", newLines);
+        setState("cursor", { line: endLine, column: endColumn, offset: 0 });
+        props.onContentChange?.(newLines.join("\n"));
+        scheduleHighlightUpdate();
+    });
   }
 
   // Handle key events
@@ -144,21 +227,127 @@ export function Editor(props: EditorProps) {
     if (e.metaKey || e.ctrlKey) {
       if (e.key === "z") {
         e.preventDefault();
-        if (e.shiftKey) {
-          handleRedo();
-        } else {
-          handleUndo();
-        }
+        if (e.shiftKey) handleRedo();
+        else handleUndo();
         return;
       }
     }
 
-    // Arrow key navigation updates cursor position
+    if (e.key === "Backspace") {
+        applyBackspace();
+        return;
+    }
+    
+    if (e.key === "Enter") {
+        applyEdit("\n");
+        return;
+    }
+
+    // Arrow key navigation
     if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "Home", "End"].includes(e.key)) {
-      // Let default behavior happen, then update cursor
-      setTimeout(updateCursorFromTextarea, 0);
+       handleNavigation(e.key, e.shiftKey);
+       // e.preventDefault(); // Prevent scrolling if needed, but let's keep default for now
     }
   }
+
+  function handleNavigation(key: string, shiftKey: boolean) {
+    let { line, column } = state.cursor;
+    
+    // If shift is pressed but no anchor, set anchor to current cursor
+    if (shiftKey && !state.selectionAnchor) {
+        setState("selectionAnchor", { ...state.cursor });
+    }
+    
+    // If shift is NOT pressed but we have selection, clear anchor
+    // Unless logic requires jumping to start/end of selection (VSCode style)
+    // For now, simpler logic: clear selection on move without shift
+    if (!shiftKey && state.selectionAnchor) {
+        setState("selectionAnchor", null);
+        // TODO: Ideally, Left arrow should go to selection start, Right to end.
+        // Keeping it simple: collapse to cursor for now, or let cursor move naturally
+    }
+
+    switch (key) {
+        case "ArrowLeft":
+            if (column > 0) column--;
+            else if (line > 0) {
+                line--;
+                column = state.lines[line]?.length ?? 0;
+            }
+            break;
+        case "ArrowRight":
+            if (column < (state.lines[line]?.length ?? 0)) column++;
+            else if (line < state.lines.length - 1) {
+                line++;
+                column = 0;
+            }
+            break;
+        case "ArrowUp":
+            if (line > 0) {
+                line--;
+                column = Math.min(column, state.lines[line]?.length ?? 0);
+            }
+            break;
+        case "ArrowDown":
+            if (line < state.lines.length - 1) {
+                line++;
+                column = Math.min(column, state.lines[line]?.length ?? 0);
+            }
+            break;
+        case "Home":
+            column = 0;
+            break;
+        case "End":
+            column = state.lines[line]?.length ?? 0;
+            break;
+    }
+    
+    batch(() => {
+        setState("cursor", { line, column, offset: 0 });
+        // Update hidden input position
+        updateHiddenInputPosition();
+    });
+  }
+
+  // Calculate selection rects for rendering
+  const selectionRects = createMemo(() => {
+    if (!state.selectionAnchor) return [];
+    
+    let start = state.selectionAnchor;
+    let end = state.cursor;
+    
+    // Sort start/end
+    if (start.line > end.line || (start.line === end.line && start.column > end.column)) {
+      [start, end] = [end, start];
+    }
+    
+    const rects: { top: number, left: number, width: number, height: number }[] = [];
+    textMeasurer.setFont("13px 'Fira Code', 'JetBrains Mono', Menlo, Monaco, 'Courier New', monospace");
+
+    for (let line = start.line; line <= end.line; line++) {
+        if (line >= state.lines.length) break;
+        const lineContent = state.lines[line] ?? "";
+        
+        const startCol = (line === start.line) ? start.column : 0;
+        const endCol = (line === end.line) ? end.column : lineContent.length;
+        
+        const startX = textMeasurer.measure(lineContent.substring(0, startCol));
+        let width = textMeasurer.measure(lineContent.substring(startCol, endCol));
+        
+        // Add padding for newline selection if not at EOF
+        if (line !== end.line || (endCol === lineContent.length && line < state.lines.length - 1)) {
+            width += 7.85; 
+        }
+        
+        rects.push({
+            top: line * LINE_HEIGHT,
+            left: LEFT_OFFSET + startX,
+            width: Math.max(width, 4), // Min width for empty lines
+            height: LINE_HEIGHT
+        });
+    }
+    return rects;
+  });
 
   async function handleUndo() {
     if (!props.bufferId) return;
@@ -182,33 +371,6 @@ export function Editor(props: EditorProps) {
     }
   }
 
-  function updateCursorFromTextarea() {
-    if (!textareaRef) return;
-
-    const pos = textareaRef.selectionStart;
-    const content = textareaRef.value;
-
-    // Calculate line and column
-    let line = 0;
-    let column = 0;
-    let offset = 0;
-
-    for (let i = 0; i < pos; i++) {
-      if (content[i] === "\n") {
-        line++;
-        column = 0;
-      } else {
-        column++;
-      }
-      offset++;
-    }
-
-    batch(() => {
-      setState("cursor", { line, column, offset });
-    });
-
-    props.onCursorChange?.(line + 1, column + 1);
-  }
 
   // Handle scroll
   function handleScroll(e: Event) {
@@ -219,14 +381,113 @@ export function Editor(props: EditorProps) {
     });
   }
 
-  // Handle click
-  function handleClick() {
+  // Calculate cursor position from mouse event
+  function getCursorFromEvent(e: MouseEvent): { line: number, column: number } {
+    if (!editorRef) return { line: 0, column: 0 };
+    
+    const rect = editorRef.getBoundingClientRect();
+    const x = e.clientX - rect.left - LEFT_OFFSET + state.scrollLeft;
+    const y = e.clientY - rect.top + state.scrollTop;
+    
+    // Calculate line index
+    const lineIndex = Math.floor(y / LINE_HEIGHT);
+    const safeLineIndex = Math.max(0, Math.min(lineIndex, state.lines.length - 1));
+    
+    // Calculate column index by measuring text
+    const lineContent = state.lines[safeLineIndex] ?? "";
+    textMeasurer.setFont("13px 'Fira Code', 'JetBrains Mono', Menlo, Monaco, 'Courier New', monospace");
+    const columnIndex = textMeasurer.measureCursorIndex(lineContent, x);
+
+    return { line: safeLineIndex, column: columnIndex };
+  }
+
+  function handleMouseDown(e: MouseEvent) {
+    if (e.button !== 0) return; // Only left click
+
+    const { line, column } = getCursorFromEvent(e);
+    
+    batch(() => {
+      setState("cursor", { line, column, offset: 0 });
+      setState("selectionAnchor", { line, column, offset: 0 }); // Start selection
+      setState("isDragging", true);
+      setIsFocused(true);
+    });
+
+    // Capture mouse for drag
+    window.addEventListener("mousemove", handleWindowMouseMove);
+    window.addEventListener("mouseup", handleWindowMouseUp);
+
+    updateHiddenInputPosition();
     textareaRef?.focus();
-    setTimeout(updateCursorFromTextarea, 0);
+    props.onCursorChange?.(line + 1, column + 1);
+  }
+
+  function handleWindowMouseMove(e: MouseEvent) {
+    if (!state.isDragging) return;
+    
+    const { line, column } = getCursorFromEvent(e);
+    
+    // If cursor changed, update it
+    if (line !== state.cursor.line || column !== state.cursor.column) {
+       batch(() => {
+         setState("cursor", { line, column, offset: 0 });
+       });
+       props.onCursorChange?.(line + 1, column + 1);
+    }
+  }
+
+  function handleWindowMouseUp() {
+    setState("isDragging", false);
+    // If anchor equals cursor, clear selection (handled by rendering logic or explicitly)
+    if (state.selectionAnchor && 
+        state.selectionAnchor.line === state.cursor.line && 
+        state.selectionAnchor.column === state.cursor.column) {
+       setState("selectionAnchor", null);     
+    }
+    
+    window.removeEventListener("mousemove", handleWindowMouseMove);
+    window.removeEventListener("mouseup", handleWindowMouseUp);
+    textareaRef?.focus();
+  }
+
+  // Calculate cursor visual X position
+
+  // Calculate cursor visual X position
+  const cursorLeft = createMemo(() => {
+    const lineContent = state.lines[state.cursor.line] || "";
+    textMeasurer.setFont("13px 'Fira Code', 'JetBrains Mono', Menlo, Monaco, 'Courier New', monospace");
+    const textBeforeCursor = lineContent.substring(0, state.cursor.column);
+    let width = textMeasurer.measure(textBeforeCursor);
+    
+    // Add width of composition text if it exists
+    if (state.compositionText) {
+        width += textMeasurer.measure(state.compositionText);
+    }
+    return width;
+  });
+
+  function updateHiddenInputPosition() {
+    if (!textareaRef) return;
+    // Position hidden input near cursor for IME support
+    // Logic will be handled in render via style binding
   }
 
   // Render highlighted line
   function renderLine(content: string, lineNumber: number): JSX.Element {
+    // IF composing on this line, render modified content without highlights (simpler)
+    if (lineNumber === state.cursor.line && state.compositionText) {
+        const col = state.cursor.column;
+        const before = content.substring(0, col);
+        const after = content.substring(col);
+        return (
+            <>
+                <span>{before}</span>
+                <span class="underline decoration-blue-500">{state.compositionText}</span>
+                <span>{after}</span>
+            </>
+        );
+    }
+
     // Find highlights for this line
     const lineStart = state.lines.slice(0, lineNumber).reduce((sum, l) => sum + l.length + 1, 0);
     const lineEnd = lineStart + content.length;
@@ -276,8 +537,8 @@ export function Editor(props: EditorProps) {
   return (
     <div
       ref={containerRef}
-      class="editor-container relative h-full w-full font-mono text-sm bg-bg-primary overflow-hidden"
-      onClick={handleClick}
+      class="editor-container relative h-full w-full font-mono text-sm bg-bg-primary overflow-hidden cursor-text"
+      onMouseDown={handleMouseDown}
     >
       {/* Scrollable viewport */}
       <div
@@ -290,10 +551,28 @@ export function Editor(props: EditorProps) {
           class="relative"
           style={{ height: `${contentHeight()}px`, "min-width": "100%" }}
         >
+          {/* Selection Layer - Behind text */}
+          <For each={selectionRects()}>
+            {(rect) => (
+              <div
+                class="absolute bg-blue-500/30 pointer-events-none"
+                style={{
+                  top: `${rect.top}px`,
+                  left: `${rect.left}px`,
+                  width: `${rect.width}px`,
+                  height: `${rect.height}px`,
+                }}
+              />
+            )}
+          </For>
+
           {/* Gutter (line numbers) */}
           <div
-            class="absolute left-0 top-0 w-12 bg-bg-secondary text-text-tertiary text-right pr-2 select-none"
-            style={{ height: `${contentHeight()}px` }}
+            class="absolute left-0 top-0 bg-bg-secondary text-text-tertiary text-right pr-3 select-none border-r border-gray-800 z-10"
+            style={{ 
+              height: `${contentHeight()}px`,
+              width: `${GUTTER_WIDTH}px`
+            }}
           >
             <For each={visibleLines()}>
               {(line) => (
@@ -314,7 +593,7 @@ export function Editor(props: EditorProps) {
           </div>
 
           {/* Editor content */}
-          <div class="ml-12 pl-4">
+          <div class="cursor-text">
             <For each={visibleLines()}>
               {(line) => (
                 <div
@@ -322,7 +601,7 @@ export function Editor(props: EditorProps) {
                   style={{
                     position: "absolute",
                     top: `${line.number * LINE_HEIGHT}px`,
-                    left: "52px", // 12 (gutter) + 4 (padding)
+                    left: `${LEFT_OFFSET}px`,
                   }}
                   classList={{
                     "bg-accent-primary/5": line.number === state.cursor.line,
@@ -337,10 +616,10 @@ export function Editor(props: EditorProps) {
           {/* Cursor layer */}
           <Show when={isFocused()}>
             <div
-              class="absolute w-0.5 bg-accent-primary animate-blink pointer-events-none"
+              class="absolute w-0.5 bg-blue-500 animate-pulse pointer-events-none"
               style={{
                 top: `${state.cursor.line * LINE_HEIGHT}px`,
-                left: `${52 + state.cursor.column * CHAR_WIDTH}px`,
+                left: `${LEFT_OFFSET + cursorLeft()}px`,
                 height: `${LINE_HEIGHT}px`,
               }}
             />
@@ -348,13 +627,20 @@ export function Editor(props: EditorProps) {
         </div>
       </div>
 
-      {/* Hidden textarea for input handling */}
+      {/* Hidden textarea for input handling - positioned at cursor or offscreen */}
       <textarea
         ref={textareaRef}
-        class="absolute opacity-0 w-0 h-0"
-        value={state.lines.join("\n")}
+        class="absolute w-1 h-1 opacity-0 p-0 m-0 border-0 -z-10"
+        style={{
+          top: `${state.scrollTop + state.cursor.line * LINE_HEIGHT}px`,
+          left: `${LEFT_OFFSET + cursorLeft()}px`
+         }}
+        value="" 
         onInput={handleInput}
         onKeyDown={handleKeyDown}
+        onCompositionStart={handleCompositionStart}
+        onCompositionUpdate={handleCompositionUpdate}
+        onCompositionEnd={handleCompositionEnd}
         onFocus={() => setIsFocused(true)}
         onBlur={() => setIsFocused(false)}
         spellcheck={false}

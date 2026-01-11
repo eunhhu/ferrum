@@ -2,8 +2,10 @@
 //!
 //! Editor state management, tabs, views, and workspace coordination.
 
+pub mod depth;
 pub mod display_map;
 pub mod editor;
+pub mod fold;
 pub mod tabs;
 pub mod workspace;
 

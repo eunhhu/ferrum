@@ -33,7 +33,7 @@ export function TerminalPanel() {
     const tab: TerminalTab = {
       id,
       title: "Terminal",
-      cwd,
+      ...(cwd !== undefined ? { cwd } : {}),
     };
 
     setTabs([...tabs, tab]);
@@ -162,7 +162,7 @@ export function TerminalPanel() {
         >
           {(tab) => (
             <Terminal
-              key={tab().id}
+              id={tab().id}
               cwd={tab().cwd}
               onTitleChange={(title) => updateTitle(tab().id, title)}
               onExit={() => {

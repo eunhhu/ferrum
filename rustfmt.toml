@@ -6,7 +6,7 @@ max_width = 100
 comment_width = 80
 
 # Indentation
-tab_spaces = 4
+tab_spaces = 2
 hard_tabs = false
 
 # Imports

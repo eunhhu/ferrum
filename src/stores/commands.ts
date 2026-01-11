@@ -8,6 +8,12 @@ import { createSignal } from "solid-js";
 import type { Command } from "../types";
 import { editorStore } from "./editor";
 import * as ipc from "../ipc/commands";
+import {
+  registerHandler,
+  registerKeybinding,
+  getShortcutDisplay,
+  setupKeybindingListener,
+} from "./keybindings";
 
 const [isCommandPaletteOpen, setCommandPaletteOpen] = createSignal(false);
 
@@ -17,7 +23,7 @@ const coreCommands: Command[] = [
   {
     id: "file.save",
     title: "Save File",
-    shortcut: "⌘S",
+    shortcut: "Cmd+S",
     category: "File",
     handler: async () => {
       const tab = editorStore.getActiveTab();
@@ -34,7 +40,7 @@ const coreCommands: Command[] = [
   {
     id: "file.saveAll",
     title: "Save All",
-    shortcut: "⌘⌥S",
+    shortcut: "Cmd+Alt+S",
     category: "File",
     handler: async () => {
       for (const tab of editorStore.tabs) {
@@ -52,7 +58,7 @@ const coreCommands: Command[] = [
   {
     id: "file.close",
     title: "Close Tab",
-    shortcut: "⌘W",
+    shortcut: "Cmd+W",
     category: "File",
     handler: () => {
       const tabId = editorStore.activeTabId();
@@ -61,12 +67,23 @@ const coreCommands: Command[] = [
       }
     },
   },
+  {
+    id: "file.closeAll",
+    title: "Close All Tabs",
+    shortcut: "Cmd+Shift+W",
+    category: "File",
+    handler: () => {
+      for (const tab of [...editorStore.tabs]) {
+        editorStore.closeTab(tab.id);
+      }
+    },
+  },
 
   // Edit commands
   {
     id: "edit.undo",
     title: "Undo",
-    shortcut: "⌘Z",
+    shortcut: "Cmd+Z",
     category: "Edit",
     handler: async () => {
       const tab = editorStore.getActiveTab();
@@ -83,7 +100,7 @@ const coreCommands: Command[] = [
   {
     id: "edit.redo",
     title: "Redo",
-    shortcut: "⌘⇧Z",
+    shortcut: "Cmd+Shift+Z",
     category: "Edit",
     handler: async () => {
       const tab = editorStore.getActiveTab();
@@ -97,12 +114,66 @@ const coreCommands: Command[] = [
       }
     },
   },
+  {
+    id: "edit.cut",
+    title: "Cut",
+    shortcut: "Cmd+X",
+    category: "Edit",
+    handler: () => {
+      document.execCommand("cut");
+    },
+  },
+  {
+    id: "edit.copy",
+    title: "Copy",
+    shortcut: "Cmd+C",
+    category: "Edit",
+    handler: () => {
+      document.execCommand("copy");
+    },
+  },
+  {
+    id: "edit.paste",
+    title: "Paste",
+    shortcut: "Cmd+V",
+    category: "Edit",
+    handler: () => {
+      document.execCommand("paste");
+    },
+  },
+  {
+    id: "edit.selectAll",
+    title: "Select All",
+    shortcut: "Cmd+A",
+    category: "Edit",
+    handler: () => {
+      document.execCommand("selectAll");
+    },
+  },
+  {
+    id: "edit.find",
+    title: "Find",
+    shortcut: "Cmd+F",
+    category: "Edit",
+    handler: () => {
+      // Will trigger find in editor
+    },
+  },
+  {
+    id: "edit.replace",
+    title: "Find and Replace",
+    shortcut: "Cmd+H",
+    category: "Edit",
+    handler: () => {
+      // Will trigger find/replace
+    },
+  },
 
   // View commands
   {
     id: "view.commandPalette",
     title: "Command Palette",
-    shortcut: "⌘⇧P",
+    shortcut: "Cmd+Shift+P",
     category: "View",
     handler: () => {
       setCommandPaletteOpen(true);
@@ -111,7 +182,7 @@ const coreCommands: Command[] = [
   {
     id: "view.toggleSidebar",
     title: "Toggle Sidebar",
-    shortcut: "⌘B",
+    shortcut: "Cmd+B",
     category: "View",
     handler: () => {
       // Will be implemented when uiStore is connected
@@ -120,10 +191,37 @@ const coreCommands: Command[] = [
   {
     id: "view.togglePanel",
     title: "Toggle Panel",
-    shortcut: "⌘J",
+    shortcut: "Cmd+J",
     category: "View",
     handler: () => {
       // Will be implemented when uiStore is connected
+    },
+  },
+  {
+    id: "view.zoomIn",
+    title: "Zoom In",
+    shortcut: "Cmd+=",
+    category: "View",
+    handler: () => {
+      // Zoom in
+    },
+  },
+  {
+    id: "view.zoomOut",
+    title: "Zoom Out",
+    shortcut: "Cmd+-",
+    category: "View",
+    handler: () => {
+      // Zoom out
+    },
+  },
+  {
+    id: "view.resetZoom",
+    title: "Reset Zoom",
+    shortcut: "Cmd+0",
+    category: "View",
+    handler: () => {
+      // Reset zoom
     },
   },
 
@@ -131,7 +229,7 @@ const coreCommands: Command[] = [
   {
     id: "go.goToFile",
     title: "Go to File",
-    shortcut: "⌘P",
+    shortcut: "Cmd+P",
     category: "Go",
     handler: () => {
       // Quick open file picker
@@ -141,46 +239,113 @@ const coreCommands: Command[] = [
   {
     id: "go.goToLine",
     title: "Go to Line",
-    shortcut: "⌘G",
+    shortcut: "Cmd+G",
     category: "Go",
     handler: () => {
       // Go to line modal
     },
   },
+  {
+    id: "go.goToSymbol",
+    title: "Go to Symbol",
+    shortcut: "Cmd+Shift+O",
+    category: "Go",
+    handler: () => {
+      // Go to symbol
+    },
+  },
+  {
+    id: "go.goToDefinition",
+    title: "Go to Definition",
+    shortcut: "F12",
+    category: "Go",
+    handler: () => {
+      // LSP go to definition
+    },
+  },
+  {
+    id: "go.goToReferences",
+    title: "Go to References",
+    shortcut: "Shift+F12",
+    category: "Go",
+    handler: () => {
+      // LSP find references
+    },
+  },
+
+  // Terminal commands
+  {
+    id: "terminal.new",
+    title: "New Terminal",
+    shortcut: "Cmd+Shift+`",
+    category: "Terminal",
+    handler: () => {
+      // Create new terminal
+    },
+  },
+  {
+    id: "terminal.toggle",
+    title: "Toggle Terminal",
+    shortcut: "Cmd+`",
+    category: "Terminal",
+    handler: () => {
+      // Toggle terminal panel
+    },
+  },
+
+  // Debug commands
+  {
+    id: "debug.start",
+    title: "Start Debugging",
+    shortcut: "F5",
+    category: "Debug",
+    handler: () => {
+      // Start debugging
+    },
+  },
+  {
+    id: "debug.stop",
+    title: "Stop Debugging",
+    shortcut: "Shift+F5",
+    category: "Debug",
+    handler: () => {
+      // Stop debugging
+    },
+  },
+  {
+    id: "debug.toggleBreakpoint",
+    title: "Toggle Breakpoint",
+    shortcut: "F9",
+    category: "Debug",
+    handler: () => {
+      // Toggle breakpoint at cursor
+    },
+  },
 ];
 
-// Handle global keyboard shortcuts
+// Initialize keybindings
+function initializeKeybindings() {
+  for (const cmd of coreCommands) {
+    // Register command handler
+    registerHandler(cmd.id, cmd.handler);
+
+    // Register keybinding
+    if (cmd.shortcut) {
+      registerKeybinding(cmd.id, cmd.shortcut);
+    }
+  }
+}
+
+// Call initialization
+initializeKeybindings();
+
+// Setup global keyboard listener
+let cleanupListener: (() => void) | null = null;
+
 function setupKeyboardShortcuts() {
-  const handleKeyDown = (e: KeyboardEvent) => {
-    const isMeta = e.metaKey || e.ctrlKey;
-    const isShift = e.shiftKey;
-
-    // Command Palette: Cmd+Shift+P
-    if (isMeta && isShift && e.key === "p") {
-      e.preventDefault();
-      setCommandPaletteOpen(true);
-      return;
-    }
-
-    // Save: Cmd+S
-    if (isMeta && !isShift && e.key === "s") {
-      e.preventDefault();
-      const saveCmd = coreCommands.find((c) => c.id === "file.save");
-      saveCmd?.handler();
-      return;
-    }
-
-    // Close: Cmd+W
-    if (isMeta && e.key === "w") {
-      e.preventDefault();
-      const closeCmd = coreCommands.find((c) => c.id === "file.close");
-      closeCmd?.handler();
-      return;
-    }
-  };
-
-  document.addEventListener("keydown", handleKeyDown);
-  return () => document.removeEventListener("keydown", handleKeyDown);
+  if (cleanupListener) return cleanupListener;
+  cleanupListener = setupKeybindingListener();
+  return cleanupListener;
 }
 
 export const commandsStore = {
@@ -201,4 +366,20 @@ export const commandsStore = {
 
   // Get all commands
   getCommands: () => coreCommands,
+
+  // Get shortcut display for a command
+  getShortcutDisplay: (commandId: string) => {
+    const cmd = coreCommands.find((c) => c.id === commandId);
+    if (!cmd?.shortcut) return undefined;
+    return getShortcutDisplay(commandId) || cmd.shortcut;
+  },
+
+  // Register a new command
+  registerCommand: (command: Command) => {
+    coreCommands.push(command);
+    registerHandler(command.id, command.handler);
+    if (command.shortcut) {
+      registerKeybinding(command.id, command.shortcut);
+    }
+  },
 };

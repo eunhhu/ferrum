@@ -57,7 +57,7 @@ export function SearchPanel(props: SearchPanelProps) {
       if (!groups[result.path]) {
         groups[result.path] = [];
       }
-      groups[result.path].push(result);
+      groups[result.path]!.push(result);
     }
     return groups;
   };
@@ -102,7 +102,8 @@ export function SearchPanel(props: SearchPanelProps) {
   // Debounced search
   let searchTimeout: ReturnType<typeof setTimeout>;
   createEffect(() => {
-    const q = query();
+    // Track query changes
+    query();
     clearTimeout(searchTimeout);
     searchTimeout = setTimeout(performSearch, 300);
   });

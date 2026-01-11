@@ -10,32 +10,22 @@
 - **안전한 샌드박싱**: WASM 또는 격리된 런타임
 - **타입 안전**: TypeScript 우선 지원
 
-## 2. 런타임 선택: QuickJS vs V8
+## 2. 런타임 선택: WASM (WebAssembly)
 
-### 2.1 QuickJS (추천)
-
-**장점:**
-- 작은 바이너리 크기 (~700KB)
-- 빠른 시작 시간
-- ES2020+ 지원
-- 샌드박싱 용이
-
-**단점:**
-- V8보다 느린 실행 속도
-- 생태계 작음
-
-### 2.2 V8
+### 2.1 WASM (Wasmtime) 선택 이유
 
 **장점:**
-- 최고 성능
-- Node.js 호환
-- 풍부한 생태계
+- **최고의 성능**: 네이티브에 근접한 속도로 플러그인 연산 수행
+- **언어 중립**: Rust, Go, C++, AssemblyScript 등 다양한 언어로 개발 가능
+- **엄격한 샌드박싱**: 메모리 및 리소스 접근을 완벽하게 격리
+- **보안**: 권한 기반 API 호출 (Capability-based security)
 
 **단점:**
-- 큰 바이너리 (~20MB)
-- 샌드박싱 복잡
+- JavaScript에 비해 학습 곡선이 있음 (SDK 제공으로 해결)
 
-**결정: QuickJS (MVP), V8 (Post-MVP 옵션)**
+**결정: WASM (Wasmtime) 기반 런타임**
+- 플러그인은 WASM 모듈로 컴파일되어 실행
+- Ferrum Host API를 통해 에디터와 통신
 
 ---
 
@@ -119,54 +109,44 @@ ferrum.ui.registerTheme(theme: Theme): void
 
 ## 4. 실행 환경
 
-### 4.1 Rust → QuickJS 브리지
+### 4.1 Rust → WASM (Wasmtime) 통합
 
 ```rust
-use rquickjs::{Context, Runtime};
+use wasmtime::*;
 
 pub struct PluginRuntime {
-    runtime: Runtime,
-    context: Context,
-    plugin_id: PluginId,
+    engine: Engine,
+    linker: Linker<PluginState>,
+    store: Store<PluginState>,
+    instance: Instance,
 }
 
 impl PluginRuntime {
-    pub fn new(plugin_id: PluginId) -> Result<Self> {
-        let runtime = Runtime::new()?;
-        let context = Context::full(&runtime)?;
-
-        // Global API 주입
-        context.with(|ctx| {
-            let globals = ctx.globals();
-
-            // ferrum 네임스페이스
-            let ferrum = rquickjs::Object::new(ctx)?;
-
-            // ferrum.workspace
-            let workspace = rquickjs::Object::new(ctx)?;
-            workspace.set("openFile", rquickjs::Function::new(ctx, |path: String| {
-                // Rust 함수 호출
-                plugin_workspace_open_file(path)
-            })?)?;
-
-            ferrum.set("workspace", workspace)?;
-            globals.set("ferrum", ferrum)?;
-
-            Ok::<_, rquickjs::Error>(())
+    pub fn new(wasm_bytes: &[u8], plugin_id: PluginId) -> Result<Self> {
+        let engine = Engine::default();
+        let mut linker = Linker::new(&engine);
+        
+        // Host API 등록
+        linker.func_wrap("ferrum", "open_file", |mut caller: Caller<'_, PluginState>, path: String| {
+            plugin_workspace_open_file(&mut caller.data_mut(), path)
         })?;
 
+        let mut store = Store::new(&engine, PluginState::new(plugin_id));
+        let module = Module::from_binary(&engine, wasm_bytes)?;
+        let instance = linker.instantiate(&mut store, &module)?;
+
         Ok(PluginRuntime {
-            runtime,
-            context,
-            plugin_id,
+            engine,
+            linker,
+            store,
+            instance,
         })
     }
 
-    pub fn execute(&self, code: &str) -> Result<String> {
-        self.context.with(|ctx| {
-            let result: String = ctx.eval(code)?;
-            Ok(result)
-        })
+    pub fn execute_function(&mut self, function_name: &str) -> Result<()> {
+        let func = self.instance.get_typed_func::<(), ()>(&mut self.store, function_name)?;
+        func.call(&mut self.store, ())?;
+        Ok(())
     }
 }
 ```

@@ -8,13 +8,13 @@ use tauri::State;
 /// Get all settings
 #[tauri::command]
 pub fn get_settings(state: State<'_, AppState>) -> Settings {
-    state.settings.read().clone()
+  state.settings.read().clone()
 }
 
 /// Update settings
 #[tauri::command]
 pub fn update_settings(state: State<'_, AppState>, updates: Value) -> Settings {
-    let mut settings = state.settings.write();
-    settings.merge(updates);
-    settings.clone()
+  let mut settings = state.settings.write();
+  settings.merge(updates);
+  settings.clone()
 }

@@ -8,7 +8,9 @@
 
 - **Frontend는 View만**: 상태 없음, 순수 렌더링
 - **Backend는 Single Source of Truth**: 모든 상태/연산
-- **최소 IPC**: 성능을 위해 통신 최소화
+- **최소 IPC**: 성능을 위해 통신 최소화 (Delta Updates)
+- **Zero-copy**: 대용량 데이터 전송 시 SharedArrayBuffer 활용
+- **고속 직렬화**: MessagePack을 통한 JSON 대비 빠른 직렬화
 - **타입 안전**: Serde 기반 직렬화
 - **비동기 우선**: 블로킹 방지
 
@@ -766,8 +768,37 @@ impl UpdateBatcher {
         // 배치로 전송
         app_handle.emit_all("editor-batch-update", BatchUpdate {
             updates: std::mem::take(&mut self.pending_updates),
-        }).ok();
-    }
+    app_handle.emit_all("editor-batch-update", BatchUpdate {
+        updates: std::mem::take(&mut self.pending_updates),
+    }).ok();
+}
+
+### 10.3 Zero-copy 전송 (SharedArrayBuffer)
+
+**문제**: 대용량 파일이나 터미널 데이터 전송 시 직렬화/복사 오버헤드 발생
+
+**해결**:
+- Rust 백엔드와 JS 프론트엔드 간 **SharedArrayBuffer** 공유
+- 텍스트 버퍼 원본 또는 큰 청크를 공유 메모리에 위치
+- IPC로는 메모리 주소(오프셋)와 길이만 전송
+- 프론트엔드에서 즉시 읽기 (복사 없음)
+
+### 10.4 MessagePack 직렬화
+
+**문제**: JSON은 텍스트 기반으로 직렬화/역직렬화 비용이 높고 크기가 큼
+
+**해결**:
+- 바이너리 포맷인 **MessagePack (rmp-serde)** 도입
+- 복잡한 객체(BufferState, SearchResults) 전송 시 활용
+- JSON 대비 20-50% 크기 감소 및 처리 속도 향상
+
+### 10.5 Debounced Events
+
+**문제**: 타이핑 등 빈번한 입력 시 매번 이벤트를 발생시키면 프레임 드랍
+
+**해결**:
+- UI 업데이트와 직접 관련 없는 분석 작업(LSP, Git Status)은 **Debouncing** 적용
+- 100-300ms 간격으로 결과 모아서 전송
 }
 ```
 

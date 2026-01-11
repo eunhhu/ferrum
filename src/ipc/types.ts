@@ -173,3 +173,29 @@ export interface DisplayMapConfig {
 }
 
 // Note: LSP types are defined in commands.ts to avoid duplication
+
+// Tree Viewer types
+export interface DepthRegionInfo {
+  start_line: number;
+  end_line: number;
+  depth: number;
+}
+
+export interface FoldRegion {
+  start_line: number;
+  end_line: number;
+  is_placeholder: boolean;
+}
+
+export interface FoldState {
+  folded_lines: number[];
+  fold_ranges: Record<number, FoldRegion>;
+}
+
+export interface ScopeInfo {
+  start_line: number;
+  end_line: number;
+  depth: number;
+  scope_name: string;
+  scope_type: string;
+}

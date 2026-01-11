@@ -15,6 +15,8 @@ import type {
   ProjectInfo,
   FileTreeNode,
   ParseResult,
+  DepthRegionInfo,
+  FoldState,
 } from "./types";
 
 // File operations
@@ -170,6 +172,10 @@ export async function expandDirectory(path: string): Promise<FileTreeNode[]> {
 
 export async function watchDirectory(path: string): Promise<void> {
   return await invoke<void>("watch_directory", { path });
+}
+
+export async function unwatchDirectory(path: string): Promise<void> {
+  return await invoke<void>("unwatch_directory", { path });
 }
 
 export async function getRecentProjects(): Promise<ProjectInfo[]> {
@@ -494,5 +500,25 @@ export async function gitDiffFile(
     repo_path: repoPath,
     file_path: filePath,
     staged,
+  });
+}
+
+// Tree Viewer operations
+export async function getDepthRegions(bufferId: string): Promise<DepthRegionInfo[]> {
+  return await invoke<DepthRegionInfo[]>("get_depth_regions", {
+    buffer_id: bufferId,
+  });
+}
+
+export async function getFoldState(bufferId: string): Promise<FoldState> {
+  return await invoke<FoldState>("get_fold_state", {
+    buffer_id: bufferId,
+  });
+}
+
+export async function toggleFold(bufferId: string, line: number): Promise<boolean> {
+  return await invoke<boolean>("toggle_fold", {
+    buffer_id: bufferId,
+    line,
   });
 }

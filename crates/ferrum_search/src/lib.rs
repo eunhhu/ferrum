@@ -5,5 +5,5 @@
 pub mod file_search;
 pub mod text_search;
 
-pub use file_search::{FileSearcher, FileMatch};
-pub use text_search::{TextSearcher, SearchOptions, TextMatch};
+pub use file_search::{FileMatch, FileSearcher};
+pub use text_search::{SearchOptions, TextMatch, TextSearcher};

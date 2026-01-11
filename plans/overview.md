@@ -146,7 +146,8 @@ DX (개발 편의성) > 생산성 > 성능 > 확장성 > 디자인 > 기타
 | **AST Parsing** | tree-sitter | 범용 언어 지원, 증분 파싱 |
 | **AST Utilities** | tree-sitter-highlight, tree-sitter-tags | 하이라이팅, 심볼 태깅 |
 | **LSP** | 공식 LSP 서버 | 오프라인시 번들 LSP fallback |
-| **Plugin Runtime** | JavaScript (V8/QuickJS) | 접근성, 생태계 |
+| **IPC** | Tauri + MsgPack | 고속 직렬화, Delta 업데이트 |
+| **Plugin Runtime** | WASM (Wasmtime) | 고성능, 보안, 언어 중립 |
 | **Language** | Rust + TypeScript | Backend/Frontend |
 
 ### Bundled LSP Servers (Offline)
@@ -296,7 +297,7 @@ DX (개발 편의성) > 생산성 > 성능 > 확장성 > 디자인 > 기타
 ### Post-MVP
 
 #### Ecosystem
-- [ ] Plugin System (JS)
+- [ ] Plugin System (WASM)
 - [ ] Plugin Marketplace
 - [ ] Theme System
 

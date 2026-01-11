@@ -125,4 +125,6 @@ html, body, #root {
   font-size: 13px;
   line-height: 20px;
   tab-size: 4;
+  user-select: none; /* Disable native selection */
+  -webkit-user-select: none;
 }

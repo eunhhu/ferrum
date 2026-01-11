@@ -9,7 +9,7 @@ use crate::state::AppState;
 
 /// Build the Tauri application
 pub fn build() -> tauri::Builder<tauri::Wry> {
-    tauri::Builder::default()
+  tauri::Builder::default()
         // Plugins
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_shell::init())
@@ -53,6 +53,7 @@ pub fn build() -> tauri::Builder<tauri::Wry> {
             commands::project::get_file_tree,
             commands::project::expand_directory,
             commands::project::watch_directory,
+            commands::project::unwatch_directory,
             commands::project::get_recent_projects,
             // Search operations
             commands::search::search_files,
@@ -95,6 +96,12 @@ pub fn build() -> tauri::Builder<tauri::Wry> {
             commands::git::git_branches,
             commands::git::git_checkout,
             commands::git::git_discard,
+            commands::git::git_discard,
             commands::git::git_diff_file,
+            // View
+            commands::view::get_depth_map,
+            commands::view::get_depth_regions,
+            commands::view::get_fold_state,
+            commands::view::toggle_fold,
         ])
 }

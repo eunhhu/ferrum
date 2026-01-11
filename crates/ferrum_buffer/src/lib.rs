@@ -21,6 +21,6 @@ pub use selection::{Selection, SelectionSet};
 
 // Re-export syntax types
 pub use syntax::{
-    AsyncParseResult, AsyncSyntaxManager, Highlight, HighlightKind, LanguageId, ParseResult,
-    SyntaxError, SyntaxManager,
+  AsyncParseResult, AsyncSyntaxManager, Highlight, HighlightKind, LanguageId, ParseResult,
+  SyntaxError, SyntaxManager,
 };

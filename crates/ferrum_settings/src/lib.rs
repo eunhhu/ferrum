@@ -2,7 +2,7 @@
 //!
 //! Application settings management with hot-reloading support.
 
-pub mod settings;
 pub mod schema;
+pub mod settings;
 
 pub use settings::Settings;
