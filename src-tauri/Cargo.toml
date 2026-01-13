@@ -50,6 +50,9 @@ parking_lot.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 
+# LSP
+lsp-types.workspace = true
+
 # Logging
 tracing.workspace = true
 tracing-subscriber.workspace = true

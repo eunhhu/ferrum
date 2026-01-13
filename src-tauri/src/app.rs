@@ -62,6 +62,8 @@ pub fn build() -> tauri::Builder<tauri::Wry> {
             commands::syntax::get_highlights,
             commands::syntax::detect_language,
             commands::syntax::get_supported_languages,
+            commands::syntax::expand_selection,
+            commands::syntax::shrink_selection,
             // Settings
             commands::settings::get_settings,
             commands::settings::update_settings,

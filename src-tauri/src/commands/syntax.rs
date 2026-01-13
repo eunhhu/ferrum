@@ -149,3 +149,68 @@ pub fn get_supported_languages() -> Vec<String> {
     "markdown".to_string(),
   ]
 }
+
+/// Selection range for smart expansion
+#[derive(Debug, Serialize, Deserialize)]
+pub struct SelectionRange {
+  pub start_line: u32,
+  pub start_character: u32,
+  pub end_line: u32,
+  pub end_character: u32,
+  pub start_byte: usize,
+  pub end_byte: usize,
+}
+
+/// Expand selection to the next larger syntax node
+#[tauri::command]
+pub fn expand_selection(
+  state: State<'_, AppState>,
+  buffer_id: String,
+  start_byte: usize,
+  end_byte: usize,
+) -> Result<SelectionRange, String> {
+  let id: BufferId = buffer_id
+    .parse()
+    .map_err(|_| "Invalid buffer ID".to_string())?;
+
+  let result = state
+    .editor
+    .expand_selection(id, start_byte, end_byte)
+    .map_err(|e| e.to_string())?;
+
+  Ok(SelectionRange {
+    start_line: result.0 as u32,
+    start_character: result.1 as u32,
+    end_line: result.2 as u32,
+    end_character: result.3 as u32,
+    start_byte: result.4,
+    end_byte: result.5,
+  })
+}
+
+/// Shrink selection to the next smaller syntax node
+#[tauri::command]
+pub fn shrink_selection(
+  state: State<'_, AppState>,
+  buffer_id: String,
+  start_byte: usize,
+  end_byte: usize,
+) -> Result<SelectionRange, String> {
+  let id: BufferId = buffer_id
+    .parse()
+    .map_err(|_| "Invalid buffer ID".to_string())?;
+
+  let result = state
+    .editor
+    .shrink_selection(id, start_byte, end_byte)
+    .map_err(|e| e.to_string())?;
+
+  Ok(SelectionRange {
+    start_line: result.0 as u32,
+    start_character: result.1 as u32,
+    end_line: result.2 as u32,
+    end_character: result.3 as u32,
+    start_byte: result.4,
+    end_byte: result.5,
+  })
+}

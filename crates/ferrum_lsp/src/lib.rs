@@ -6,5 +6,5 @@ pub mod client;
 pub mod manager;
 pub mod types;
 
-pub use client::LspClient;
-pub use manager::LspManager;
+pub use client::{LspClient, LspClientState};
+pub use manager::{LspManager, LspServerConfig};

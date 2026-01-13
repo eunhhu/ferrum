@@ -623,6 +623,95 @@ impl SyntaxManager {
     let tree = self.tree.read();
     tree.as_ref().map(f)
   }
+
+  /// Find the smallest node that encloses the given byte range
+  /// Returns (start_byte, end_byte, start_point, end_point) of the enclosing node
+  pub fn find_enclosing_node(
+    &self,
+    start_byte: usize,
+    end_byte: usize,
+  ) -> Option<(usize, usize, TsPoint, TsPoint)> {
+    let tree = self.tree.read();
+    let tree = tree.as_ref()?;
+    let root = tree.root_node();
+
+    // Find the smallest node containing the range
+    let mut node = root.descendant_for_byte_range(start_byte, end_byte)?;
+
+    // If the node exactly matches our range, go to parent
+    if node.start_byte() == start_byte && node.end_byte() == end_byte {
+      node = node.parent()?;
+    }
+
+    // Skip trivial nodes (single character, punctuation)
+    while node.byte_range().len() <= 1 || is_trivial_node(&node) {
+      node = node.parent()?;
+    }
+
+    Some((
+      node.start_byte(),
+      node.end_byte(),
+      node.start_position(),
+      node.end_position(),
+    ))
+  }
+
+  /// Find a smaller node within the given byte range
+  /// Returns (start_byte, end_byte, start_point, end_point) of the inner node
+  pub fn find_inner_node(
+    &self,
+    start_byte: usize,
+    end_byte: usize,
+  ) -> Option<(usize, usize, TsPoint, TsPoint)> {
+    let tree = self.tree.read();
+    let tree = tree.as_ref()?;
+    let root = tree.root_node();
+
+    // Find the node at this range
+    let node = root.descendant_for_byte_range(start_byte, end_byte)?;
+
+    // If we're at the exact range, try to find a child
+    if node.start_byte() == start_byte && node.end_byte() == end_byte {
+      // Find the largest child that's smaller than the current node
+      let mut cursor = node.walk();
+      let mut best_child: Option<tree_sitter::Node> = None;
+
+      for child in node.children(&mut cursor) {
+        if !is_trivial_node(&child) && child.byte_range().len() > 0 {
+          if best_child.is_none()
+            || child.byte_range().len() > best_child.as_ref().unwrap().byte_range().len()
+          {
+            best_child = Some(child);
+          }
+        }
+      }
+
+      if let Some(child) = best_child {
+        return Some((
+          child.start_byte(),
+          child.end_byte(),
+          child.start_position(),
+          child.end_position(),
+        ));
+      }
+    }
+
+    // Return the current node if no smaller one found
+    Some((
+      node.start_byte(),
+      node.end_byte(),
+      node.start_position(),
+      node.end_position(),
+    ))
+  }
+}
+
+/// Check if a node is trivial (punctuation, whitespace, etc.)
+fn is_trivial_node(node: &Node) -> bool {
+  matches!(
+    node.kind(),
+    "(" | ")" | "[" | "]" | "{" | "}" | "," | ";" | ":" | "." | "::" | "=>" | "->" | "<" | ">"
+  )
 }
 
 /// Collect error nodes recursively

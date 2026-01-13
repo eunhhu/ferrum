@@ -203,6 +203,39 @@ export async function getSupportedLanguages(): Promise<string[]> {
   return await invoke<string[]>("get_supported_languages");
 }
 
+export interface SelectionRange {
+  start_line: number;
+  start_character: number;
+  end_line: number;
+  end_character: number;
+  start_byte: number;
+  end_byte: number;
+}
+
+export async function expandSelection(
+  bufferId: string,
+  startByte: number,
+  endByte: number
+): Promise<SelectionRange> {
+  return await invoke<SelectionRange>("expand_selection", {
+    buffer_id: bufferId,
+    start_byte: startByte,
+    end_byte: endByte,
+  });
+}
+
+export async function shrinkSelection(
+  bufferId: string,
+  startByte: number,
+  endByte: number
+): Promise<SelectionRange> {
+  return await invoke<SelectionRange>("shrink_selection", {
+    buffer_id: bufferId,
+    start_byte: startByte,
+    end_byte: endByte,
+  });
+}
+
 // LSP operations
 export interface LspStatus {
   language: string;

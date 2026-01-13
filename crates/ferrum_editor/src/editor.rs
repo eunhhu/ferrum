@@ -300,6 +300,70 @@ impl Editor {
       Err(Error::BufferNotFound(buffer_id))
     }
   }
+
+  /// Expand selection to the next larger syntax node
+  /// Returns (start_line, start_col, end_line, end_col, start_byte, end_byte)
+  pub fn expand_selection(
+    &self,
+    buffer_id: BufferId,
+    start_byte: usize,
+    end_byte: usize,
+  ) -> Result<(usize, usize, usize, usize, usize, usize)> {
+    let manager = self
+      .syntax_managers
+      .get(&buffer_id)
+      .ok_or(Error::BufferNotFound(buffer_id))?;
+
+    let result = manager.find_enclosing_node(start_byte, end_byte);
+
+    match result {
+      Some((start, end, start_point, end_point)) => {
+        Ok((start_point.row, start_point.column, end_point.row, end_point.column, start, end))
+      },
+      None => {
+        // No larger node found, return original selection
+        let buffer = self.buffer(buffer_id).ok_or(Error::BufferNotFound(buffer_id))?;
+        let rope = Rope::from_str(&buffer.to_string());
+        let start_line = rope.byte_to_line(start_byte.min(rope.len_bytes()));
+        let end_line = rope.byte_to_line(end_byte.min(rope.len_bytes()));
+        let start_col = start_byte - rope.line_to_byte(start_line);
+        let end_col = end_byte - rope.line_to_byte(end_line);
+        Ok((start_line, start_col, end_line, end_col, start_byte, end_byte))
+      },
+    }
+  }
+
+  /// Shrink selection to the next smaller syntax node
+  /// Returns (start_line, start_col, end_line, end_col, start_byte, end_byte)
+  pub fn shrink_selection(
+    &self,
+    buffer_id: BufferId,
+    start_byte: usize,
+    end_byte: usize,
+  ) -> Result<(usize, usize, usize, usize, usize, usize)> {
+    let manager = self
+      .syntax_managers
+      .get(&buffer_id)
+      .ok_or(Error::BufferNotFound(buffer_id))?;
+
+    let result = manager.find_inner_node(start_byte, end_byte);
+
+    match result {
+      Some((start, end, start_point, end_point)) => {
+        Ok((start_point.row, start_point.column, end_point.row, end_point.column, start, end))
+      },
+      None => {
+        // No smaller node found, return original selection
+        let buffer = self.buffer(buffer_id).ok_or(Error::BufferNotFound(buffer_id))?;
+        let rope = Rope::from_str(&buffer.to_string());
+        let start_line = rope.byte_to_line(start_byte.min(rope.len_bytes()));
+        let end_line = rope.byte_to_line(end_byte.min(rope.len_bytes()));
+        let start_col = start_byte - rope.line_to_byte(start_line);
+        let end_col = end_byte - rope.line_to_byte(end_line);
+        Ok((start_line, start_col, end_line, end_col, start_byte, end_byte))
+      },
+    }
+  }
 }
 
 impl Default for Editor {
