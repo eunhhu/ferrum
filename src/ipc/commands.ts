@@ -3,6 +3,7 @@
  */
 
 import { invoke } from "@tauri-apps/api/core";
+import { isTauriEnvironment } from "./tauri-check";
 import type {
   FileContent,
   DirectoryEntry,
@@ -188,6 +189,9 @@ export async function getHighlights(
   startByte?: number,
   endByte?: number
 ): Promise<ParseResult> {
+  if (!isTauriEnvironment()) {
+    return { highlights: [], errors: [], parse_time_us: 0 };
+  }
   return await invoke<ParseResult>("get_highlights", {
     buffer_id: bufferId,
     start_byte: startByte,
@@ -538,18 +542,27 @@ export async function gitDiffFile(
 
 // Tree Viewer operations
 export async function getDepthRegions(bufferId: string): Promise<DepthRegionInfo[]> {
+  if (!isTauriEnvironment()) {
+    return [];
+  }
   return await invoke<DepthRegionInfo[]>("get_depth_regions", {
     buffer_id: bufferId,
   });
 }
 
 export async function getFoldState(bufferId: string): Promise<FoldState> {
+  if (!isTauriEnvironment()) {
+    return { folded_lines: [], fold_ranges: {} };
+  }
   return await invoke<FoldState>("get_fold_state", {
     buffer_id: bufferId,
   });
 }
 
 export async function toggleFold(bufferId: string, line: number): Promise<boolean> {
+  if (!isTauriEnvironment()) {
+    return false;
+  }
   return await invoke<boolean>("toggle_fold", {
     buffer_id: bufferId,
     line,

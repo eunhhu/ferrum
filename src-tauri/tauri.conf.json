@@ -43,18 +43,8 @@
     "longDescription": "Ferrum IDE - A high-performance code editor built with Tauri and SolidJS"
   },
   "plugins": {
-    "fs": {
-      "all": true,
-      "scope": ["**"]
-    },
     "shell": {
-      "all": true
-    },
-    "dialog": {
-      "all": true
-    },
-    "clipboard-manager": {
-      "all": true
+      "open": true
     }
   }
 }

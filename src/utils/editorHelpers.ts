@@ -13,22 +13,26 @@ export function insertText(lines: string[], text: string, line: number, column: 
     const textLines = text.split("\n");
     const newLines = [...lines];
     
-    // First line
-    newLines[line] = before + (textLines[0] ?? "");
+    // For a simple newline ("\n"), textLines will be ["", ""]
+    // First part: before + first text line
+    const firstPart = before + (textLines[0] ?? "");
+    // Last part: last text line + after
+    const lastPart = (textLines[textLines.length - 1] ?? "") + after;
     
-    // Middle lines
+    // Build the replacement lines
+    const replacementLines: string[] = [firstPart];
     for (let i = 1; i < textLines.length - 1; i++) {
-        newLines.splice(line + i, 0, textLines[i] ?? "");
+      replacementLines.push(textLines[i] ?? "");
     }
+    replacementLines.push(lastPart);
     
-    // Last line
-    const lastTextLine = textLines[textLines.length - 1] ?? "";
-    newLines.splice(line + textLines.length - 1, 0, lastTextLine + after);
+    // Replace the current line with all new lines
+    newLines.splice(line, 1, ...replacementLines);
     
     return { 
-        newLines, 
-        endLine: line + textLines.length - 1, 
-        endColumn: lastTextLine.length 
+      newLines, 
+      endLine: line + textLines.length - 1, 
+      endColumn: (textLines[textLines.length - 1] ?? "").length 
     };
   }
 }

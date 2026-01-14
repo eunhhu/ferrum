@@ -1,12 +1,13 @@
 /**
  * Main Editor Component
  *
- * Implements a high-performance code editor using fine-grained SolidJS signals.
- * Key optimizations:
+ * A high-performance code editor built with SolidJS.
+ * 
+ * Features:
  * - Virtual scrolling for large files
- * - GPU-accelerated cursor and selection layers
- * - Debounced syntax highlighting
- * - Optimistic updates for typing
+ * - Syntax highlighting (tree-sitter in Tauri, regex fallback in browser)
+ * - Multi-cursor support (planned)
+ * - Undo/Redo with history
  */
 
 import {
@@ -21,42 +22,19 @@ import {
   type JSX,
 } from "solid-js";
 import { createStore } from "solid-js/store";
-import type { HighlightSpan } from "../../ipc/types";
 import * as ipc from "../../ipc/commands";
+import { isTauriEnvironment } from "../../ipc/tauri-check";
+import { highlightCode } from "../../utils/clientHighlighter";
 import { textMeasurer } from "../../utils/textMeasurer";
 import { insertText, deleteBackwards, deleteRange } from "../../utils/editorHelpers";
+import {
+  EDITOR_CONFIG,
+  LEFT_OFFSET,
+  type EditorProps,
+  type EditorState,
+} from "./types";
 
-// Constants
-const LINE_HEIGHT = 20; // pixels
-const VISIBLE_LINE_BUFFER = 5;
-const GUTTER_WIDTH = 50;
-const CONTENT_PADDING = 10;
-const LEFT_OFFSET = GUTTER_WIDTH + CONTENT_PADDING;
-
-interface EditorProps {
-  bufferId: string;
-  content: string;
-  language?: string;
-  onContentChange?: (content: string) => void;
-  onCursorChange?: (line: number, column: number) => void;
-}
-
-interface Cursor {
-  line: number;
-  column: number;
-  offset: number;
-}
-
-interface EditorState {
-  lines: string[];
-  cursor: Cursor;
-  selectionAnchor: Cursor | null; // For drag selection
-  isDragging: boolean;
-  scrollTop: number;
-  scrollLeft: number;
-  highlights: HighlightSpan[];
-  compositionText: string | null;
-}
+const { LINE_HEIGHT, VISIBLE_LINE_BUFFER, GUTTER_WIDTH } = EDITOR_CONFIG;
 
 export function Editor(props: EditorProps) {
   let containerRef: HTMLDivElement | undefined;
@@ -106,8 +84,15 @@ export function Editor(props: EditorProps) {
     if (!props.bufferId) return;
 
     try {
-      const result = await ipc.getHighlights(props.bufferId);
-      setState("highlights", result.highlights);
+      if (isTauriEnvironment()) {
+        const result = await ipc.getHighlights(props.bufferId);
+        setState("highlights", result.highlights);
+      } else {
+        // Use client-side highlighting in browser mode
+        const code = state.lines.join("\n");
+        const highlights = highlightCode(code, props.language || "typescript");
+        setState("highlights", highlights);
+      }
     } catch (e) {
       console.error("Failed to load highlights:", e);
     }
@@ -188,6 +173,8 @@ export function Editor(props: EditorProps) {
         props.onContentChange?.(newLines.join("\n"));
         scheduleHighlightUpdate();
     });
+    // Auto-scroll to keep cursor visible
+    setTimeout(ensureCursorVisible, 0);
   }
 
   function applyBackspace() {
@@ -235,11 +222,13 @@ export function Editor(props: EditorProps) {
     }
 
     if (e.key === "Backspace") {
+        e.preventDefault();
         applyBackspace();
         return;
     }
     
     if (e.key === "Enter") {
+        e.preventDefault();
         applyEdit("\n");
         return;
     }
@@ -308,6 +297,11 @@ export function Editor(props: EditorProps) {
         // Update hidden input position
         updateHiddenInputPosition();
     });
+    
+    // Auto-scroll to keep cursor visible when navigating with keyboard
+    setTimeout(ensureCursorVisible, 0);
+    
+    props.onCursorChange?.(line + 1, column + 1);
   }
 
   // Calculate selection rects for rendering
@@ -376,10 +370,48 @@ export function Editor(props: EditorProps) {
   // Handle scroll
   function handleScroll(e: Event) {
     const target = e.target as HTMLDivElement;
+    const scrollTop = target.scrollTop;
+    const visibleStartLine = Math.floor(scrollTop / LINE_HEIGHT);
+    
     batch(() => {
-      setState("scrollTop", target.scrollTop);
+      setState("scrollTop", scrollTop);
       setState("scrollLeft", target.scrollLeft);
     });
+    
+    // Notify parent of scroll change
+    props.onScrollChange?.(scrollTop, visibleStartLine);
+  }
+
+  // Scroll to a specific line (used by sticky header click)
+  function scrollToLine(line: number) {
+    if (!editorRef) return;
+    const targetScrollTop = Math.max(0, line * LINE_HEIGHT);
+    editorRef.scrollTop = targetScrollTop;
+  }
+
+  // Ensure cursor is visible (auto-scroll when cursor moves out of view)
+  function ensureCursorVisible() {
+    if (!editorRef || !containerRef) return;
+    
+    const cursorTop = state.cursor.line * LINE_HEIGHT;
+    const cursorBottom = cursorTop + LINE_HEIGHT;
+    const viewportTop = state.scrollTop;
+    const viewportBottom = state.scrollTop + containerRef.clientHeight;
+    
+    // Scroll up if cursor is above viewport
+    if (cursorTop < viewportTop) {
+      editorRef.scrollTop = cursorTop;
+    }
+    // Scroll down if cursor is below viewport
+    else if (cursorBottom > viewportBottom) {
+      editorRef.scrollTop = cursorBottom - containerRef.clientHeight;
+    }
+  }
+
+  // Expose scrollToLine for parent components via window
+  if (typeof window !== 'undefined') {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (window as any).__ferrum_editor_scrollToLine = scrollToLine;
   }
 
   // Calculate cursor position from mouse event

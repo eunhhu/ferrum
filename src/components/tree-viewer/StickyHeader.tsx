@@ -1,8 +1,9 @@
 /**
  * Sticky Header Component
  * 
- * Shows the current scope context (function/class names) at the top
- * when scrolling through code.
+ * Shows nested scope context (function/class names) at the top
+ * when scrolling through code. Uses absolute positioning to float
+ * above the editor without affecting layout.
  */
 
 import { For, Show, createMemo } from "solid-js";
@@ -11,10 +12,11 @@ import type { ScopeInfo } from "../../ipc/types";
 interface StickyHeaderProps {
   scopes: ScopeInfo[];
   currentLine: number;
+  onScopeClick?: (scope: ScopeInfo) => void;
 }
 
 export function StickyHeader(props: StickyHeaderProps) {
-  // Get scopes that contain the current line, sorted by depth
+  // Get scopes that contain the current line, sorted by depth (outermost first)
   const activeScopes = createMemo(() => {
     return props.scopes
       .filter(scope => 
@@ -26,30 +28,36 @@ export function StickyHeader(props: StickyHeaderProps) {
 
   return (
     <Show when={activeScopes().length > 0}>
-      <div class="sticky-headers fixed top-0 left-0 right-0 z-50 transition-all duration-200">
-        <For each={activeScopes()}>
-          {(scope, index) => (
-            <div
-              class="sticky-header-item flex items-center px-4 py-1.5 text-xs font-mono backdrop-blur-md border-b border-white/5 transition-all hover:bg-white/5 cursor-pointer group"
-              style={{
-                "padding-left": `${scope.depth * 16 + 24}px`, // Adjusted indentation
-                "background-color": `rgba(30, 30, 30, ${0.85 + index() * 0.05})`,
-                "border-left": `4px solid ${getScopeColor(scope.depth)}`,
-              }}
-              title={`Jump to line ${scope.start_line + 1}`}
-            >
-              <span class="mr-2 opacity-70 group-hover:opacity-100 transition-opacity" style={{ color: getScopeColor(scope.depth) }}>
-                {getScopeIcon(scope.scope_type)}
-              </span>
-              <span class="text-gray-200 font-medium group-hover:text-white transition-colors">
-                {scope.scope_name}
-              </span>
-              <span class="ml-auto text-gray-500 text-[10px] group-hover:text-gray-400">
-                Ln {scope.start_line + 1}
-              </span>
-            </div>
-          )}
-        </For>
+      {/* Absolute positioned container - floats above editor */}
+      <div class="absolute top-0 left-0 right-0 z-40 pointer-events-auto">
+        <div class="bg-bg-secondary/95 backdrop-blur-sm border-b border-border shadow-md">
+          <For each={activeScopes()}>
+            {(scope) => (
+              <div
+                class="sticky-header-item flex items-center h-5 text-xs font-mono border-b border-border/30 last:border-b-0 hover:bg-bg-hover cursor-pointer transition-colors"
+                style={{
+                  "padding-left": `${scope.depth * 12 + 56}px`,
+                  "border-left": `3px solid ${getScopeColor(scope.depth)}`,
+                }}
+                onClick={() => props.onScopeClick?.(scope)}
+                title={`Jump to line ${scope.start_line + 1}`}
+              >
+                <span 
+                  class="mr-1.5 w-3 text-center text-[10px]" 
+                  style={{ color: getScopeColor(scope.depth) }}
+                >
+                  {getScopeIcon(scope.scope_type)}
+                </span>
+                <span class="text-text-primary truncate text-[11px]">
+                  {scope.scope_name}
+                </span>
+                <span class="ml-auto mr-2 text-text-tertiary text-[9px]">
+                  {scope.start_line + 1}
+                </span>
+              </div>
+            )}
+          </For>
+        </div>
       </div>
     </Show>
   );

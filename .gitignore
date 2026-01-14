@@ -44,3 +44,7 @@ Cargo.lock
 # Misc
 *.pem
 .turbo
+
+# Playwright
+playwright-report/
+test-results/

@@ -1,7 +1,7 @@
 /**
- * Simplified App for Testing
+ * Ferrum IDE - Main Application
  * 
- * Clean UI to test TreeViewer and Editor components
+ * A high-performance code editor with advanced features.
  */
 
 import { createSignal, onMount } from "solid-js";
@@ -10,7 +10,11 @@ import { TreeViewer } from "./components/tree-viewer/TreeViewer";
 import { StickyHeader } from "./components/tree-viewer/StickyHeader";
 import type { ScopeInfo } from "./ipc/types";
 
-const SAMPLE_CODE = `function fibonacci(n: number): number {
+// Longer sample code for testing scroll behavior
+const SAMPLE_CODE = `// Ferrum IDE - Sample Code
+// This file demonstrates various TypeScript features
+
+function fibonacci(n: number): number {
   if (n <= 1) {
     return n;
   }
@@ -18,18 +22,71 @@ const SAMPLE_CODE = `function fibonacci(n: number): number {
 }
 
 class Calculator {
+  private history: number[] = [];
+
   add(a: number, b: number): number {
-    return a + b;
+    const result = a + b;
+    this.history.push(result);
+    return result;
   }
   
+  subtract(a: number, b: number): number {
+    const result = a - b;
+    this.history.push(result);
+    return result;
+  }
+
   multiply(a: number, b: number): number {
-    return a * b;
+    const result = a * b;
+    this.history.push(result);
+    return result;
+  }
+
+  divide(a: number, b: number): number {
+    if (b === 0) {
+      throw new Error("Division by zero");
+    }
+    const result = a / b;
+    this.history.push(result);
+    return result;
+  }
+
+  getHistory(): number[] {
+    return [...this.history];
+  }
+
+  clearHistory(): void {
+    this.history = [];
   }
 }
 
-for (let i = 0; i < 10; i++) {
-  console.log(fibonacci(i));
+interface User {
+  id: number;
+  name: string;
+  email: string;
 }
+
+async function fetchUsers(): Promise<User[]> {
+  const response = await fetch("/api/users");
+  if (!response.ok) {
+    throw new Error("Failed to fetch users");
+  }
+  return response.json();
+}
+
+// Main execution
+const calc = new Calculator();
+console.log("Addition:", calc.add(5, 3));
+console.log("Subtraction:", calc.subtract(10, 4));
+console.log("Multiplication:", calc.multiply(6, 7));
+
+for (let i = 0; i < 10; i++) {
+  console.log(\`Fibonacci(\${i}) = \${fibonacci(i)}\`);
+}
+
+// Export for module usage
+export { Calculator, fibonacci, fetchUsers };
+export type { User };
 `;
 
 function App() {
@@ -37,88 +94,77 @@ function App() {
   const [content, setContent] = createSignal(SAMPLE_CODE);
   const [currentLine, setCurrentLine] = createSignal(0);
   const [scopes, setScopes] = createSignal<ScopeInfo[]>([]);
-
-  let editorContainerRef: HTMLDivElement | undefined;
-
+  
   onMount(() => {
-    // Mock scope data for testing
+    // Mock scope data - in production, this comes from tree-sitter analysis
     setScopes([
-      { start_line: 0, end_line: 4, depth: 1, scope_name: "fibonacci", scope_type: "function_declaration" },
-      { start_line: 1, end_line: 3, depth: 2, scope_name: "if", scope_type: "if_statement" },
-      { start_line: 6, end_line: 13, depth: 1, scope_name: "class Calculator", scope_type: "class_declaration" },
-      { start_line: 7, end_line: 9, depth: 2, scope_name: "add", scope_type: "method_declaration" },
-      { start_line: 11, end_line: 13, depth: 2, scope_name: "multiply", scope_type: "method_declaration" },
-      { start_line: 15, end_line: 17, depth: 1, scope_name: "for", scope_type: "for_statement" },
+      { start_line: 3, end_line: 8, depth: 1, scope_name: "fibonacci", scope_type: "function_declaration" },
+      { start_line: 4, end_line: 6, depth: 2, scope_name: "if", scope_type: "if_statement" },
+      { start_line: 10, end_line: 54, depth: 1, scope_name: "Calculator", scope_type: "class_declaration" },
+      { start_line: 13, end_line: 17, depth: 2, scope_name: "add", scope_type: "method_declaration" },
+      { start_line: 19, end_line: 23, depth: 2, scope_name: "subtract", scope_type: "method_declaration" },
+      { start_line: 25, end_line: 29, depth: 2, scope_name: "multiply", scope_type: "method_declaration" },
+      { start_line: 31, end_line: 38, depth: 2, scope_name: "divide", scope_type: "method_declaration" },
+      { start_line: 32, end_line: 34, depth: 3, scope_name: "if", scope_type: "if_statement" },
+      { start_line: 40, end_line: 42, depth: 2, scope_name: "getHistory", scope_type: "method_declaration" },
+      { start_line: 44, end_line: 46, depth: 2, scope_name: "clearHistory", scope_type: "method_declaration" },
+      { start_line: 56, end_line: 62, depth: 1, scope_name: "fetchUsers", scope_type: "function_declaration" },
+      { start_line: 57, end_line: 60, depth: 2, scope_name: "if", scope_type: "if_statement" },
+      { start_line: 70, end_line: 72, depth: 1, scope_name: "for loop", scope_type: "for_statement" },
     ]);
-
-    // Track scroll to update current line
-    if (editorContainerRef) {
-      editorContainerRef.addEventListener("scroll", (e) => {
-        const target = e.target as HTMLDivElement;
-        const lineHeight = 20;
-        const line = Math.floor(target.scrollTop / lineHeight);
-        setCurrentLine(line);
-      });
-    }
   });
 
-  return (
-    <div class="h-screen w-screen bg-gray-900 text-white flex flex-col">
-      {/* Sticky Headers */}
-      <StickyHeader scopes={scopes()} currentLine={currentLine()} />
+  const handleScrollChange = (_scrollTop: number, visibleStartLine: number) => {
+    setCurrentLine(visibleStartLine);
+  };
 
-      {/* Header */}
-      <div class="h-12 bg-gray-800 border-b border-gray-700 flex items-center px-4">
-        <h1 class="text-lg font-semibold">Ferrum IDE - Tree Viewer Test</h1>
+  const handleScopeClick = (scope: ScopeInfo) => {
+    // Call editor's scrollToLine via window global
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const scrollFn = (window as any).__ferrum_editor_scrollToLine;
+    if (typeof scrollFn === 'function') {
+      scrollFn(scope.start_line);
+    }
+  };
+
+  return (
+    <div class="h-screen w-screen bg-bg-primary text-text-primary flex overflow-hidden">
+      {/* Editor Area - relative container for z-stacking */}
+      <div class="flex-1 relative overflow-hidden">
+        {/* Sticky Headers - absolute positioned, z-stacked above editor */}
+        <StickyHeader 
+          scopes={scopes()} 
+          currentLine={currentLine()} 
+          onScopeClick={handleScopeClick}
+        />
+        
+        {/* Editor - fills the container */}
+        <Editor
+          bufferId={bufferId()}
+          content={content()}
+          language="typescript"
+          onContentChange={setContent}
+          onScrollChange={handleScrollChange}
+        />
+        
+        {/* TreeViewer overlay */}
+        <TreeViewer
+          bufferId={bufferId()}
+          lineCount={content().split("\n").length}
+        />
       </div>
 
-      {/* Main Content */}
-      <div class="flex-1 flex overflow-hidden">
-        {/* Editor with TreeViewer overlay */}
-        <div class="flex-1 relative" ref={editorContainerRef}>
-          <Editor
-            bufferId={bufferId()}
-            content={content()}
-            language="typescript"
-            onContentChange={setContent}
-          />
-          <TreeViewer
-            bufferId={bufferId()}
-            lineCount={content().split("\n").length}
-          />
-        </div>
-
-        {/* Info Panel */}
-        <div class="w-80 bg-gray-800 border-l border-gray-700 p-4 overflow-auto">
-          <h2 class="text-sm font-semibold mb-4">Component Info</h2>
-          <div class="space-y-2 text-xs">
-            <div>
-              <span class="text-gray-400">Buffer ID:</span>
-              <span class="ml-2">{bufferId()}</span>
-            </div>
-            <div>
-              <span class="text-gray-400">Lines:</span>
-              <span class="ml-2">{content().split("\n").length}</span>
-            </div>
-            <div>
-              <span class="text-gray-400">Current Line:</span>
-              <span class="ml-2">{currentLine() + 1}</span>
-            </div>
-            <div>
-              <span class="text-gray-400">Language:</span>
-              <span class="ml-2">TypeScript</span>
-            </div>
+      {/* Debug Panel */}
+      <div class="w-56 bg-bg-secondary border-l border-border p-3 overflow-auto text-xs">
+        <h2 class="font-semibold mb-3 text-text-primary">Debug</h2>
+        <div class="space-y-1 text-text-secondary">
+          <div class="flex justify-between">
+            <span>Lines:</span>
+            <span class="text-text-primary">{content().split("\n").length}</span>
           </div>
-
-          <div class="mt-6">
-            <h3 class="text-sm font-semibold mb-2">Features</h3>
-            <ul class="text-xs space-y-1 text-gray-400">
-              <li>✓ Depth visualization</li>
-              <li>✓ Code folding</li>
-              <li>✓ Sticky headers</li>
-              <li>✓ Syntax highlighting</li>
-              <li>✓ Virtual scrolling</li>
-            </ul>
+          <div class="flex justify-between">
+            <span>Visible:</span>
+            <span class="text-text-primary">{currentLine() + 1}</span>
           </div>
         </div>
       </div>
