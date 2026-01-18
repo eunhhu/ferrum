@@ -167,15 +167,29 @@ impl LspClient {
 
   /// Initialize the server
   async fn initialize(&self, root_path: &PathBuf) -> Result<InitializeResult> {
-    let root_uri = format!("file://{}", root_path.to_string_lossy());
+    let root_uri: Uri = format!("file://{}", root_path.to_string_lossy())
+      .parse()
+      .unwrap();
+
+    // Use workspace_folders instead of deprecated root_path/root_uri
+    let workspace_folder = lsp_types::WorkspaceFolder {
+      uri: root_uri,
+      name: root_path
+        .file_name()
+        .map(|n| n.to_string_lossy().to_string())
+        .unwrap_or_else(|| "workspace".to_string()),
+    };
+
+    #[allow(deprecated)]
     let params = InitializeParams {
       process_id: Some(std::process::id()),
+      // These fields are deprecated but some LSP servers still require them
       root_path: None,
-      root_uri: Some(root_uri.parse().unwrap()),
+      root_uri: None,
       initialization_options: None,
       capabilities: self.client_capabilities(),
       trace: None,
-      workspace_folders: None,
+      workspace_folders: Some(vec![workspace_folder]),
       client_info: Some(lsp_types::ClientInfo {
         name: "Ferrum IDE".to_string(),
         version: Some(env!("CARGO_PKG_VERSION").to_string()),

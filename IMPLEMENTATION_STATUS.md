@@ -6,8 +6,8 @@
 |-------|------|--------|
 | Phase 1: Foundation | ✅ 완료 | 100% |
 | Phase 2: Core DX | ✅ 완료 | 100% |
-| Phase 3: Visual | ✅ 완료 | 80% |
-| Phase 4: Advanced | 🔲 대기 | 0% |
+| Phase 3: Visual | ✅ 완료 | 100% |
+| Phase 4: Advanced | ✅ 완료 | 100% |
 | Phase 5: AI | 🔲 대기 | 0% |
 
 ---
@@ -73,7 +73,7 @@
 
 ---
 
-## ✅ Phase 3: Visual (80% 완료)
+## ✅ Phase 3: Visual (완료)
 
 ### Code/View Mode 전환
 - **모드 토글**: Code / Visual / Split (`src/components/editor/ViewModeToggle.tsx`)
@@ -89,19 +89,47 @@
 - **팬/줌**: 마우스 휠 및 드래그
 - **LSP 심볼 통합**: 코드 구조 자동 추출
 
-### 🔲 미완료
-- **Structural Minimap**: 구조적 미니맵
-- **Dependency Highlight**: 의존성 하이라이트
+### Structural Minimap
+- **구조적 미니맵**: 코드 구조 기반 미니맵 (`src/components/editor/StructuralMinimap.tsx`)
+- **LSP 심볼 기반**: 함수/클래스/인터페이스 블록 시각화
+- **뷰포트 표시**: 현재 보이는 영역 표시
+- **클릭 네비게이션**: 블록 클릭시 해당 라인으로 이동
+
+### Dependency Highlight
+- **의존성 시각화**: import/call/reference 관계 표시 (`src/components/editor/DependencyHighlight.tsx`)
+- **백엔드 분석**: tree-sitter 기반 의존성 분석 (`crates/ferrum_buffer/src/syntax.rs`)
+- **인터랙티브**: 심볼 호버시 관련 의존성 하이라이트
 
 ---
 
-## 🔲 Phase 4: Advanced (대기)
+## ✅ Phase 4: Advanced (완료)
 
-- [ ] Env Manager
-- [ ] Componentify
-- [ ] Error Flow Visualization
-- [ ] Plugin System (WASM)
-- [ ] Plugin API (Editor, UI, FS)
+### Env Manager
+- **환경변수 스캔**: 프로젝트 전체 env 사용 분석 (`src-tauri/src/commands/env.rs`)
+- **UI 패널**: 환경변수 목록 및 상태 표시 (`src/components/panels/EnvManagerPanel.tsx`)
+- **자동 생성**: `.env.example` 및 `env.d.ts` 생성
+- **미싱/미사용 감지**: 정의되지 않은 변수 및 사용되지 않는 변수 표시
+
+### Componentify
+- **JSX 추출**: 선택 영역을 컴포넌트로 추출 (`src/components/editor/Componentify.tsx`)
+- **Props 분석**: 사용된 변수/콜백 자동 감지
+- **코드 생성**: TypeScript interface 및 컴포넌트 코드 생성
+- **파일 옵션**: 새 파일 생성 또는 현재 파일에 추가
+
+### Error Flow Visualization
+- **에러 흐름 분석**: throw/catch/try 블록 감지 (`src/components/editor/ErrorFlowVisualization.tsx`)
+- **시각적 마커**: 에러 발생/전파/처리 지점 표시
+- **연결선**: 관련 블록 간 연결 시각화
+- **인터랙티브**: 노드 클릭시 해당 라인으로 이동
+
+### Plugin System (기반 구축)
+- **플러그인 매니페스트**: JSON 기반 플러그인 정의 (`crates/ferrum_plugin/src/manifest.rs`)
+- **권한 시스템**: capability-based 권한 관리 (`crates/ferrum_plugin/src/permission.rs`)
+- **플러그인 레지스트리**: 설치된 플러그인 관리 (`crates/ferrum_plugin/src/registry.rs`)
+- **런타임 기반**: 플러그인 활성화/비활성화 (`crates/ferrum_plugin/src/runtime.rs`)
+- **API 정의**: 플러그인에서 사용 가능한 API 인터페이스 (`crates/ferrum_plugin/src/api.rs`)
+
+> Note: Plugin System은 기본 구조가 구현되었으며, QuickJS/WASM 런타임 통합은 Phase 5에서 완료 예정
 
 ---
 
@@ -110,6 +138,7 @@
 - [ ] OpenRouter SDK 연동
 - [ ] 로컬 오픈소스 모델 연동
 - [ ] Context Action Palette AI 통합
+- [ ] Plugin System 런타임 완성 (QuickJS/WASM)
 
 ---
 
@@ -139,13 +168,16 @@ ferrum/
 │   ├── ferrum_editor/     # 에디터 상태, 폴딩, 깊이
 │   ├── ferrum_lsp/        # LSP 클라이언트/매니저
 │   ├── ferrum_git/        # Git 통합
+│   ├── ferrum_plugin/     # 플러그인 시스템
 │   └── ...
 ├── src/
 │   ├── components/
 │   │   ├── editor/        # 에디터 컴포넌트
 │   │   ├── tree-viewer/   # 트리 뷰어
 │   │   ├── visual/        # 비주얼 코딩
-│   │   └── preview/       # 컴파일 미리보기
+│   │   ├── preview/       # 컴파일 미리보기
+│   │   ├── panels/        # 패널 컴포넌트 (Env Manager 등)
+│   │   └── ai/            # AI 관련 컴포넌트 (Phase 5)
 │   └── ipc/               # IPC 명령어
 ├── src-tauri/             # Tauri 백엔드
 ├── e2e/                   # E2E 테스트
@@ -156,19 +188,21 @@ ferrum/
 
 ## 🚀 다음 단계 권장사항
 
-### 즉시 (Phase 3 완료)
-1. **Structural Minimap**: 코드 구조 기반 미니맵
-2. **Dependency Highlight**: import/export 관계 시각화
+### 즉시 (Phase 5 시작)
+1. **AI 통합**: OpenRouter SDK 연동
+2. **로컬 AI**: 오픈소스 모델 통합 (ollama 등)
+3. **Context Action AI**: 스마트 제안 기능
 
-### 단기 (Phase 4)
-1. **Plugin System**: QuickJS 런타임 통합
-2. **Env Manager**: 환경 변수 관리
-3. **Error Flow Visualization**: 에러 전파 시각화
+### 단기 (Plugin System 완성)
+1. **QuickJS 런타임**: JavaScript 플러그인 실행
+2. **Plugin Marketplace**: 플러그인 검색/설치 UI
+3. **Plugin API 확장**: 더 많은 기능 노출
 
-### 중기 (Phase 5)
-1. **AI 통합**: OpenRouter SDK
-2. **Context Action AI**: 스마트 제안
+### 중기 (품질 개선)
+1. **성능 최적화**: 대용량 파일 처리
+2. **테스트 커버리지**: 단위/통합 테스트 확대
+3. **문서화**: API 문서 및 사용자 가이드
 
 ---
 
-*마지막 업데이트: 2026-01-14*
+*마지막 업데이트: 2026-01-18*

@@ -214,3 +214,51 @@ pub fn shrink_selection(
     end_byte: result.5,
   })
 }
+
+/// Dependency link between two symbols
+#[derive(Debug, Serialize, Deserialize)]
+pub struct DependencyLink {
+  pub id: String,
+  pub from_symbol: String,
+  pub to_symbol: String,
+  pub from_line: u32,
+  pub to_line: u32,
+  pub from_column: u32,
+  pub to_column: u32,
+  #[serde(rename = "type")]
+  pub link_type: String, // "import", "call", "reference", "extends", "implements"
+}
+
+/// Analyze code dependencies in a buffer
+#[tauri::command]
+pub fn analyze_dependencies(
+  state: State<'_, AppState>,
+  buffer_id: String,
+) -> Result<Vec<DependencyLink>, String> {
+  let id: BufferId = buffer_id
+    .parse()
+    .map_err(|_| "Invalid buffer ID".to_string())?;
+
+  let result = state
+    .editor
+    .analyze_dependencies(id)
+    .map_err(|e| e.to_string())?;
+
+  Ok(
+    result
+      .into_iter()
+      .map(
+        |(from_name, from_line, from_col, to_name, to_line, to_col, link_type)| DependencyLink {
+          id: format!("{}-{}-{}-{}", from_name, from_line, to_name, to_line),
+          from_symbol: from_name,
+          to_symbol: to_name,
+          from_line,
+          to_line,
+          from_column: from_col,
+          to_column: to_col,
+          link_type,
+        },
+      )
+      .collect(),
+  )
+}

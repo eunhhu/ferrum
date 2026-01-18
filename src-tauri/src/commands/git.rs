@@ -408,3 +408,75 @@ pub async fn git_diff_file(
 
   Ok(result)
 }
+
+/// Git blame info for a single line
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct GitBlameLineInfo {
+  pub line: usize,
+  pub commit_id: String,
+  pub short_id: String,
+  pub author: String,
+  pub email: String,
+  pub time: i64,
+  pub message: String,
+}
+
+/// Get git blame for a file
+#[tauri::command]
+pub async fn git_blame_file(
+  repo_path: String,
+  file_path: String,
+) -> Result<Vec<GitBlameLineInfo>, String> {
+  let repo = Repository::open(&repo_path).map_err(|e| e.to_string())?;
+  let inner = repo.inner();
+
+  // Resolve the file path relative to repo root
+  let repo_workdir = inner.workdir().ok_or("Not a worktree repository")?;
+  let full_path = std::path::Path::new(&repo_path).join(&file_path);
+  let relative_path = full_path
+    .strip_prefix(repo_workdir)
+    .unwrap_or(std::path::Path::new(&file_path));
+
+  // Get blame for the file
+  let blame = inner
+    .blame_file(relative_path, None)
+    .map_err(|e| format!("Failed to get blame: {}", e))?;
+
+  let mut result = Vec::new();
+  let mut commit_cache: std::collections::HashMap<git2::Oid, (String, String, String, i64)> =
+    std::collections::HashMap::new();
+
+  for (line_idx, hunk) in blame.iter().enumerate() {
+    let oid = hunk.final_commit_id();
+
+    // Cache commit info to avoid repeated lookups
+    let (author, email, message, time) = if let Some(cached) = commit_cache.get(&oid) {
+      cached.clone()
+    } else {
+      let (author, email, message, time) = match inner.find_commit(oid) {
+        Ok(commit) => {
+          let author_name = commit.author().name().unwrap_or("Unknown").to_string();
+          let author_email = commit.author().email().unwrap_or("").to_string();
+          let msg = commit.summary().unwrap_or("").to_string();
+          let commit_time = commit.time().seconds();
+          (author_name, author_email, msg, commit_time)
+        },
+        Err(_) => ("Unknown".to_string(), "".to_string(), "".to_string(), 0),
+      };
+      commit_cache.insert(oid, (author.clone(), email.clone(), message.clone(), time));
+      (author, email, message, time)
+    };
+
+    result.push(GitBlameLineInfo {
+      line: line_idx,
+      commit_id: oid.to_string(),
+      short_id: oid.to_string().chars().take(7).collect(),
+      author,
+      email,
+      time,
+      message,
+    });
+  }
+
+  Ok(result)
+}

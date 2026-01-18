@@ -79,7 +79,11 @@ export async function searchText(
   query: string,
   options?: TextSearchOptions
 ): Promise<TextSearchResult[]> {
-  return await invoke<TextSearchResult[]>("search_text", { root, query, options });
+  return await invoke<TextSearchResult[]>("search_text", {
+    root,
+    query,
+    options,
+  });
 }
 
 // Settings operations
@@ -373,7 +377,9 @@ export async function lspDocumentSymbols(
   });
 }
 
-export async function lspDiagnostics(filePath: string): Promise<LspDiagnostic[]> {
+export async function lspDiagnostics(
+  filePath: string
+): Promise<LspDiagnostic[]> {
   return await invoke<LspDiagnostic[]>("lsp_diagnostics", {
     file_path: filePath,
   });
@@ -496,36 +502,69 @@ export async function gitStatus(path: string): Promise<GitStatusResponse> {
   return await invoke<GitStatusResponse>("git_status", { path });
 }
 
-export async function gitStage(repoPath: string, filePath: string): Promise<void> {
-  return await invoke<void>("git_stage", { repo_path: repoPath, file_path: filePath });
+export async function gitStage(
+  repoPath: string,
+  filePath: string
+): Promise<void> {
+  return await invoke<void>("git_stage", {
+    repo_path: repoPath,
+    file_path: filePath,
+  });
 }
 
-export async function gitUnstage(repoPath: string, filePath: string): Promise<void> {
-  return await invoke<void>("git_unstage", { repo_path: repoPath, file_path: filePath });
+export async function gitUnstage(
+  repoPath: string,
+  filePath: string
+): Promise<void> {
+  return await invoke<void>("git_unstage", {
+    repo_path: repoPath,
+    file_path: filePath,
+  });
 }
 
 export async function gitStageAll(repoPath: string): Promise<void> {
   return await invoke<void>("git_stage_all", { repo_path: repoPath });
 }
 
-export async function gitCommit(repoPath: string, message: string): Promise<GitCommitInfo> {
-  return await invoke<GitCommitInfo>("git_commit", { repo_path: repoPath, message });
+export async function gitCommit(
+  repoPath: string,
+  message: string
+): Promise<GitCommitInfo> {
+  return await invoke<GitCommitInfo>("git_commit", {
+    repo_path: repoPath,
+    message,
+  });
 }
 
-export async function gitLog(repoPath: string, limit?: number): Promise<GitCommitInfo[]> {
-  return await invoke<GitCommitInfo[]>("git_log", { repo_path: repoPath, limit });
+export async function gitLog(
+  repoPath: string,
+  limit?: number
+): Promise<GitCommitInfo[]> {
+  return await invoke<GitCommitInfo[]>("git_log", {
+    repo_path: repoPath,
+    limit,
+  });
 }
 
 export async function gitBranches(repoPath: string): Promise<GitBranchInfo[]> {
   return await invoke<GitBranchInfo[]>("git_branches", { repo_path: repoPath });
 }
 
-export async function gitCheckout(repoPath: string, branch: string): Promise<void> {
+export async function gitCheckout(
+  repoPath: string,
+  branch: string
+): Promise<void> {
   return await invoke<void>("git_checkout", { repo_path: repoPath, branch });
 }
 
-export async function gitDiscard(repoPath: string, filePath: string): Promise<void> {
-  return await invoke<void>("git_discard", { repo_path: repoPath, file_path: filePath });
+export async function gitDiscard(
+  repoPath: string,
+  filePath: string
+): Promise<void> {
+  return await invoke<void>("git_discard", {
+    repo_path: repoPath,
+    file_path: filePath,
+  });
 }
 
 export async function gitDiffFile(
@@ -540,8 +579,34 @@ export async function gitDiffFile(
   });
 }
 
+// Git blame info for a single line
+export interface GitBlameLineInfo {
+  line: number;
+  commit_id: string;
+  short_id: string;
+  author: string;
+  email: string;
+  time: number;
+  message: string;
+}
+
+export async function gitBlameFile(
+  repoPath: string,
+  filePath: string
+): Promise<GitBlameLineInfo[]> {
+  if (!isTauriEnvironment()) {
+    return [];
+  }
+  return await invoke<GitBlameLineInfo[]>("git_blame_file", {
+    repo_path: repoPath,
+    file_path: filePath,
+  });
+}
+
 // Tree Viewer operations
-export async function getDepthRegions(bufferId: string): Promise<DepthRegionInfo[]> {
+export async function getDepthRegions(
+  bufferId: string
+): Promise<DepthRegionInfo[]> {
   if (!isTauriEnvironment()) {
     return [];
   }
@@ -559,12 +624,106 @@ export async function getFoldState(bufferId: string): Promise<FoldState> {
   });
 }
 
-export async function toggleFold(bufferId: string, line: number): Promise<boolean> {
+export async function toggleFold(
+  bufferId: string,
+  line: number
+): Promise<boolean> {
   if (!isTauriEnvironment()) {
     return false;
   }
   return await invoke<boolean>("toggle_fold", {
     buffer_id: bufferId,
     line,
+  });
+}
+
+// Dependency analysis
+export interface DependencyLink {
+  id: string;
+  from_symbol: string;
+  to_symbol: string;
+  from_line: number;
+  to_line: number;
+  from_column: number;
+  to_column: number;
+  type: "import" | "call" | "reference" | "extends" | "implements";
+}
+
+export async function analyzeDependencies(
+  bufferId: string
+): Promise<DependencyLink[]> {
+  if (!isTauriEnvironment()) {
+    return [];
+  }
+  return await invoke<DependencyLink[]>("analyze_dependencies", {
+    buffer_id: bufferId,
+  });
+}
+
+// Environment Variable Management
+export interface EnvVariableUsage {
+  name: string;
+  file_path: string;
+  line: number;
+  has_value: boolean;
+}
+
+export interface EnvVariableInfo {
+  name: string;
+  value: string | null;
+  is_secret: boolean;
+  usages: EnvVariableUsage[];
+}
+
+export interface EnvScanResult {
+  variables: EnvVariableInfo[];
+  env_files: string[];
+  missing_in_env: string[];
+  unused_in_code: string[];
+}
+
+export async function scanEnvVariables(
+  projectPath: string
+): Promise<EnvScanResult> {
+  if (!isTauriEnvironment()) {
+    return {
+      variables: [],
+      env_files: [],
+      missing_in_env: [],
+      unused_in_code: [],
+    };
+  }
+  return await invoke<EnvScanResult>("scan_env_variables", {
+    project_path: projectPath,
+  });
+}
+
+export async function generateEnvExample(projectPath: string): Promise<string> {
+  if (!isTauriEnvironment()) {
+    return "";
+  }
+  return await invoke<string>("generate_env_example", {
+    project_path: projectPath,
+  });
+}
+
+export async function generateEnvTypes(projectPath: string): Promise<string> {
+  if (!isTauriEnvironment()) {
+    return "";
+  }
+  return await invoke<string>("generate_env_types", {
+    project_path: projectPath,
+  });
+}
+
+export async function writeEnvExample(projectPath: string): Promise<void> {
+  return await invoke<void>("write_env_example", {
+    project_path: projectPath,
+  });
+}
+
+export async function writeEnvTypes(projectPath: string): Promise<void> {
+  return await invoke<void>("write_env_types", {
+    project_path: projectPath,
   });
 }

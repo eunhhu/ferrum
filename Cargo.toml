@@ -14,15 +14,16 @@ members = [
     "crates/ferrum_settings",
     "crates/ferrum_ipc",
     "crates/ferrum_collab",
+    "crates/ferrum_plugin",
 ]
 
 [workspace.package]
 version = "0.1.0"
-edition = "2024"
+edition = "2021"
 authors = ["eunhhu"]
 license = "MIT"
 repository = "https://github.com/eunhhu/ferrum"
-rust-version = "1.92"
+rust-version = "1.75"
 
 [workspace.dependencies]
 # Workspace crates
@@ -38,6 +39,7 @@ ferrum_ui = { path = "crates/ferrum_ui" }
 ferrum_settings = { path = "crates/ferrum_settings" }
 ferrum_ipc = { path = "crates/ferrum_ipc" }
 ferrum_collab = { path = "crates/ferrum_collab" }
+ferrum_plugin = { path = "crates/ferrum_plugin" }
 
 # Tauri
 tauri = { version = "2", features = ["devtools"] }
@@ -118,6 +120,7 @@ pretty_assertions = "1"
 insta = { version = "1", features = ["json", "yaml"] }
 proptest = "1"
 criterion = "0.5"
+tempfile = "3"
 
 [profile.dev]
 opt-level = 0

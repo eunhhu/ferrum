@@ -1,6 +1,7 @@
 //! Tauri commands
 
 pub mod buffer;
+pub mod env;
 pub mod file;
 pub mod git;
 pub mod lsp;

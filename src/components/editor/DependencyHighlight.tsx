@@ -2,23 +2,15 @@
  * Dependency Highlight Component
  *
  * Highlights import/export relationships and shows dependency connections
- * between symbols in the current file.
+ * between symbols in the current file using tree-sitter based analysis.
  */
 
-import { createSignal, createEffect, For, Show } from "solid-js";
-import { lspDocumentSymbols, type LspSymbolInfo } from "../../ipc/commands";
-
-interface DependencyLink {
-  id: string;
-  fromSymbol: string;
-  toSymbol: string;
-  fromLine: number;
-  toLine: number;
-  type: "import" | "export" | "call" | "reference";
-}
+import { createSignal, createEffect, For, Show, onCleanup } from "solid-js";
+import { analyzeDependencies, type DependencyLink } from "../../ipc/commands";
+import { isTauriEnvironment } from "../../ipc/tauri-check";
 
 interface DependencyHighlightProps {
-  filePath: string | null;
+  bufferId: string | null;
   enabled: boolean;
   lineHeight: number;
   visibleStartLine: number;
@@ -26,167 +18,252 @@ interface DependencyHighlightProps {
   onSymbolClick?: (symbol: string, line: number) => void;
 }
 
+// Cache for dependency analysis results
+const dependencyCache = new Map<
+  string,
+  { deps: DependencyLink[]; timestamp: number }
+>();
+const CACHE_TTL = 10000; // 10 seconds
+
 export function DependencyHighlight(props: DependencyHighlightProps) {
   const [dependencies, setDependencies] = createSignal<DependencyLink[]>([]);
   const [hoveredSymbol, setHoveredSymbol] = createSignal<string | null>(null);
-  const [symbols, setSymbols] = createSignal<LspSymbolInfo[]>([]);
+  const [loading, setLoading] = createSignal(false);
+  const [error, setError] = createSignal<string | null>(null);
 
-  // Load symbols and analyze dependencies
-  createEffect(() => {
-    if (props.enabled && props.filePath) {
-      loadDependencies();
-    }
+  let debounceTimer: ReturnType<typeof setTimeout> | null = null;
+
+  // Cleanup on unmount
+  onCleanup(() => {
+    if (debounceTimer) clearTimeout(debounceTimer);
   });
 
-  const loadDependencies = async () => {
-    if (!props.filePath) return;
+  // Load dependencies when enabled and buffer changes
+  createEffect(() => {
+    if (!props.enabled || !props.bufferId) {
+      setDependencies([]);
+      return;
+    }
+
+    // Debounce to avoid excessive calls
+    if (debounceTimer) clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(() => {
+      loadDependencies(props.bufferId!);
+    }, 150);
+  });
+
+  const loadDependencies = async (bufferId: string) => {
+    // Check cache first
+    const cached = dependencyCache.get(bufferId);
+    if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+      setDependencies(cached.deps);
+      setError(null);
+      return;
+    }
+
+    // Skip if not in Tauri environment
+    if (!isTauriEnvironment()) {
+      setError("Dependency analysis not available");
+      setDependencies([]);
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
 
     try {
-      const syms = await lspDocumentSymbols(props.filePath);
-      setSymbols(syms);
-
-      // Analyze dependencies between symbols
-      const deps = analyzeDependencies(syms);
+      const deps = await analyzeDependencies(bufferId);
       setDependencies(deps);
+
+      // Update cache
+      dependencyCache.set(bufferId, { deps, timestamp: Date.now() });
     } catch (e) {
-      console.error("Failed to load dependencies:", e);
+      const errorMsg =
+        e instanceof Error ? e.message : "Failed to analyze dependencies";
+      console.error("Failed to analyze dependencies:", e);
+      setError(errorMsg);
       setDependencies([]);
+    } finally {
+      setLoading(false);
     }
-  };
-
-  const analyzeDependencies = (symbols: LspSymbolInfo[]): DependencyLink[] => {
-    const deps: DependencyLink[] = [];
-    const flatSymbols = flattenSymbols(symbols);
-
-    // Create mock dependencies based on symbol proximity
-    // In a real implementation, this would use LSP references
-    for (let i = 0; i < flatSymbols.length; i++) {
-      for (let j = i + 1; j < flatSymbols.length; j++) {
-        const from = flatSymbols[i];
-        const to = flatSymbols[j];
-
-        // Check if symbols might be related (same name pattern, proximity, etc.)
-        if (from && to && mightBeRelated(from, to)) {
-          deps.push({
-            id: `${from.name}-${to.name}`,
-            fromSymbol: from.name,
-            toSymbol: to.name,
-            fromLine: from.range.start.line,
-            toLine: to.range.start.line,
-            type: determineRelationType(from, to),
-          });
-        }
-      }
-    }
-
-    return deps;
-  };
-
-  const flattenSymbols = (symbols: LspSymbolInfo[]): LspSymbolInfo[] => {
-    const result: LspSymbolInfo[] = [];
-    const traverse = (syms: LspSymbolInfo[]) => {
-      for (const sym of syms) {
-        result.push(sym);
-        if (sym.children) {
-          traverse(sym.children);
-        }
-      }
-    };
-    traverse(symbols);
-    return result;
-  };
-
-  const mightBeRelated = (a: LspSymbolInfo, b: LspSymbolInfo): boolean => {
-    // Simple heuristic: methods in same class, or functions calling each other
-    const aIsMethod = a.kind === 6;
-    const bIsMethod = b.kind === 6;
-
-    if (aIsMethod && bIsMethod) {
-      // Both are methods - might be in same class
-      return Math.abs(a.range.start.line - b.range.start.line) < 20;
-    }
-
-    // Function and its caller
-    if ((a.kind === 12 || b.kind === 12) && Math.abs(a.range.start.line - b.range.start.line) < 50) {
-      return Math.random() > 0.7; // Random for demo
-    }
-
-    return false;
-  };
-
-  const determineRelationType = (from: LspSymbolInfo, to: LspSymbolInfo): DependencyLink["type"] => {
-    if (from.kind === 6 && to.kind === 6) return "reference";
-    if (from.kind === 12 || to.kind === 12) return "call";
-    return "reference";
   };
 
   const getLinkColor = (type: DependencyLink["type"]): string => {
     switch (type) {
       case "import":
         return "stroke-blue-400";
-      case "export":
-        return "stroke-green-400";
       case "call":
         return "stroke-purple-400";
       case "reference":
         return "stroke-yellow-400";
+      case "extends":
+        return "stroke-green-400";
+      case "implements":
+        return "stroke-cyan-400";
       default:
         return "stroke-gray-400";
     }
   };
 
+  const getLinkDotColor = (type: DependencyLink["type"]): string => {
+    switch (type) {
+      case "import":
+        return "bg-blue-400";
+      case "call":
+        return "bg-purple-400";
+      case "reference":
+        return "bg-yellow-400";
+      case "extends":
+        return "bg-green-400";
+      case "implements":
+        return "bg-cyan-400";
+      default:
+        return "bg-gray-400";
+    }
+  };
+
   const isLinkVisible = (link: DependencyLink): boolean => {
     return (
-      (link.fromLine >= props.visibleStartLine && link.fromLine <= props.visibleEndLine) ||
-      (link.toLine >= props.visibleStartLine && link.toLine <= props.visibleEndLine)
+      (link.from_line >= props.visibleStartLine &&
+        link.from_line <= props.visibleEndLine) ||
+      (link.to_line >= props.visibleStartLine &&
+        link.to_line <= props.visibleEndLine)
     );
   };
 
   const isLinkHighlighted = (link: DependencyLink): boolean => {
     const hovered = hoveredSymbol();
     if (!hovered) return false;
-    return link.fromSymbol === hovered || link.toSymbol === hovered;
+    return link.from_symbol === hovered || link.to_symbol === hovered;
+  };
+
+  // Get unique symbols for rendering markers
+  const getVisibleSymbols = () => {
+    const deps = dependencies();
+    const symbolMap = new Map<
+      string,
+      { name: string; line: number; type: DependencyLink["type"] }
+    >();
+
+    for (const dep of deps) {
+      // Add source symbol
+      if (
+        dep.from_line >= props.visibleStartLine &&
+        dep.from_line <= props.visibleEndLine
+      ) {
+        const key = `${dep.from_symbol}-${dep.from_line}`;
+        if (!symbolMap.has(key)) {
+          symbolMap.set(key, {
+            name: dep.from_symbol,
+            line: dep.from_line,
+            type: dep.type,
+          });
+        }
+      }
+      // Add target symbol
+      if (
+        dep.to_line >= props.visibleStartLine &&
+        dep.to_line <= props.visibleEndLine
+      ) {
+        const key = `${dep.to_symbol}-${dep.to_line}`;
+        if (!symbolMap.has(key)) {
+          symbolMap.set(key, {
+            name: dep.to_symbol,
+            line: dep.to_line,
+            type: dep.type,
+          });
+        }
+      }
+    }
+
+    return Array.from(symbolMap.values());
   };
 
   return (
     <Show when={props.enabled}>
       <div class="dependency-highlight absolute inset-0 pointer-events-none z-5">
+        {/* Loading indicator */}
+        <Show when={loading()}>
+          <div class="absolute top-2 left-2 flex items-center gap-1.5 bg-bg-secondary/80 px-2 py-1 rounded text-xs text-text-tertiary">
+            <div class="w-3 h-3 border border-accent border-t-transparent rounded-full animate-spin" />
+            Analyzing...
+          </div>
+        </Show>
+
+        {/* Error indicator */}
+        <Show when={error() && !loading()}>
+          <div class="absolute top-2 left-2 bg-red-900/50 px-2 py-1 rounded text-xs text-red-300">
+            {error()}
+          </div>
+        </Show>
+
         {/* SVG for connection lines */}
         <svg class="absolute inset-0 w-full h-full overflow-visible">
           <defs>
             <marker
-              id="arrowhead"
+              id="arrowhead-call"
               markerWidth="6"
               markerHeight="4"
               refX="5"
               refY="2"
               orient="auto"
             >
-              <polygon points="0 0, 6 2, 0 4" fill="currentColor" />
+              <polygon points="0 0, 6 2, 0 4" class="fill-purple-400" />
+            </marker>
+            <marker
+              id="arrowhead-reference"
+              markerWidth="6"
+              markerHeight="4"
+              refX="5"
+              refY="2"
+              orient="auto"
+            >
+              <polygon points="0 0, 6 2, 0 4" class="fill-yellow-400" />
+            </marker>
+            <marker
+              id="arrowhead-import"
+              markerWidth="6"
+              markerHeight="4"
+              refX="5"
+              refY="2"
+              orient="auto"
+            >
+              <polygon points="0 0, 6 2, 0 4" class="fill-blue-400" />
             </marker>
           </defs>
 
           <For each={dependencies().filter(isLinkVisible)}>
             {(link) => {
-              const y1 = (link.fromLine - props.visibleStartLine) * props.lineHeight + props.lineHeight / 2;
-              const y2 = (link.toLine - props.visibleStartLine) * props.lineHeight + props.lineHeight / 2;
+              const y1 =
+                (link.from_line - props.visibleStartLine) * props.lineHeight +
+                props.lineHeight / 2;
+              const y2 =
+                (link.to_line - props.visibleStartLine) * props.lineHeight +
+                props.lineHeight / 2;
               const x1 = 40;
               const x2 = 40;
-              const cx = 20;
+
+              // Calculate control point for bezier curve
+              const distance = Math.abs(y2 - y1);
+              const cx = Math.max(5, 30 - Math.min(distance / 20, 20));
 
               const isHighlighted = isLinkHighlighted(link);
+
+              // Skip if same line (self-reference)
+              if (link.from_line === link.to_line) return null;
 
               return (
                 <path
                   d={`M ${x1} ${y1} C ${cx} ${y1}, ${cx} ${y2}, ${x2} ${y2}`}
                   fill="none"
-                  class={`transition-opacity duration-150 ${getLinkColor(link.type)}`}
+                  class={`transition-all duration-150 ${getLinkColor(link.type)}`}
                   classList={{
-                    "opacity-60": isHighlighted,
-                    "opacity-20": !isHighlighted,
+                    "opacity-70": isHighlighted,
+                    "opacity-20": !isHighlighted && hoveredSymbol() !== null,
+                    "opacity-30": !isHighlighted && hoveredSymbol() === null,
                   }}
                   stroke-width={isHighlighted ? 2 : 1}
-                  marker-end="url(#arrowhead)"
+                  marker-end={`url(#arrowhead-${link.type})`}
                 />
               );
             }}
@@ -194,33 +271,105 @@ export function DependencyHighlight(props: DependencyHighlightProps) {
         </svg>
 
         {/* Symbol markers */}
-        <For each={flattenSymbols(symbols()).filter(s => 
-          s.range.start.line >= props.visibleStartLine && 
-          s.range.start.line <= props.visibleEndLine
-        )}>
+        <For each={getVisibleSymbols()}>
           {(symbol) => {
-            const y = (symbol.range.start.line - props.visibleStartLine) * props.lineHeight;
+            const y = (symbol.line - props.visibleStartLine) * props.lineHeight;
             const isHovered = hoveredSymbol() === symbol.name;
 
             return (
               <div
-                class="absolute left-1 w-2 h-2 rounded-full cursor-pointer pointer-events-auto transition-all duration-150"
+                class={`absolute left-1 w-2 h-2 rounded-full cursor-pointer pointer-events-auto transition-all duration-150 ${getLinkDotColor(symbol.type)}`}
                 classList={{
-                  "bg-accent scale-125": isHovered,
-                  "bg-text-tertiary": !isHovered,
+                  "scale-150 ring-2 ring-white/30": isHovered,
+                  "opacity-60": !isHovered,
                 }}
                 style={{
                   top: `${y + props.lineHeight / 2 - 4}px`,
                 }}
                 onMouseEnter={() => setHoveredSymbol(symbol.name)}
                 onMouseLeave={() => setHoveredSymbol(null)}
-                onClick={() => props.onSymbolClick?.(symbol.name, symbol.range.start.line)}
-                title={symbol.name}
+                onClick={() => props.onSymbolClick?.(symbol.name, symbol.line)}
+                title={`${symbol.name} (${symbol.type})`}
               />
             );
           }}
         </For>
+
+        {/* Hover tooltip */}
+        <Show when={hoveredSymbol()}>
+          {(symbolName) => {
+            const relatedDeps = dependencies().filter(
+              (d) =>
+                d.from_symbol === symbolName() || d.to_symbol === symbolName()
+            );
+            if (relatedDeps.length === 0) return null;
+
+            return (
+              <div class="absolute left-12 top-2 z-50 bg-bg-secondary border border-border rounded-lg shadow-xl px-3 py-2 text-xs max-w-xs">
+                <div class="font-medium text-text-primary mb-1">
+                  {symbolName()}
+                </div>
+                <div class="text-text-tertiary space-y-0.5">
+                  <For each={relatedDeps.slice(0, 5)}>
+                    {(dep) => (
+                      <div class="flex items-center gap-1.5">
+                        <span
+                          class={`w-1.5 h-1.5 rounded-full ${getLinkDotColor(dep.type)}`}
+                        />
+                        <span>
+                          {dep.from_symbol === symbolName()
+                            ? `→ ${dep.to_symbol}`
+                            : `← ${dep.from_symbol}`}
+                        </span>
+                        <span class="text-text-quaternary">({dep.type})</span>
+                      </div>
+                    )}
+                  </For>
+                  <Show when={relatedDeps.length > 5}>
+                    <div class="text-text-quaternary">
+                      +{relatedDeps.length - 5} more
+                    </div>
+                  </Show>
+                </div>
+              </div>
+            );
+          }}
+        </Show>
+
+        {/* Empty state */}
+        <Show when={!loading() && dependencies().length === 0 && !error()}>
+          <div class="absolute top-2 left-2 bg-bg-secondary/60 px-2 py-1 rounded text-xs text-text-quaternary">
+            No dependencies
+          </div>
+        </Show>
+
+        {/* Legend */}
+        <Show when={dependencies().length > 0}>
+          <div class="absolute bottom-2 left-2 flex gap-3 bg-bg-secondary/80 px-2 py-1 rounded text-xs">
+            <div class="flex items-center gap-1">
+              <span class="w-2 h-2 rounded-full bg-purple-400" />
+              <span class="text-text-tertiary">Call</span>
+            </div>
+            <div class="flex items-center gap-1">
+              <span class="w-2 h-2 rounded-full bg-yellow-400" />
+              <span class="text-text-tertiary">Ref</span>
+            </div>
+            <div class="flex items-center gap-1">
+              <span class="w-2 h-2 rounded-full bg-blue-400" />
+              <span class="text-text-tertiary">Import</span>
+            </div>
+          </div>
+        </Show>
       </div>
     </Show>
   );
+}
+
+// Export function to invalidate cache
+export function invalidateDependencyCache(bufferId: string): void {
+  dependencyCache.delete(bufferId);
+}
+
+export function clearDependencyCache(): void {
+  dependencyCache.clear();
 }

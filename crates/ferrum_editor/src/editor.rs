@@ -3,9 +3,9 @@
 use crate::depth::DepthAnalyzer;
 use crate::fold::FoldState;
 use dashmap::DashMap;
-use ferrum_buffer::Buffer;
 use ferrum_buffer::position::Range;
 use ferrum_buffer::syntax::{LanguageId, ParseResult, SyntaxManager};
+use ferrum_buffer::Buffer;
 use ferrum_core::prelude::*;
 use parking_lot::RwLock;
 use ropey::Rope;
@@ -317,18 +317,27 @@ impl Editor {
     let result = manager.find_enclosing_node(start_byte, end_byte);
 
     match result {
-      Some((start, end, start_point, end_point)) => {
-        Ok((start_point.row, start_point.column, end_point.row, end_point.column, start, end))
-      },
+      Some((start, end, start_point, end_point)) => Ok((
+        start_point.row,
+        start_point.column,
+        end_point.row,
+        end_point.column,
+        start,
+        end,
+      )),
       None => {
         // No larger node found, return original selection
-        let buffer = self.buffer(buffer_id).ok_or(Error::BufferNotFound(buffer_id))?;
+        let buffer = self
+          .buffer(buffer_id)
+          .ok_or(Error::BufferNotFound(buffer_id))?;
         let rope = Rope::from_str(&buffer.to_string());
         let start_line = rope.byte_to_line(start_byte.min(rope.len_bytes()));
         let end_line = rope.byte_to_line(end_byte.min(rope.len_bytes()));
         let start_col = start_byte - rope.line_to_byte(start_line);
         let end_col = end_byte - rope.line_to_byte(end_line);
-        Ok((start_line, start_col, end_line, end_col, start_byte, end_byte))
+        Ok((
+          start_line, start_col, end_line, end_col, start_byte, end_byte,
+        ))
       },
     }
   }
@@ -349,20 +358,51 @@ impl Editor {
     let result = manager.find_inner_node(start_byte, end_byte);
 
     match result {
-      Some((start, end, start_point, end_point)) => {
-        Ok((start_point.row, start_point.column, end_point.row, end_point.column, start, end))
-      },
+      Some((start, end, start_point, end_point)) => Ok((
+        start_point.row,
+        start_point.column,
+        end_point.row,
+        end_point.column,
+        start,
+        end,
+      )),
       None => {
         // No smaller node found, return original selection
-        let buffer = self.buffer(buffer_id).ok_or(Error::BufferNotFound(buffer_id))?;
+        let buffer = self
+          .buffer(buffer_id)
+          .ok_or(Error::BufferNotFound(buffer_id))?;
         let rope = Rope::from_str(&buffer.to_string());
         let start_line = rope.byte_to_line(start_byte.min(rope.len_bytes()));
         let end_line = rope.byte_to_line(end_byte.min(rope.len_bytes()));
         let start_col = start_byte - rope.line_to_byte(start_line);
         let end_col = end_byte - rope.line_to_byte(end_line);
-        Ok((start_line, start_col, end_line, end_col, start_byte, end_byte))
+        Ok((
+          start_line, start_col, end_line, end_col, start_byte, end_byte,
+        ))
       },
     }
+  }
+
+  /// Analyze code dependencies in a buffer
+  /// Returns Vec<(from_name, from_line, from_col, to_name, to_line, to_col, link_type)>
+  pub fn analyze_dependencies(
+    &self,
+    buffer_id: BufferId,
+  ) -> Result<Vec<(String, u32, u32, String, u32, u32, String)>> {
+    let manager = self
+      .syntax_managers
+      .get(&buffer_id)
+      .ok_or(Error::BufferNotFound(buffer_id))?;
+
+    let buffer = self
+      .buffers
+      .get(&buffer_id)
+      .ok_or(Error::BufferNotFound(buffer_id))?;
+
+    let text = buffer.to_string();
+    let dependencies = manager.analyze_dependencies(text.as_bytes());
+
+    Ok(dependencies)
   }
 }
 

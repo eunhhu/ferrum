@@ -64,6 +64,7 @@ pub fn build() -> tauri::Builder<tauri::Wry> {
             commands::syntax::get_supported_languages,
             commands::syntax::expand_selection,
             commands::syntax::shrink_selection,
+            commands::syntax::analyze_dependencies,
             // Settings
             commands::settings::get_settings,
             commands::settings::update_settings,
@@ -98,12 +99,18 @@ pub fn build() -> tauri::Builder<tauri::Wry> {
             commands::git::git_branches,
             commands::git::git_checkout,
             commands::git::git_discard,
-            commands::git::git_discard,
             commands::git::git_diff_file,
+            commands::git::git_blame_file,
             // View
             commands::view::get_depth_map,
             commands::view::get_depth_regions,
             commands::view::get_fold_state,
             commands::view::toggle_fold,
+            // Env Manager
+            commands::env::scan_env_variables,
+            commands::env::generate_env_example,
+            commands::env::generate_env_types,
+            commands::env::write_env_example,
+            commands::env::write_env_types,
         ])
 }

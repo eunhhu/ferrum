@@ -704,6 +704,255 @@ impl SyntaxManager {
       node.end_position(),
     ))
   }
+
+  /// Analyze code dependencies (imports, function calls, references)
+  /// Returns Vec<(from_name, from_line, from_col, to_name, to_line, to_col, link_type)>
+  pub fn analyze_dependencies(
+    &self,
+    source: &[u8],
+  ) -> Vec<(String, u32, u32, String, u32, u32, String)> {
+    let tree = self.tree.read();
+    let Some(tree) = tree.as_ref() else {
+      return Vec::new();
+    };
+
+    let root = tree.root_node();
+    let mut dependencies = Vec::new();
+    let mut definitions: Vec<(String, u32, u32, String)> = Vec::new(); // (name, line, col, kind)
+
+    // First pass: collect all definitions (functions, classes, methods, variables)
+    self.collect_definitions(root, source, &mut definitions);
+
+    // Second pass: find references and calls
+    self.collect_references(root, source, &definitions, &mut dependencies);
+
+    dependencies
+  }
+
+  /// Collect all symbol definitions from the AST
+  fn collect_definitions(
+    &self,
+    node: Node,
+    source: &[u8],
+    definitions: &mut Vec<(String, u32, u32, String)>,
+  ) {
+    let kind = node.kind();
+
+    // Match various definition patterns based on language
+    match kind {
+      // Rust
+      "function_item" | "function_definition" => {
+        if let Some(name_node) = node.child_by_field_name("name") {
+          if let Ok(name) = name_node.utf8_text(source) {
+            definitions.push((
+              name.to_string(),
+              node.start_position().row as u32,
+              node.start_position().column as u32,
+              "function".to_string(),
+            ));
+          }
+        }
+      },
+      // TypeScript/JavaScript
+      "function_declaration" | "arrow_function" | "method_definition" => {
+        if let Some(name_node) = node.child_by_field_name("name") {
+          if let Ok(name) = name_node.utf8_text(source) {
+            definitions.push((
+              name.to_string(),
+              node.start_position().row as u32,
+              node.start_position().column as u32,
+              "function".to_string(),
+            ));
+          }
+        }
+      },
+      // Class definitions
+      "class_declaration" | "struct_item" | "impl_item" => {
+        if let Some(name_node) = node.child_by_field_name("name") {
+          if let Ok(name) = name_node.utf8_text(source) {
+            definitions.push((
+              name.to_string(),
+              node.start_position().row as u32,
+              node.start_position().column as u32,
+              "class".to_string(),
+            ));
+          }
+        }
+      },
+      // Variable declarations
+      "let_declaration" | "const_declaration" | "variable_declaration" | "lexical_declaration" => {
+        // Try to get the declarator/pattern
+        let mut cursor = node.walk();
+        for child in node.children(&mut cursor) {
+          if child.kind() == "variable_declarator" || child.kind() == "identifier" {
+            if let Some(name_node) = child.child_by_field_name("name") {
+              if let Ok(name) = name_node.utf8_text(source) {
+                definitions.push((
+                  name.to_string(),
+                  node.start_position().row as u32,
+                  node.start_position().column as u32,
+                  "variable".to_string(),
+                ));
+              }
+            } else if child.kind() == "identifier" {
+              if let Ok(name) = child.utf8_text(source) {
+                definitions.push((
+                  name.to_string(),
+                  node.start_position().row as u32,
+                  node.start_position().column as u32,
+                  "variable".to_string(),
+                ));
+              }
+            }
+          }
+        }
+      },
+      // Import statements
+      "import_statement" | "use_declaration" => {
+        // Extract import source
+        let mut cursor = node.walk();
+        for child in node.children(&mut cursor) {
+          if child.kind() == "string" || child.kind() == "string_literal" {
+            if let Ok(import_path) = child.utf8_text(source) {
+              definitions.push((
+                import_path.trim_matches('"').trim_matches('\'').to_string(),
+                node.start_position().row as u32,
+                node.start_position().column as u32,
+                "import".to_string(),
+              ));
+            }
+          }
+        }
+      },
+      _ => {},
+    }
+
+    // Recurse into children
+    let mut cursor = node.walk();
+    for child in node.children(&mut cursor) {
+      self.collect_definitions(child, source, definitions);
+    }
+  }
+
+  /// Collect references to definitions (function calls, variable usage)
+  fn collect_references(
+    &self,
+    node: Node,
+    source: &[u8],
+    definitions: &[(String, u32, u32, String)],
+    dependencies: &mut Vec<(String, u32, u32, String, u32, u32, String)>,
+  ) {
+    let kind = node.kind();
+
+    match kind {
+      // Function calls
+      "call_expression" => {
+        if let Some(func_node) = node.child_by_field_name("function") {
+          let func_name = if func_node.kind() == "identifier" {
+            func_node.utf8_text(source).ok().map(|s| s.to_string())
+          } else if func_node.kind() == "member_expression"
+            || func_node.kind() == "field_expression"
+          {
+            // Get the property/field name
+            func_node
+              .child_by_field_name("property")
+              .or_else(|| func_node.child_by_field_name("field"))
+              .and_then(|n| n.utf8_text(source).ok())
+              .map(|s| s.to_string())
+          } else {
+            func_node.utf8_text(source).ok().map(|s| s.to_string())
+          };
+
+          if let Some(name) = func_name {
+            // Find if this function is defined in our file
+            if let Some((def_name, def_line, def_col, _def_kind)) = definitions
+              .iter()
+              .find(|(n, _, _, k)| n == &name && k == "function")
+            {
+              dependencies.push((
+                name.clone(),
+                node.start_position().row as u32,
+                node.start_position().column as u32,
+                def_name.clone(),
+                *def_line,
+                *def_col,
+                "call".to_string(),
+              ));
+            }
+          }
+        }
+      },
+      // Method calls (Rust)
+      "method_call_expression" => {
+        if let Some(method_node) = node.child_by_field_name("method") {
+          if let Ok(method_name) = method_node.utf8_text(source) {
+            // Find the method definition
+            if let Some((def_name, def_line, def_col, _)) =
+              definitions.iter().find(|(n, _, _, _)| n == method_name)
+            {
+              dependencies.push((
+                method_name.to_string(),
+                node.start_position().row as u32,
+                node.start_position().column as u32,
+                def_name.clone(),
+                *def_line,
+                *def_col,
+                "call".to_string(),
+              ));
+            }
+          }
+        }
+      },
+      // Identifier references (variable usage)
+      "identifier" => {
+        // Only process if not part of a declaration
+        if let Some(parent) = node.parent() {
+          let parent_kind = parent.kind();
+          // Skip if this identifier is being declared
+          if !matches!(
+            parent_kind,
+            "function_item"
+              | "function_declaration"
+              | "variable_declarator"
+              | "let_declaration"
+              | "parameter"
+              | "formal_parameters"
+              | "class_declaration"
+              | "struct_item"
+          ) {
+            if let Ok(var_name) = node.utf8_text(source) {
+              // Find if this variable is defined in our file
+              if let Some((def_name, def_line, def_col, _def_kind)) = definitions
+                .iter()
+                .find(|(n, _, _, k)| n == var_name && k == "variable")
+              {
+                // Only add if it's a different location
+                let ref_line = node.start_position().row as u32;
+                if ref_line != *def_line {
+                  dependencies.push((
+                    var_name.to_string(),
+                    ref_line,
+                    node.start_position().column as u32,
+                    def_name.clone(),
+                    *def_line,
+                    *def_col,
+                    "reference".to_string(),
+                  ));
+                }
+              }
+            }
+          }
+        }
+      },
+      _ => {},
+    }
+
+    // Recurse into children
+    let mut cursor = node.walk();
+    for child in node.children(&mut cursor) {
+      self.collect_references(child, source, definitions, dependencies);
+    }
+  }
 }
 
 /// Check if a node is trivial (punctuation, whitespace, etc.)
