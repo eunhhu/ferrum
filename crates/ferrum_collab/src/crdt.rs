@@ -40,3 +40,59 @@ impl Operation {
     }
   }
 }
+
+#[cfg(test)]
+mod tests {
+  use super::*;
+
+  #[test]
+  fn test_insert_operation() {
+    let peer_id = PeerId::new();
+    let op = Operation::insert(peer_id, 0, "hello".to_string());
+
+    assert_eq!(op.peer_id, peer_id);
+    match op.kind {
+      OperationKind::Insert { position, ref text } => {
+        assert_eq!(position, 0);
+        assert_eq!(text, "hello");
+      },
+      _ => panic!("Expected Insert operation"),
+    }
+  }
+
+  #[test]
+  fn test_delete_operation() {
+    let peer_id = PeerId::new();
+    let op = Operation::delete(peer_id, 5, 3);
+
+    assert_eq!(op.peer_id, peer_id);
+    match op.kind {
+      OperationKind::Delete { position, length } => {
+        assert_eq!(position, 5);
+        assert_eq!(length, 3);
+      },
+      _ => panic!("Expected Delete operation"),
+    }
+  }
+
+  #[test]
+  fn test_operation_has_unique_id() {
+    let peer_id = PeerId::new();
+    let op1 = Operation::insert(peer_id, 0, "a".to_string());
+    let op2 = Operation::insert(peer_id, 0, "b".to_string());
+
+    assert_ne!(op1.id, op2.id);
+  }
+
+  #[test]
+  fn test_operation_serialization() {
+    let peer_id = PeerId::new();
+    let op = Operation::insert(peer_id, 10, "test".to_string());
+
+    let json = serde_json::to_string(&op).unwrap();
+    let deserialized: Operation = serde_json::from_str(&json).unwrap();
+
+    assert_eq!(op.id, deserialized.id);
+    assert_eq!(op.peer_id, deserialized.peer_id);
+  }
+}

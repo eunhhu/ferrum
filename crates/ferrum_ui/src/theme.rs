@@ -150,3 +150,70 @@ impl Theme {
     }
   }
 }
+
+#[cfg(test)]
+mod tests {
+  use super::*;
+
+  #[test]
+  fn test_dark_theme() {
+    let theme = Theme::dark();
+
+    assert_eq!(theme.name, "Ferrum Dark");
+    assert!(theme.is_dark);
+    assert!(theme.colors.background.starts_with('#'));
+  }
+
+  #[test]
+  fn test_light_theme() {
+    let theme = Theme::light();
+
+    assert_eq!(theme.name, "Ferrum Light");
+    assert!(!theme.is_dark);
+    assert!(theme.colors.background.starts_with('#'));
+  }
+
+  #[test]
+  fn test_theme_has_all_colors() {
+    let dark = Theme::dark();
+    let light = Theme::light();
+
+    // Verify all colors are valid hex
+    let colors = vec![
+      &dark.colors.background,
+      &dark.colors.foreground,
+      &dark.colors.primary,
+      &dark.colors.error,
+      &light.colors.background,
+      &light.colors.foreground,
+    ];
+
+    for color in colors {
+      assert!(color.starts_with('#'));
+      assert!(color.len() == 7); // #RRGGBB format
+    }
+  }
+
+  #[test]
+  fn test_syntax_colors() {
+    let theme = Theme::dark();
+
+    assert!(!theme.syntax.keyword.is_empty());
+    assert!(!theme.syntax.string.is_empty());
+    assert!(!theme.syntax.number.is_empty());
+    assert!(!theme.syntax.comment.is_empty());
+    assert!(!theme.syntax.function.is_empty());
+  }
+
+  #[test]
+  fn test_theme_serialization() {
+    let theme = Theme::dark();
+
+    let json = serde_json::to_string(&theme).unwrap();
+    let deserialized: Theme = serde_json::from_str(&json).unwrap();
+
+    assert_eq!(deserialized.name, theme.name);
+    assert_eq!(deserialized.is_dark, theme.is_dark);
+    assert_eq!(deserialized.colors.background, theme.colors.background);
+  }
+}

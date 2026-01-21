@@ -7,6 +7,7 @@
 import { createSignal } from "solid-js";
 import type { Command } from "../types";
 import { editorStore } from "./editor";
+import { uiStore } from "./ui";
 import * as ipc from "../ipc/commands";
 import {
   registerHandler,
@@ -185,7 +186,7 @@ const coreCommands: Command[] = [
     shortcut: "Cmd+B",
     category: "View",
     handler: () => {
-      // Will be implemented when uiStore is connected
+      uiStore.toggleSidebar();
     },
   },
   {
@@ -194,7 +195,7 @@ const coreCommands: Command[] = [
     shortcut: "Cmd+J",
     category: "View",
     handler: () => {
-      // Will be implemented when uiStore is connected
+      uiStore.togglePanel();
     },
   },
   {

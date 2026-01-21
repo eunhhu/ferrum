@@ -107,3 +107,98 @@ impl FoldState {
     }
   }
 }
+
+#[cfg(test)]
+mod tests {
+  use super::*;
+
+  #[test]
+  fn test_fold_state_new() {
+    let state = FoldState::new();
+    assert!(state.folded_lines.is_empty());
+    assert!(state.fold_ranges.is_empty());
+  }
+
+  #[test]
+  fn test_insert_fold_range() {
+    let mut state = FoldState::new();
+    state.insert_fold_range(5, 10);
+
+    assert!(state.fold_ranges.contains_key(&5));
+    let region = state.fold_ranges.get(&5).unwrap();
+    assert_eq!(region.start_line, 5);
+    assert_eq!(region.end_line, 10);
+  }
+
+  #[test]
+  fn test_insert_invalid_fold_range() {
+    let mut state = FoldState::new();
+    // Same line - should not insert
+    state.insert_fold_range(5, 5);
+    assert!(!state.fold_ranges.contains_key(&5));
+
+    // End before start - should not insert
+    state.insert_fold_range(10, 5);
+    assert!(!state.fold_ranges.contains_key(&10));
+  }
+
+  #[test]
+  fn test_toggle_fold() {
+    let mut state = FoldState::new();
+    state.insert_fold_range(5, 10);
+
+    // Initially not folded
+    assert!(!state.is_line_hidden(6));
+    assert!(!state.is_line_hidden(7));
+
+    // Fold
+    let success = state.toggle_fold(5);
+    assert!(success);
+    assert!(state.is_line_hidden(6));
+    assert!(state.is_line_hidden(7));
+    assert!(state.is_line_hidden(10));
+    assert!(!state.is_line_hidden(5)); // Start line is not hidden
+
+    // Unfold
+    let success = state.toggle_fold(5);
+    assert!(success);
+    assert!(!state.is_line_hidden(6));
+    assert!(!state.is_line_hidden(7));
+  }
+
+  #[test]
+  fn test_toggle_fold_invalid_line() {
+    let mut state = FoldState::new();
+    state.insert_fold_range(5, 10);
+
+    // Toggle on a line that is not a fold start
+    let success = state.toggle_fold(7);
+    assert!(!success);
+  }
+
+  #[test]
+  fn test_is_line_hidden() {
+    let mut state = FoldState::new();
+    state.insert_fold_range(0, 5);
+    state.toggle_fold(0);
+
+    assert!(!state.is_line_hidden(0)); // Start line visible
+    assert!(state.is_line_hidden(1));
+    assert!(state.is_line_hidden(5));
+    assert!(!state.is_line_hidden(6)); // Outside range
+  }
+
+  #[test]
+  fn test_multiple_fold_regions() {
+    let mut state = FoldState::new();
+    state.insert_fold_range(0, 5);
+    state.insert_fold_range(10, 15);
+
+    state.toggle_fold(0);
+    state.toggle_fold(10);
+
+    assert!(state.is_line_hidden(1));
+    assert!(state.is_line_hidden(11));
+    assert!(!state.is_line_hidden(7)); // Between regions
+  }
+}

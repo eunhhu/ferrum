@@ -106,7 +106,7 @@ export function ErrorFlowVisualization(props: ErrorFlowProps) {
 
         // Detect throw statements
         const throwMatch = trimmed.match(
-          /\bthrow\s+(?:new\s+)?(\w+)?\s*\(?\s*['""]?([^'""\)]*)?/
+          /\bthrow\s+(?:new\s+)?(\w+)?\s*\(?\s*['""]?([^'"")]*)?/
         );
         if (throwMatch) {
           const id = `throw-${nodeId++}`;

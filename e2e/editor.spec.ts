@@ -10,22 +10,23 @@ test.describe("Editor Core", () => {
   test.beforeEach(async ({ page }) => {
     await page.goto("/");
     // Wait for app to initialize
-    await page.waitForSelector(".editor-container, .app-container", { timeout: 10000 });
+    await page.waitForSelector("[data-testid='app'], .editor-container", {
+      timeout: 10000,
+    });
   });
 
   test("should load the application", async ({ page }) => {
     // Check that the main app container exists
-    const appExists = await page.locator(".app-container, #app, [data-testid='app']").count();
+    const appExists = await page.locator("[data-testid='app']").count();
     expect(appExists).toBeGreaterThan(0);
   });
 
   test("should display editor area", async ({ page }) => {
     // Look for editor-related elements
-    const editorArea = page.locator(".editor, .editor-container, [data-testid='editor']");
-    await expect(editorArea.first()).toBeVisible({ timeout: 5000 }).catch(() => {
-      // Editor might not be visible if no file is open, which is acceptable
-      console.log("Editor not visible - no file open");
-    });
+    const editorArea = page.locator(
+      "[data-testid='editor-area'], .editor-container"
+    );
+    await expect(editorArea.first()).toBeVisible({ timeout: 5000 });
   });
 
   test("should handle keyboard shortcuts", async ({ page }) => {
@@ -47,7 +48,9 @@ test.describe("Editor Core", () => {
 test.describe("Error Handling", () => {
   test.beforeEach(async ({ page }) => {
     await page.goto("/");
-    await page.waitForSelector(".editor-container, .app-container", { timeout: 10000 });
+    await page.waitForSelector("[data-testid='app'], .editor-container", {
+      timeout: 10000,
+    });
   });
 
   test("should handle console errors gracefully", async ({ page }) => {
@@ -90,7 +93,10 @@ test.describe("Error Handling", () => {
 
     // Filter Tauri-related rejections (expected in browser mode)
     const criticalRejections = rejections.filter(
-      (r) => !r.includes("Tauri") && !r.includes("__TAURI__") && !r.includes("invoke")
+      (r) =>
+        !r.includes("Tauri") &&
+        !r.includes("__TAURI__") &&
+        !r.includes("invoke")
     );
 
     expect(criticalRejections.length).toBe(0);
@@ -100,11 +106,15 @@ test.describe("Error Handling", () => {
 test.describe("UI Components", () => {
   test.beforeEach(async ({ page }) => {
     await page.goto("/");
-    await page.waitForSelector(".editor-container, .app-container", { timeout: 10000 });
+    await page.waitForSelector("[data-testid='app'], .editor-container", {
+      timeout: 10000,
+    });
   });
 
   test("should render tree viewer if present", async ({ page }) => {
-    const treeViewer = page.locator(".tree-viewer, [data-testid='tree-viewer']");
+    const treeViewer = page.locator(
+      ".tree-viewer, [data-testid='tree-viewer']"
+    );
     const count = await treeViewer.count();
     console.log(`Tree viewer elements: ${count}`);
 
@@ -114,13 +124,17 @@ test.describe("UI Components", () => {
   });
 
   test("should render navigation trail if present", async ({ page }) => {
-    const navTrail = page.locator(".navigation-trail, [data-testid='navigation-trail']");
+    const navTrail = page.locator(
+      ".navigation-trail, [data-testid='navigation-trail']"
+    );
     const count = await navTrail.count();
     console.log(`Navigation trail elements: ${count}`);
   });
 
   test("should render view mode toggle if present", async ({ page }) => {
-    const viewToggle = page.locator(".view-mode-toggle, [data-testid='view-mode-toggle']");
+    const viewToggle = page.locator(
+      ".view-mode-toggle, [data-testid='view-mode-toggle']"
+    );
     const count = await viewToggle.count();
     console.log(`View mode toggle elements: ${count}`);
   });
@@ -131,7 +145,9 @@ test.describe("Performance", () => {
     const startTime = Date.now();
 
     await page.goto("/");
-    await page.waitForSelector(".editor-container, .app-container", { timeout: 15000 });
+    await page.waitForSelector("[data-testid='app'], .editor-container", {
+      timeout: 15000,
+    });
 
     const loadTime = Date.now() - startTime;
     console.log(`Page load time: ${loadTime}ms`);
@@ -142,7 +158,9 @@ test.describe("Performance", () => {
 
   test("should not have memory leaks on navigation", async ({ page }) => {
     await page.goto("/");
-    await page.waitForSelector(".editor-container, .app-container", { timeout: 10000 });
+    await page.waitForSelector("[data-testid='app'], .editor-container", {
+      timeout: 10000,
+    });
 
     // Get initial metrics
     const initialMetrics = await page.evaluate(() => {

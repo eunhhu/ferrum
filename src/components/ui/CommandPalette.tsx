@@ -5,13 +5,7 @@
  * Activated with Cmd+Shift+P (Mac) or Ctrl+Shift+P (Windows/Linux)
  */
 
-import {
-  createSignal,
-  createMemo,
-  For,
-  Show,
-  onMount,
-} from "solid-js";
+import { createSignal, createMemo, createEffect, For, Show } from "solid-js";
 import type { Command } from "../../types";
 
 interface CommandPaletteProps {
@@ -38,12 +32,17 @@ export function CommandPalette(props: CommandPaletteProps) {
     });
   });
 
-  // Reset state when opened
-  const handleOpen = () => {
-    setQuery("");
-    setSelectedIndex(0);
-    setTimeout(() => inputRef?.focus(), 0);
-  };
+  // Focus input when palette opens
+  createEffect(() => {
+    if (props.isOpen) {
+      setQuery("");
+      setSelectedIndex(0);
+      // Use requestAnimationFrame for reliable focus after render
+      requestAnimationFrame(() => {
+        inputRef?.focus();
+      });
+    }
+  });
 
   // Handle keyboard navigation
   function handleKeyDown(e: KeyboardEvent) {
@@ -79,13 +78,6 @@ export function CommandPalette(props: CommandPaletteProps) {
     setQuery(target.value);
     setSelectedIndex(0);
   };
-
-  // Focus input when opened
-  onMount(() => {
-    if (props.isOpen) {
-      handleOpen();
-    }
-  });
 
   return (
     <Show when={props.isOpen}>

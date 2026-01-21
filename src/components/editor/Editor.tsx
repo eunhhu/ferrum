@@ -450,8 +450,9 @@ export function Editor(props: EditorProps) {
 
   // Expose scrollToLine for parent components via window
   if (typeof window !== "undefined") {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (window as any).__ferrum_editor_scrollToLine = scrollToLine;
+    (
+      window as { __ferrum_editor_scrollToLine?: typeof scrollToLine }
+    ).__ferrum_editor_scrollToLine = scrollToLine;
   }
 
   // Calculate cursor position from mouse event

@@ -72,3 +72,61 @@ impl CollabSession {
     self.operations.read().clone()
   }
 }
+
+#[cfg(test)]
+mod tests {
+  use super::*;
+  use ferrum_core::id::PeerId;
+
+  #[test]
+  fn test_create_host_session() {
+    let session = CollabSession::create_host("Host User");
+
+    assert!(session.local_peer().is_host);
+    assert_eq!(session.local_peer().name, "Host User");
+    assert!(session.peers().is_empty());
+  }
+
+  #[test]
+  fn test_join_session() {
+    let session = CollabSession::join("Guest User");
+
+    assert!(!session.local_peer().is_host);
+    assert_eq!(session.local_peer().name, "Guest User");
+  }
+
+  #[test]
+  fn test_add_and_remove_peer() {
+    let session = CollabSession::create_host("Host");
+    let peer = Peer::new("Guest", false);
+    let peer_id = peer.id;
+
+    session.add_peer(peer);
+    assert_eq!(session.peers().len(), 1);
+
+    session.remove_peer(&peer_id);
+    assert!(session.peers().is_empty());
+  }
+
+  #[test]
+  fn test_apply_operations() {
+    let session = CollabSession::create_host("Host");
+    let peer_id = PeerId::new();
+
+    let op1 = Operation::insert(peer_id, 0, "Hello".to_string());
+    let op2 = Operation::insert(peer_id, 5, " World".to_string());
+
+    session.apply_operation(op1);
+    session.apply_operation(op2);
+
+    assert_eq!(session.operations().len(), 2);
+  }
+
+  #[test]
+  fn test_session_has_unique_id() {
+    let session1 = CollabSession::create_host("Host1");
+    let session2 = CollabSession::create_host("Host2");
+
+    assert_ne!(session1.id(), session2.id());
+  }
+}

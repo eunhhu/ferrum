@@ -1,6 +1,6 @@
 /**
  * Editor Component Types
- * 
+ *
  * Centralized type definitions for the editor system.
  */
 
@@ -13,11 +13,13 @@ export const EDITOR_CONFIG = {
   GUTTER_WIDTH: 50,
   CONTENT_PADDING: 10,
   HIGHLIGHT_DEBOUNCE_MS: 100,
-  FONT_FAMILY: "'Fira Code', 'JetBrains Mono', Menlo, Monaco, 'Courier New', monospace",
+  FONT_FAMILY:
+    "'Fira Code', 'JetBrains Mono', Menlo, Monaco, 'Courier New', monospace",
   FONT_SIZE: 13,
 } as const;
 
-export const LEFT_OFFSET = EDITOR_CONFIG.GUTTER_WIDTH + EDITOR_CONFIG.CONTENT_PADDING;
+export const LEFT_OFFSET =
+  EDITOR_CONFIG.GUTTER_WIDTH + EDITOR_CONFIG.CONTENT_PADDING;
 
 // Cursor position in the editor
 export interface Cursor {
@@ -42,8 +44,8 @@ export interface EditorState {
 export interface EditorProps {
   bufferId: string;
   content: string;
-  language?: string;
-  readOnly?: boolean;
+  language?: string | undefined;
+  readOnly?: boolean | undefined;
   onContentChange?: (content: string) => void;
   onCursorChange?: (line: number, column: number) => void;
   onScrollChange?: (scrollTop: number, visibleStartLine: number) => void;

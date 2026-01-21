@@ -8,7 +8,7 @@
  * - Peek View (inline definition preview)
  */
 
-import { createSignal, createEffect, onCleanup, Show, batch } from "solid-js";
+import { createSignal, createEffect, onCleanup, Show } from "solid-js";
 import { Editor } from "./Editor";
 import { HoverTooltip } from "./HoverTooltip";
 import { Autocomplete } from "./Autocomplete";
@@ -32,15 +32,13 @@ export function EditorWithFeatures(props: EditorWithFeaturesProps) {
   const [cursorLine, setCursorLine] = createSignal(0);
   const [cursorColumn, setCursorColumn] = createSignal(0);
   const [scrollTop, setScrollTop] = createSignal(0);
-  const [scrollLeft, setScrollLeft] = createSignal(0);
+  const [scrollLeft] = createSignal(0);
   const [selectedText, setSelectedText] = createSignal("");
 
   // Hover tooltip state
   const [hoverVisible, setHoverVisible] = createSignal(false);
   const [hoverContent, setHoverContent] = createSignal<string | null>(null);
   const [hoverPosition, setHoverPosition] = createSignal({ x: 0, y: 0 });
-  const [hoverLine, setHoverLine] = createSignal(0);
-  const [hoverColumn, setHoverColumn] = createSignal(0);
 
   // Autocomplete state
   const [autocompleteVisible, setAutocompleteVisible] = createSignal(false);
@@ -51,7 +49,6 @@ export function EditorWithFeatures(props: EditorWithFeaturesProps) {
     x: 0,
     y: 0,
   });
-  const [triggerChar, setTriggerChar] = createSignal("");
 
   // Context action palette state
   const [contextMenuVisible, setContextMenuVisible] = createSignal(false);
@@ -115,7 +112,6 @@ export function EditorWithFeatures(props: EditorWithFeaturesProps) {
       charBeforeCursor === "(" ||
       /[a-zA-Z]/.test(charBeforeCursor)
     ) {
-      setTriggerChar(charBeforeCursor);
       scheduleAutocomplete();
     } else {
       setAutocompleteVisible(false);
@@ -149,8 +145,6 @@ export function EditorWithFeatures(props: EditorWithFeaturesProps) {
       if (result && result.contents) {
         setHoverContent(result.contents);
         setHoverPosition({ x, y: y + LINE_HEIGHT });
-        setHoverLine(line);
-        setHoverColumn(column);
         setHoverVisible(true);
       } else {
         setHoverVisible(false);
