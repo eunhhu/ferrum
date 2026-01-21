@@ -10,7 +10,7 @@
  */
 
 import { createSignal, Show, For } from "solid-js";
-import { useAi } from "./AiProvider";
+import { useAi, AI_MODELS } from "./AiProvider";
 
 export interface AiAction {
   id: string;
@@ -140,7 +140,10 @@ export function AiContextActions(props: AiContextActionsProps) {
     setSelectedAction(action.id);
 
     try {
-      const response = await action.action(props.selectedCode, props.errorMessage);
+      const response = await action.action(
+        props.selectedCode,
+        props.errorMessage
+      );
       setResult(response);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to process request");
@@ -154,7 +157,7 @@ export function AiContextActions(props: AiContextActionsProps) {
     if (code) {
       // Extract code from markdown code blocks if present
       const codeMatch = code.match(/```\w*\n([\s\S]*?)```/);
-      props.onApply(codeMatch ? codeMatch[1].trim() : code.trim());
+      props.onApply(codeMatch ? (codeMatch[1] ?? "").trim() : code.trim());
     }
   };
 
@@ -167,7 +170,10 @@ export function AiContextActions(props: AiContextActionsProps) {
     };
 
     for (const action of actions) {
-      groups[action.category].push(action);
+      const category = groups[action.category];
+      if (category) {
+        category.push(action);
+      }
     }
 
     return groups;
@@ -214,7 +220,9 @@ export function AiContextActions(props: AiContextActionsProps) {
                     >
                       <span class="text-lg">{action.icon}</span>
                       <div class="flex-1 min-w-0">
-                        <div class="text-sm text-text-primary">{action.label}</div>
+                        <div class="text-sm text-text-primary">
+                          {action.label}
+                        </div>
                         <div class="text-xs text-text-tertiary truncate">
                           {action.description}
                         </div>
@@ -276,7 +284,8 @@ export function AiContextActions(props: AiContextActionsProps) {
 
       {/* Footer */}
       <div class="px-3 py-2 border-t border-border bg-bg-secondary/50 text-[10px] text-text-quaternary">
-        Powered by {AI_MODELS.find((m) => m.id === ai.state.selectedModel)?.name || "AI"}
+        Powered by{" "}
+        {AI_MODELS.find((m) => m.id === ai.state.selectedModel)?.name || "AI"}
       </div>
     </div>
   );

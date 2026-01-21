@@ -9,8 +9,6 @@
  */
 
 import { createSignal, createEffect, For, Show, onCleanup } from "solid-js";
-import { lspDocumentSymbols, type LspSymbolInfo } from "../../ipc/commands";
-import { isTauriEnvironment } from "../../ipc/tauri-check";
 
 interface ErrorFlowNode {
   id: string;
@@ -75,7 +73,11 @@ export function ErrorFlowVisualization(props: ErrorFlowProps) {
         const trimmed = line.trim();
 
         // Detect try blocks
-        if (/\btry\s*\{/.test(trimmed) || trimmed === "try {" || trimmed === "try") {
+        if (
+          /\btry\s*\{/.test(trimmed) ||
+          trimmed === "try {" ||
+          trimmed === "try"
+        ) {
           const id = `try-${nodeId++}`;
           tryStack.push({ line: lineIdx, id });
           nodes.push({
@@ -98,23 +100,26 @@ export function ErrorFlowVisualization(props: ErrorFlowProps) {
             line: lineIdx,
             column: line.indexOf("catch"),
             name: catchMatch[1] || "error",
-            parentId: tryBlock?.id,
+            ...(tryBlock?.id ? { parentId: tryBlock.id } : {}),
           });
         }
 
         // Detect throw statements
-        const throwMatch = trimmed.match(/\bthrow\s+(?:new\s+)?(\w+)?\s*\(?\s*['""]?([^'""\)]*)?/);
+        const throwMatch = trimmed.match(
+          /\bthrow\s+(?:new\s+)?(\w+)?\s*\(?\s*['""]?([^'""\)]*)?/
+        );
         if (throwMatch) {
           const id = `throw-${nodeId++}`;
           const currentTry = tryStack[tryStack.length - 1];
+          const messageVal = throwMatch[2]?.trim();
           nodes.push({
             id,
             type: "throw",
             line: lineIdx,
             column: line.indexOf("throw"),
             name: throwMatch[1] || "Error",
-            message: throwMatch[2]?.trim(),
-            parentId: currentTry?.id,
+            ...(messageVal ? { message: messageVal } : {}),
+            ...(currentTry?.id ? { parentId: currentTry.id } : {}),
           });
         }
 
@@ -181,23 +186,10 @@ export function ErrorFlowVisualization(props: ErrorFlowProps) {
     }
   };
 
-  const getNodeIcon = (type: ErrorFlowNode["type"]): string => {
-    switch (type) {
-      case "throw":
-        return "🔴";
-      case "propagate":
-        return "🟡";
-      case "catch":
-        return "🟢";
-      case "try":
-        return "🔵";
-      default:
-        return "⚪";
-    }
-  };
-
   const isNodeVisible = (node: ErrorFlowNode): boolean => {
-    return node.line >= props.visibleStartLine && node.line <= props.visibleEndLine;
+    return (
+      node.line >= props.visibleStartLine && node.line <= props.visibleEndLine
+    );
   };
 
   const getRelatedNodes = (nodeId: string): ErrorFlowNode[] => {
@@ -269,7 +261,13 @@ export function ErrorFlowVisualization(props: ErrorFlowProps) {
                   class={`w-4 h-4 flex items-center justify-center rounded-full text-[10px] ${getNodeColor(node.type)} text-white`}
                   title={`${node.type}: ${node.name}${node.message ? ` - ${node.message}` : ""}`}
                 >
-                  {node.type === "throw" ? "!" : node.type === "catch" ? "✓" : node.type === "try" ? "T" : "?"}
+                  {node.type === "throw"
+                    ? "!"
+                    : node.type === "catch"
+                      ? "✓"
+                      : node.type === "try"
+                        ? "T"
+                        : "?"}
                 </span>
               </div>
             );
@@ -278,22 +276,36 @@ export function ErrorFlowVisualization(props: ErrorFlowProps) {
 
         {/* Connection lines between related nodes */}
         <svg class="absolute inset-0 w-full h-full overflow-visible pointer-events-none">
-          <For each={errorNodes().filter((n) => n.parentId && isNodeVisible(n))}>
+          <For
+            each={errorNodes().filter((n) => n.parentId && isNodeVisible(n))}
+          >
             {(node) => {
               const parent = errorNodes().find((n) => n.id === node.parentId);
               if (!parent) return null;
 
-              const y1 = (parent.line - props.visibleStartLine) * props.lineHeight + props.lineHeight / 2;
-              const y2 = (node.line - props.visibleStartLine) * props.lineHeight + props.lineHeight / 2;
+              const y1 =
+                (parent.line - props.visibleStartLine) * props.lineHeight +
+                props.lineHeight / 2;
+              const y2 =
+                (node.line - props.visibleStartLine) * props.lineHeight +
+                props.lineHeight / 2;
               const isHighlighted = isNodeHighlighted(node);
 
               return (
                 <path
                   d={`M 16 ${y1} C 8 ${y1}, 8 ${y2}, 16 ${y2}`}
                   fill="none"
-                  stroke={node.type === "catch" ? "#22c55e" : node.type === "throw" ? "#ef4444" : "#eab308"}
+                  stroke={
+                    node.type === "catch"
+                      ? "#22c55e"
+                      : node.type === "throw"
+                        ? "#ef4444"
+                        : "#eab308"
+                  }
                   stroke-width={isHighlighted ? 2 : 1}
-                  stroke-dasharray={node.type === "propagate" ? "4,2" : undefined}
+                  stroke-dasharray={
+                    node.type === "propagate" ? "4,2" : undefined
+                  }
                   class="transition-all duration-150"
                   classList={{
                     "opacity-60": isHighlighted,
@@ -319,13 +331,19 @@ export function ErrorFlowVisualization(props: ErrorFlowProps) {
                 style={{ top: `${y}px` }}
               >
                 <div class="flex items-center gap-2 mb-1">
-                  <span class={`w-2 h-2 rounded-full ${getNodeColor(node.type)}`} />
-                  <span class="font-medium text-text-primary capitalize">{node.type}</span>
+                  <span
+                    class={`w-2 h-2 rounded-full ${getNodeColor(node.type)}`}
+                  />
+                  <span class="font-medium text-text-primary capitalize">
+                    {node.type}
+                  </span>
                   <span class="text-text-tertiary">Line {node.line + 1}</span>
                 </div>
                 <div class="text-text-secondary font-mono">{node.name}</div>
                 <Show when={node.message}>
-                  <div class="text-text-tertiary mt-1 truncate">"{node.message}"</div>
+                  <div class="text-text-tertiary mt-1 truncate">
+                    "{node.message}"
+                  </div>
                 </Show>
                 <Show when={node.parentId}>
                   <div class="text-text-quaternary mt-1 text-[10px]">

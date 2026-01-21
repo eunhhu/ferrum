@@ -8,7 +8,7 @@
  * - Token usage tracking
  */
 
-import { createContext, useContext, createSignal, ParentComponent, Show } from "solid-js";
+import { createContext, useContext, ParentComponent } from "solid-js";
 import { createStore } from "solid-js/store";
 
 // AI Model definitions
@@ -113,7 +113,11 @@ interface AiContextType {
   setApiKey: (key: string) => void;
   selectModel: (modelId: string) => void;
   sendMessage: (message: string, options?: AiRequestOptions) => Promise<string>;
-  streamMessage: (message: string, options?: AiRequestOptions, onChunk?: (chunk: string) => void) => Promise<string>;
+  streamMessage: (
+    message: string,
+    options?: AiRequestOptions,
+    onChunk?: (chunk: string) => void
+  ) => Promise<string>;
   clearHistory: () => void;
   getCodeSuggestion: (code: string, instruction: string) => Promise<string>;
   explainCode: (code: string) => Promise<string>;
@@ -163,28 +167,39 @@ export const AiProvider: ParentComponent = (props) => {
     const modelInfo = AI_MODELS.find((m) => m.id === model) || AI_MODELS[0];
 
     const requestMessages = options.systemPrompt
-      ? [{ role: "system" as const, content: options.systemPrompt }, ...messages]
+      ? [
+          { role: "system" as const, content: options.systemPrompt },
+          ...messages,
+        ]
       : messages;
 
-    const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${state.apiKey}`,
-        "HTTP-Referer": "https://ferrum.ide",
-        "X-Title": "Ferrum IDE",
-      },
-      body: JSON.stringify({
-        model,
-        messages: requestMessages.map((m) => ({ role: m.role, content: m.content })),
-        temperature: options.temperature ?? 0.7,
-        max_tokens: options.maxTokens ?? 4096,
-        stream: options.stream ?? false,
-      }),
-    });
+    const response = await fetch(
+      "https://openrouter.ai/api/v1/chat/completions",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${state.apiKey}`,
+          "HTTP-Referer": "https://ferrum.ide",
+          "X-Title": "Ferrum IDE",
+        },
+        body: JSON.stringify({
+          model,
+          messages: requestMessages.map((m) => ({
+            role: m.role,
+            content: m.content,
+          })),
+          temperature: options.temperature ?? 0.7,
+          max_tokens: options.maxTokens ?? 4096,
+          stream: options.stream ?? false,
+        }),
+      }
+    );
 
     if (!response.ok) {
-      const error = await response.json().catch(() => ({ error: { message: response.statusText } }));
+      const error = await response
+        .json()
+        .catch(() => ({ error: { message: response.statusText } }));
       throw new Error(error.error?.message || "Failed to call OpenRouter API");
     }
 
@@ -195,8 +210,9 @@ export const AiProvider: ParentComponent = (props) => {
       completionTokens: data.usage?.completion_tokens || 0,
       totalTokens: data.usage?.total_tokens || 0,
       estimatedCost:
-        ((data.usage?.prompt_tokens || 0) * modelInfo.costPer1kInput +
-          (data.usage?.completion_tokens || 0) * modelInfo.costPer1kOutput) /
+        ((data.usage?.prompt_tokens || 0) * (modelInfo?.costPer1kInput ?? 0) +
+          (data.usage?.completion_tokens || 0) *
+            (modelInfo?.costPer1kOutput ?? 0)) /
         1000,
     };
 
@@ -206,7 +222,10 @@ export const AiProvider: ParentComponent = (props) => {
     };
   };
 
-  const sendMessage = async (message: string, options: AiRequestOptions = {}): Promise<string> => {
+  const sendMessage = async (
+    message: string,
+    options: AiRequestOptions = {}
+  ): Promise<string> => {
     setState("isLoading", true);
     setState("error", null);
 
@@ -249,7 +268,7 @@ export const AiProvider: ParentComponent = (props) => {
   const streamMessage = async (
     message: string,
     options: AiRequestOptions = {},
-    onChunk?: (chunk: string) => void
+    _onChunk?: (chunk: string) => void
   ): Promise<string> => {
     // For now, just use non-streaming
     // Full streaming implementation would require SSE handling
@@ -257,7 +276,10 @@ export const AiProvider: ParentComponent = (props) => {
   };
 
   // Convenience methods for common AI tasks
-  const getCodeSuggestion = async (code: string, instruction: string): Promise<string> => {
+  const getCodeSuggestion = async (
+    code: string,
+    instruction: string
+  ): Promise<string> => {
     const prompt = `Given the following code:
 
 \`\`\`
@@ -269,7 +291,8 @@ ${instruction}
 Provide only the modified code without explanations.`;
 
     return sendMessage(prompt, {
-      systemPrompt: "You are a helpful coding assistant. Provide concise, high-quality code modifications.",
+      systemPrompt:
+        "You are a helpful coding assistant. Provide concise, high-quality code modifications.",
       temperature: 0.3,
     });
   };
@@ -288,12 +311,16 @@ Provide a clear, concise explanation of what this code does, including:
 4. Potential improvements (if any)`;
 
     return sendMessage(prompt, {
-      systemPrompt: "You are a helpful coding tutor. Explain code clearly and thoroughly.",
+      systemPrompt:
+        "You are a helpful coding tutor. Explain code clearly and thoroughly.",
       temperature: 0.5,
     });
   };
 
-  const generateCode = async (description: string, language: string): Promise<string> => {
+  const generateCode = async (
+    description: string,
+    language: string
+  ): Promise<string> => {
     const prompt = `Generate ${language} code for the following:
 
 ${description}
@@ -319,7 +346,8 @@ ${error}
 Provide the corrected code and a brief explanation of the fix.`;
 
     return sendMessage(prompt, {
-      systemPrompt: "You are a debugging expert. Fix code errors efficiently and explain the solution.",
+      systemPrompt:
+        "You are a debugging expert. Fix code errors efficiently and explain the solution.",
       temperature: 0.3,
     });
   };
@@ -337,7 +365,11 @@ Provide the corrected code and a brief explanation of the fix.`;
     fixError,
   };
 
-  return <AiContext.Provider value={contextValue}>{props.children}</AiContext.Provider>;
+  return (
+    <AiContext.Provider value={contextValue}>
+      {props.children}
+    </AiContext.Provider>
+  );
 };
 
 export const useAi = () => {

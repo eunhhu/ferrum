@@ -8,7 +8,7 @@
 | Phase 2: Core DX | ✅ 완료 | 100% |
 | Phase 3: Visual | ✅ 완료 | 100% |
 | Phase 4: Advanced | ✅ 완료 | 100% |
-| Phase 5: AI | 🔲 대기 | 0% |
+| Phase 5: AI | ✅ 완료 | 100% |
 
 ---
 
@@ -61,7 +61,8 @@
 
 ### Context Action Palette
 - **컨텍스트 기반 액션**: 현재 위치에 따른 액션 제안 (`src/components/editor/ContextActionPalette.tsx`)
-- **키보드 탐색**: 화살표 키, Enter, Escape
+- **키보드 탐색**: 화살표 키, Enter, Escape, Tab 완성
+- **AI 통합**: AI 기반 코드 액션 (설명, 개선, 타입 추가, 테스트 생성 등)
 
 ### Peek View
 - **정의 미리보기**: 파일 이동 없이 코드 확인 (`src/components/editor/PeekView.tsx`)
@@ -129,16 +130,47 @@
 - **런타임 기반**: 플러그인 활성화/비활성화 (`crates/ferrum_plugin/src/runtime.rs`)
 - **API 정의**: 플러그인에서 사용 가능한 API 인터페이스 (`crates/ferrum_plugin/src/api.rs`)
 
-> Note: Plugin System은 기본 구조가 구현되었으며, QuickJS/WASM 런타임 통합은 Phase 5에서 완료 예정
-
 ---
 
-## 🔲 Phase 5: AI (대기)
+## ✅ Phase 5: AI (완료)
 
-- [ ] OpenRouter SDK 연동
-- [ ] 로컬 오픈소스 모델 연동
-- [ ] Context Action Palette AI 통합
-- [ ] Plugin System 런타임 완성 (QuickJS/WASM)
+### OpenRouter SDK 연동
+- **AI Provider**: OpenRouter API 통합 (`src/components/ai/AiProvider.tsx`)
+- **멀티 모델 지원**: Claude, GPT-4, Gemini, Llama 등 6개 모델
+- **사용량 추적**: 토큰 사용량 및 예상 비용 계산
+- **대화 기록**: 세션 내 대화 기록 유지
+
+### 로컬 오픈소스 모델 연동 (Ollama)
+- **Local AI Provider**: Ollama 통합 (`src/components/ai/LocalAiProvider.tsx`)
+- **모델 관리**: 설치된 모델 목록, 다운로드, 삭제
+- **추천 모델**: CodeLlama, DeepSeek Coder, Qwen Coder 등
+- **스트리밍 응답**: 실시간 응답 스트리밍 지원
+- **오프라인 지원**: 인터넷 없이 로컬에서 AI 사용
+
+### AI 채팅 패널
+- **Cloud AI Panel**: OpenRouter 기반 채팅 (`src/components/ai/AiChatPanel.tsx`)
+- **Local AI Panel**: Ollama 기반 채팅 (`src/components/ai/LocalAiPanel.tsx`)
+- **Unified AI Panel**: Cloud/Local 전환 가능한 통합 패널 (`src/components/ai/UnifiedAiPanel.tsx`)
+- **코드 블록 렌더링**: 마크다운 코드 블록 파싱 및 Insert 버튼
+- **선택 코드 첨부**: 에디터에서 선택한 코드를 컨텍스트로 전달
+
+### Context Action Palette AI 통합
+- **AI 컨텍스트 액션**: 선택 코드에 대한 AI 액션 (`src/components/ai/AiContextActions.tsx`)
+- **Context Action Palette 통합**: AI 액션이 Context Action Palette에 통합
+- **지원 액션**:
+  - 코드 설명 (Explain Code)
+  - 코드 개선 (Improve Code)
+  - 에러 수정 (Fix Error)
+  - TypeScript 타입 추가 (Add Types)
+  - 주석 추가 (Add Comments)
+  - 코드 간소화 (Simplify)
+  - 테스트 생성 (Generate Tests)
+  - 디버그 로깅 추가 (Add Debug Logging)
+
+### Combined AI Provider
+- **통합 인터페이스**: Cloud/Local AI를 하나의 인터페이스로 (`src/components/ai/CombinedAiProvider.tsx`)
+- **모드 전환**: 사용자가 Cloud/Local 모드 선택 가능
+- **공통 메서드**: `sendMessage`, `streamMessage`, `getCodeSuggestion`, `explainCode`, `fixError`
 
 ---
 
@@ -177,7 +209,15 @@ ferrum/
 │   │   ├── visual/        # 비주얼 코딩
 │   │   ├── preview/       # 컴파일 미리보기
 │   │   ├── panels/        # 패널 컴포넌트 (Env Manager 등)
-│   │   └── ai/            # AI 관련 컴포넌트 (Phase 5)
+│   │   └── ai/            # AI 관련 컴포넌트
+│   │       ├── AiProvider.tsx         # OpenRouter 통합
+│   │       ├── LocalAiProvider.tsx    # Ollama 통합
+│   │       ├── CombinedAiProvider.tsx # 통합 Provider
+│   │       ├── AiChatPanel.tsx        # Cloud AI 채팅
+│   │       ├── LocalAiPanel.tsx       # Local AI 채팅
+│   │       ├── UnifiedAiPanel.tsx     # 통합 AI 패널
+│   │       ├── AiContextActions.tsx   # AI 컨텍스트 액션
+│   │       └── index.ts               # 모듈 exports
 │   └── ipc/               # IPC 명령어
 ├── src-tauri/             # Tauri 백엔드
 ├── e2e/                   # E2E 테스트
@@ -188,21 +228,22 @@ ferrum/
 
 ## 🚀 다음 단계 권장사항
 
-### 즉시 (Phase 5 시작)
-1. **AI 통합**: OpenRouter SDK 연동
-2. **로컬 AI**: 오픈소스 모델 통합 (ollama 등)
-3. **Context Action AI**: 스마트 제안 기능
-
 ### 단기 (Plugin System 완성)
-1. **QuickJS 런타임**: JavaScript 플러그인 실행
+1. **QuickJS/WASM 런타임**: JavaScript 플러그인 실행 환경
 2. **Plugin Marketplace**: 플러그인 검색/설치 UI
-3. **Plugin API 확장**: 더 많은 기능 노출
+3. **Plugin API 확장**: 더 많은 에디터 기능 노출
 
 ### 중기 (품질 개선)
-1. **성능 최적화**: 대용량 파일 처리
+1. **성능 최적화**: 대용량 파일 처리 개선
 2. **테스트 커버리지**: 단위/통합 테스트 확대
 3. **문서화**: API 문서 및 사용자 가이드
+4. **AI 스트리밍**: OpenRouter 스트리밍 응답 완성
+
+### 장기 (생태계 확장)
+1. **Mobile 지원**: 클라우드 기반 모바일 버전
+2. **테마 시스템**: 커스텀 테마 지원
+3. **협업 기능**: 실시간 협업 편집
 
 ---
 
-*마지막 업데이트: 2026-01-18*
+*마지막 업데이트: 2026-01-21*

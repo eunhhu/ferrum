@@ -163,7 +163,7 @@ export function InlineBlame(props: InlineBlameProps) {
                   {/* Compact view */}
                   <Show when={hoveredLine() !== lineNumber}>
                     <span class="text-text-tertiary opacity-50 hover:opacity-80 transition-opacity cursor-default font-mono text-[10px]">
-                      {blame()!.author.split(" ")[0].slice(0, 12)},{" "}
+                      {blame()!.author.split(" ")[0]?.slice(0, 12) ?? ""},{" "}
                       {formatTime(blame()!.time)}
                     </span>
                   </Show>

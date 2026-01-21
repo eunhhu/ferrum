@@ -1,7 +1,7 @@
 import { Show } from "solid-js";
 import { editorStore } from "../../stores";
 import { EditorTabs } from "../editor/EditorTabs";
-import { Editor } from "../editor/Editor";
+import { EditorWithFeatures } from "../editor/EditorWithFeatures";
 
 export function EditorArea() {
   const { tabs, getActiveTab, updateContent, setCursorPosition } = editorStore;
@@ -24,10 +24,11 @@ export function EditorArea() {
         <div class="flex-1 overflow-hidden">
           <Show when={getActiveTab()}>
             {(tab) => (
-              <Editor
+              <EditorWithFeatures
                 bufferId={tab().bufferId || tab().id}
                 content={tab().content || ""}
                 language={tab().language}
+                filePath={tab().filePath}
                 onContentChange={(content) => {
                   updateContent(tab().id, content);
                 }}

@@ -1,6 +1,6 @@
 /**
  * TextMeasurer Utility
- * 
+ *
  * Uses an offscreen canvas to accurately measure text width, ensuring
  * proper cursor positioning even for variable-width fonts and CJK characters.
  */
@@ -8,7 +8,8 @@
 export class TextMeasurer {
   private canvas: HTMLCanvasElement;
   private ctx: CanvasRenderingContext2D;
-  private font: string = "13px 'Fira Code', 'JetBrains Mono', Menlo, Monaco, 'Courier New', monospace";
+  private font: string =
+    "13px 'Fira Code', 'JetBrains Mono', Menlo, Monaco, 'Courier New', monospace";
 
   constructor() {
     this.canvas = document.createElement("canvas");
@@ -33,20 +34,27 @@ export class TextMeasurer {
    */
   measureCursorIndex(text: string, clientX: number): number {
     this.ctx.font = this.font;
-    
+
+    // Handle edge case: negative or zero clientX
+    if (clientX <= 0) {
+      return 0;
+    }
+
     // Simple approach: find the character index where x is closest
     let lastWidth = 0;
     for (let i = 0; i <= text.length; i++) {
-        const width = this.ctx.measureText(text.substring(0, i)).width;
-        if (width > clientX) {
-            // Check if we are closer to i-1 or i
-            if (clientX - lastWidth < width - clientX) {
-                return i - 1;
-            } else {
-                return i;
-            }
+      const width = this.ctx.measureText(text.substring(0, i)).width;
+      if (width > clientX) {
+        // Check if we are closer to i-1 or i
+        const prevDist = clientX - lastWidth;
+        const nextDist = width - clientX;
+        if (prevDist < nextDist && i > 0) {
+          return i - 1;
+        } else {
+          return i;
         }
-        lastWidth = width;
+      }
+      lastWidth = width;
     }
 
     return text.length;
