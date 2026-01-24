@@ -2,20 +2,27 @@
 
 A high-performance code editor built with Tauri 2.0 + SolidJS + Rust.
 
+## Features
+
+- **Custom Editor Engine** - Rope-based text buffer with tree-sitter parsing
+- **Multi-language LSP** - TypeScript, Rust, Python, Go, and more
+- **Tree Viewer** - Figma-style depth-based code navigation
+- **Visual Coding** - Node-based code visualization
+- **AI Integration** - OpenRouter (cloud) and Ollama (local) support
+
 ## Prerequisites
 
-- [Bun](https://bun.sh/) (recommended runtime)
-- [Rust](https://rustup.rs/) (stable)
-- Platform-specific dependencies for Tauri
+- [Bun](https://bun.sh/) - JavaScript runtime
+- [Rust](https://rustup.rs/) - Stable toolchain
 
-### macOS
+### Platform Dependencies
 
+**macOS**
 ```bash
 xcode-select --install
 ```
 
-### Ubuntu/Debian
-
+**Ubuntu/Debian**
 ```bash
 sudo apt-get update
 sudo apt-get install -y libwebkit2gtk-4.1-dev build-essential curl wget file \
@@ -25,44 +32,22 @@ sudo apt-get install -y libwebkit2gtk-4.1-dev build-essential curl wget file \
 ## Getting Started
 
 ```bash
-# Install dependencies
 bun install
-
-# Run development server
 bun run dev
-
-# Build for production
-bun run build
 ```
 
-## Development Commands
+## Commands
 
-### Frontend
-
-```bash
-bun run typecheck    # TypeScript type checking
-bun run lint         # Lint with Biome
-bun run lint:fix     # Fix lint issues
-bun run format       # Format code with Biome
-bun run test         # Run tests in watch mode
-bun run test:run     # Run tests once
-bun run test:coverage # Run tests with coverage
-```
-
-### Backend (Rust)
-
-```bash
-bun run rust:check   # cargo check
-bun run rust:clippy  # cargo clippy with warnings as errors
-bun run rust:test    # cargo test
-bun run rust:fmt     # cargo fmt
-```
-
-### Full Check
-
-```bash
-bun run check:all    # TypeScript + Biome + Clippy
-```
+| Command | Description |
+|---------|-------------|
+| `bun run dev` | Start development server |
+| `bun run build` | Production build |
+| `bun run typecheck` | TypeScript check |
+| `bun run lint` | Lint with Biome |
+| `bun run test:run` | Run tests |
+| `bun run rust:check` | Cargo check |
+| `bun run rust:test` | Cargo test |
+| `bun run check:all` | Full check (TS + Biome + Clippy) |
 
 ## Project Structure
 
@@ -70,24 +55,14 @@ bun run check:all    # TypeScript + Biome + Clippy
 ferrum/
 ├── src/              # Frontend (SolidJS/TypeScript)
 ├── src-tauri/        # Tauri application
-│   └── crates/       # Rust workspace crates
-│       ├── ferrum_core/
-│       ├── ferrum_buffer/
-│       ├── ferrum_editor/
-│       ├── ferrum_lsp/
-│       └── ...
+│   └── crates/       # Rust workspace
 ├── tests/            # E2E tests (Playwright)
-└── .vscode/          # VS Code configuration
+└── docs/             # Documentation
 ```
 
-## IDE Setup
+## Documentation
 
-VS Code is recommended with the following extensions:
-- [Tauri](https://marketplace.visualstudio.com/items?itemName=tauri-apps.tauri-vscode)
-- [rust-analyzer](https://marketplace.visualstudio.com/items?itemName=rust-lang.rust-analyzer)
-- [Biome](https://marketplace.visualstudio.com/items?itemName=biomejs.biome)
-
-Debug configurations are provided in `.vscode/launch.json`.
+See [docs/README.md](./docs/README.md) for detailed documentation.
 
 ## License
 

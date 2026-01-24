@@ -21,35 +21,33 @@ Ferrum IDE 개발에 기여하기 위한 가이드입니다.
 
 | 도구 | 버전 | 설명 |
 |------|------|------|
-| **Node.js** | v18+ | 프론트엔드 빌드 |
+| **Bun** | 최신 | JavaScript 런타임 |
 | **Rust** | stable (최신) | 백엔드 개발 |
 | **Tauri CLI** | v2 | 데스크톱 앱 빌드 |
-| **pnpm** (권장) | 최신 | 패키지 매니저 |
 
 ### 설치
 
 ```bash
 # 저장소 클론
-git clone https://github.com/[repo]/ferrum.git
+git clone https://github.com/anthropics/ferrum.git
 cd ferrum
 
 # 의존성 설치
-npm install
+bun install
 
 # Rust 툴체인 확인
 rustup update stable
 
 # 개발 서버 시작
-npm run dev
+bun run dev
 ```
 
 ### 권장 IDE 설정
 
-**VS Code / Cursor 사용 시:**
-- rust-analyzer 확장
-- ESLint 확장
-- Prettier 확장
-- Tauri 확장
+**VS Code 사용 시:**
+- rust-analyzer
+- Biome
+- Tauri
 
 ---
 
@@ -59,38 +57,46 @@ npm run dev
 
 | 스크립트 | 명령어 | 설명 |
 |---------|--------|------|
-| `dev` | `npm run dev` | Tauri 개발 서버 (핫 리로드) |
-| `vite` | `npm run vite` | Vite 개발 서버만 (프론트엔드) |
+| `dev` | `bun run dev` | Tauri 개발 서버 (핫 리로드) |
+| `vite` | `bun run vite` | Vite 개발 서버만 (프론트엔드) |
 
 ### 빌드
 
 | 스크립트 | 명령어 | 설명 |
 |---------|--------|------|
-| `build` | `npm run build` | Tauri 프로덕션 빌드 |
-| `vite:build` | `npm run vite:build` | Vite 프로덕션 빌드 |
-| `vite:preview` | `npm run vite:preview` | 빌드 결과 미리보기 |
+| `build` | `bun run build` | Tauri 프로덕션 빌드 |
+| `vite:build` | `bun run vite:build` | Vite 프로덕션 빌드 |
+| `vite:preview` | `bun run vite:preview` | 빌드 결과 미리보기 |
 
 ### 코드 품질
 
 | 스크립트 | 명령어 | 설명 |
 |---------|--------|------|
-| `lint` | `npm run lint` | ESLint 코드 검사 |
-| `lint:fix` | `npm run lint:fix` | ESLint 자동 수정 |
-| `format` | `npm run format` | Prettier 포맷팅 |
-| `format:check` | `npm run format:check` | 포맷팅 검사 |
-| `typecheck` | `npm run typecheck` | TypeScript 타입 검사 |
-| `check` | `npm run check` | typecheck + lint + format 전체 검사 |
+| `lint` | `bun run lint` | Biome 코드 검사 |
+| `lint:fix` | `bun run lint:fix` | Biome 자동 수정 |
+| `format` | `bun run format` | Biome 포맷팅 |
+| `typecheck` | `bun run typecheck` | TypeScript 타입 검사 |
+| `check` | `bun run check` | typecheck + biome 전체 검사 |
 
 ### 테스트
 
 | 스크립트 | 명령어 | 설명 |
 |---------|--------|------|
-| `test` | `npm run test` | Vitest 테스트 (watch 모드) |
-| `test:run` | `npm run test:run` | 테스트 1회 실행 |
-| `test:coverage` | `npm run test:coverage` | 커버리지 리포트 (80%+ 유지) |
-| `test:e2e` | `npm run test:e2e` | Playwright E2E 테스트 |
-| `test:e2e:ui` | `npm run test:e2e:ui` | Playwright UI 모드 |
-| `test:e2e:debug` | `npm run test:e2e:debug` | Playwright 디버그 모드 |
+| `test` | `bun run test` | Vitest 테스트 (watch 모드) |
+| `test:run` | `bun run test:run` | 테스트 1회 실행 |
+| `test:coverage` | `bun run test:coverage` | 커버리지 리포트 (80%+ 유지) |
+| `test:e2e` | `bun run test:e2e` | Playwright E2E 테스트 |
+| `test:e2e:ui` | `bun run test:e2e:ui` | Playwright UI 모드 |
+| `test:e2e:debug` | `bun run test:e2e:debug` | Playwright 디버그 모드 |
+
+### Rust
+
+| 스크립트 | 명령어 | 설명 |
+|---------|--------|------|
+| `rust:check` | `bun run rust:check` | cargo check |
+| `rust:clippy` | `bun run rust:clippy` | cargo clippy |
+| `rust:test` | `bun run rust:test` | cargo test |
+| `rust:fmt` | `bun run rust:fmt` | cargo fmt |
 
 ---
 
@@ -103,26 +109,26 @@ npm run dev
 git checkout -b feat/my-feature
 
 # 2. 개발 서버 시작
-npm run dev
+bun run dev
 
 # 3. 코드 작성 후 타입 검사
-npm run typecheck
+bun run typecheck
 
 # 4. 커밋 전 전체 검사
-npm run check
+bun run check
 ```
 
 ### 2. 테스트
 
 ```bash
 # 단위 테스트 (TDD 권장)
-npm run test
+bun run test
 
 # 커버리지 확인 (80% 이상 유지 필수)
-npm run test:coverage
+bun run test:coverage
 
 # E2E 테스트
-npm run test:e2e
+bun run test:e2e
 
 # Rust 테스트
 cargo test --workspace
@@ -131,10 +137,12 @@ cargo test --workspace
 ### 3. 코드 품질
 
 ```bash
-# 전체 검사 후 수정
-npm run check
-npm run lint:fix
-npm run format
+# 전체 검사
+bun run check:all
+
+# 자동 수정
+bun run lint:fix
+bun run format
 ```
 
 ---
@@ -147,15 +155,14 @@ ferrum/
 │   ├── ferrum_buffer/          # 텍스트 버퍼 (ropey), Tree-sitter 파싱
 │   ├── ferrum_core/            # 공통 타입, 에러 정의
 │   ├── ferrum_editor/          # 에디터 상태, 폴딩, DisplayMap
-│   ├── ferrum_lsp/             # LSP 클라이언트/매니저 (16개 언어 지원)
+│   ├── ferrum_lsp/             # LSP 클라이언트/매니저
 │   ├── ferrum_git/             # Git 통합 (git2)
-│   └── ferrum_plugin/          # WASM 플러그인 시스템 (Wasmtime)
+│   └── ferrum_plugin/          # 플러그인 시스템
 │
 ├── src/                        # TypeScript/SolidJS 프론트엔드
 │   ├── components/             # UI 컴포넌트
 │   │   ├── editor/             # 에디터 레이어 (6단계)
-│   │   ├── file-explorer/      # 파일 탐색기 (Tree Viewer)
-│   │   ├── search/             # 검색 UI
+│   │   ├── tree-viewer/        # 파일 탐색기
 │   │   └── ai/                 # AI 패널
 │   ├── ipc/                    # Tauri IPC 명령어
 │   ├── stores/                 # 상태 관리
@@ -167,9 +174,8 @@ ferrum/
 │   │   └── main.rs
 │   └── tauri.conf.json
 │
-├── e2e/                        # Playwright E2E 테스트
-├── plans/                      # 설계 문서 (아키텍처, 스펙)
-└── docs/                       # 사용자/개발자 문서
+├── tests/                      # E2E 테스트 (Playwright)
+└── docs/                       # 문서
 ```
 
 ---
@@ -216,7 +222,7 @@ L1: Text Layer         (텍스트 렌더링)
 L0: Background Layer   (라인 하이라이트)
 ```
 
-자세한 아키텍처는 `plans/architecture/` 디렉토리를 참조하세요.
+자세한 아키텍처는 `docs/architecture/` 디렉토리를 참조하세요.
 
 ---
 
@@ -273,14 +279,13 @@ async fn open_file(path: String) -> Result<BufferId, String> {
 }
 
 // ✅ cargo fmt 및 cargo clippy 준수
-// clippy::all, clippy::pedantic 권장
 ```
 
 ### 린트 규칙
 
-- ESLint + Prettier 설정 준수 (`.eslintrc.js`, `.prettierrc`)
+- Biome 설정 준수 (`biome.json`)
 - `cargo fmt` 및 `cargo clippy` 통과 필수
-- 커밋 전 `npm run check` 실행
+- 커밋 전 `bun run check` 실행
 
 ---
 
@@ -352,8 +357,8 @@ mod tests {
 
 PR 생성 전 다음 항목을 확인하세요:
 
-- [ ] `npm run check` 통과
-- [ ] `npm run test:run` 통과
+- [ ] `bun run check` 통과
+- [ ] `bun run test:run` 통과
 - [ ] `cargo test --workspace` 통과
 - [ ] 테스트 커버리지 80% 이상 유지
 - [ ] 변경사항에 대한 테스트 추가
@@ -368,7 +373,6 @@ PR 생성 전 다음 항목을 확인하세요:
 feat: add multi-cursor support
 fix: resolve LSP connection timeout
 docs: update architecture diagram
-style: format editor components
 refactor: simplify buffer operations
 test: add unit tests for anchor system
 chore: update dependencies
@@ -378,8 +382,8 @@ chore: update dependencies
 
 1. `main` 브랜치에서 기능 브랜치 생성
 2. 변경사항 작성 및 테스트
-3. `npm run check` 통과 확인
-4. PR 생성 (템플릿 사용)
+3. `bun run check` 통과 확인
+4. PR 생성
 5. 코드 리뷰 요청
 6. 리뷰 반영 후 머지
 
@@ -397,16 +401,7 @@ chore: update dependencies
 
 ## 관련 문서
 
-- **아키텍처 설계**: `plans/architecture/`
-- **기능 스펙**: `plans/specs/`
-- **기술 문서**: `plans/technical/`
+- **아키텍처 설계**: `docs/architecture/`
+- **기능 스펙**: `docs/specs/`
+- **기술 문서**: `docs/technical/`
 - **런북**: `docs/RUNBOOK.md`
-
----
-
-## 도움말
-
-문제가 있으면 GitHub Issues에 등록해주세요.
-
-- **GitHub Issues**: https://github.com/[repo]/issues
-- **기술 문서**: `plans/` 디렉토리

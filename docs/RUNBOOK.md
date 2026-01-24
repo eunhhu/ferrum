@@ -10,7 +10,6 @@
 - [일반적인 문제 및 해결책](#일반적인-문제-및-해결책)
 - [성능 최적화](#성능-최적화)
 - [롤백 절차](#롤백-절차)
-- [긴급 대응](#긴급-대응)
 
 ---
 
@@ -20,14 +19,14 @@
 
 ```bash
 # 의존성 확인
-npm install
+bun install
 
 # 전체 검사 (필수)
-npm run check
+bun run check
 
 # 테스트 실행
-npm run test:run
-npm run test:e2e
+bun run test:run
+bun run test:e2e
 
 # Rust 테스트
 cargo test --workspace
@@ -37,7 +36,7 @@ cargo test --workspace
 
 ```bash
 # Tauri 프로덕션 빌드
-npm run build
+bun run build
 ```
 
 ### 빌드 결과물 위치
@@ -51,7 +50,7 @@ npm run build
 ### 3. 배포 체크리스트
 
 - [ ] 모든 테스트 통과
-- [ ] `npm run check` 통과
+- [ ] `bun run check` 통과
 - [ ] 테스트 커버리지 80% 이상
 - [ ] 버전 번호 업데이트
   - `package.json`
@@ -59,17 +58,6 @@ npm run build
   - `src-tauri/Cargo.toml`
 - [ ] CHANGELOG 업데이트
 - [ ] 릴리즈 노트 작성
-- [ ] 코드 서명 (macOS: codesign, Windows: signtool)
-
-### 4. 버전 관리
-
-```bash
-# 버전 확인
-cat package.json | grep version
-cat src-tauri/tauri.conf.json | grep version
-
-# 버전 동기화 필수!
-```
 
 ---
 
@@ -100,7 +88,7 @@ cat src-tauri/tauri.conf.json | grep version
 
 #### 개발 모드
 - **프론트엔드**: 브라우저 개발자 도구 콘솔
-- **백엔드**: 터미널 출력 (`RUST_LOG=debug npm run dev`)
+- **백엔드**: 터미널 출력 (`RUST_LOG=debug bun run dev`)
 
 #### 프로덕션
 
@@ -132,16 +120,6 @@ RUST_LOG=ferrum_lsp=debug,ferrum_buffer=info ./ferrum
 | **LSP 응답시간** | < 100ms | 100-500ms | > 500ms |
 | **파싱 시간** | < 50ms | 50-200ms | > 200ms |
 
-### 핵심 모니터링 포인트
-
-```typescript
-// 프론트엔드 성능 측정
-performance.mark('render-start');
-// ... 렌더링 ...
-performance.mark('render-end');
-performance.measure('render', 'render-start', 'render-end');
-```
-
 ---
 
 ## 일반적인 문제 및 해결책
@@ -159,7 +137,7 @@ rustup update stable
 
 # 2. 클린 빌드
 cargo clean
-npm run build
+bun run build
 
 # 3. 캐시 완전 정리
 rm -rf target/
@@ -168,17 +146,14 @@ rm -rf node_modules/.vite/
 
 #### Node 의존성 문제
 
-**증상**: `npm install` 실패 또는 모듈 not found
+**증상**: `bun install` 실패 또는 모듈 not found
 
 **해결**:
 ```bash
 # node_modules 재설치
 rm -rf node_modules
-rm package-lock.json
-npm install
-
-# 또는 pnpm 사용
-pnpm install --force
+rm bun.lock
+bun install
 ```
 
 #### Tauri 빌드 실패
@@ -188,7 +163,7 @@ pnpm install --force
 **해결**:
 ```bash
 # 1. Tauri CLI 재설치
-npm install -D @tauri-apps/cli@latest
+bun add -D @tauri-apps/cli@latest
 
 # 2. 캐시 정리
 rm -rf src-tauri/target
@@ -197,7 +172,7 @@ rm -rf src-tauri/target
 sudo apt install libwebkit2gtk-4.1-dev libssl-dev libgtk-3-dev
 
 # 4. 다시 빌드
-npm run build
+bun run build
 ```
 
 ---
@@ -223,10 +198,9 @@ which pyright
 | 언어 | 서버 | 설치 명령 |
 |------|------|----------|
 | Rust | rust-analyzer | `rustup component add rust-analyzer` |
-| TypeScript/JavaScript | typescript-language-server | `npm i -g typescript-language-server` |
-| Python | pyright | `npm i -g pyright` |
+| TypeScript/JavaScript | typescript-language-server | `bun add -g typescript-language-server` |
+| Python | pyright | `bun add -g pyright` |
 | Go | gopls | `go install golang.org/x/tools/gopls@latest` |
-| C/C++ | clangd | `brew install llvm` (macOS) |
 
 2. **프로젝트 루트 확인**
    - TypeScript: `tsconfig.json` 또는 `package.json` 존재
@@ -235,10 +209,8 @@ which pyright
 
 3. **LSP 로그 확인**
 ```bash
-RUST_LOG=ferrum_lsp=debug npm run dev
+RUST_LOG=ferrum_lsp=debug bun run dev
 ```
-
-4. **앱 재시작**
 
 #### 구문 강조 안됨
 
@@ -247,19 +219,12 @@ RUST_LOG=ferrum_lsp=debug npm run dev
 **해결**:
 
 1. **지원 언어 확인**
-   - Ferrum은 16개 주요 언어 기본 지원
-   - 지원: Rust, TypeScript, JavaScript, Python, Go, C, C++, Java, Kotlin, Swift, Ruby, PHP, HTML, CSS, JSON, Markdown
+   - 지원: Rust, TypeScript, JavaScript, Python, Go, C, C++, Java, HTML, CSS, JSON, Markdown
 
 2. **tree-sitter 쿼리 확인**
 ```bash
 ls crates/ferrum_buffer/queries/
-# 각 언어별 highlights.scm 파일 존재 확인
 ```
-
-3. **파일 확장자 매핑 확인**
-   - `.rs` → Rust
-   - `.ts`, `.tsx` → TypeScript
-   - `.py` → Python
 
 #### AI 기능 안됨
 
@@ -275,16 +240,11 @@ echo $OPENROUTER_API_KEY
 curl https://openrouter.ai/api/v1/models
 ```
 
-3. API 사용량/한도 확인
-   - OpenRouter 대시보드에서 확인
-
 **Local AI (Ollama)**:
 
 1. Ollama 서비스 실행 확인
 ```bash
 ollama serve
-# 또는
-brew services start ollama
 ```
 
 2. 모델 설치 확인
@@ -296,12 +256,6 @@ ollama list
 ```bash
 ollama pull codellama
 ollama pull llama3.2
-ollama pull deepseek-coder
-```
-
-4. 연결 테스트
-```bash
-curl http://localhost:11434/api/tags
 ```
 
 ---
@@ -312,17 +266,12 @@ curl http://localhost:11434/api/tags
 
 **증상**: 10MB+ 파일에서 입력 지연
 
-**원인 및 해결**:
+**해결**:
 
-1. **가상 스크롤링 확인**
-   - Ferrum은 기본적으로 보이는 라인만 렌더링
-   - 설정에서 가상 스크롤 활성화 확인
+1. **가상 스크롤링 확인** - 보이는 라인만 렌더링
+2. **구문 강조 최적화** - 증분 파싱으로 < 50ms 유지
 
-2. **구문 강조 최적화**
-   - 증분 파싱으로 < 50ms 유지
-   - 대용량 파일에서는 구문 강조 간소화 옵션 사용
-
-3. **성능 타겟**
+**성능 타겟**:
 
 | 파일 크기 | 입력 지연 목표 |
 |----------|---------------|
@@ -330,33 +279,9 @@ curl http://localhost:11434/api/tags
 | 1-10MB | < 16ms |
 | 10-100MB | < 50ms |
 
-#### 메모리 누수 의심
-
-**증상**: 시간이 지남에 따라 메모리 증가
-
-**진단**:
-```bash
-# 개발 모드에서 메모리 프로파일링
-# 브라우저 개발자 도구 > Memory 탭 > Heap Snapshot
-```
-
-**해결**:
-1. 열린 파일 수 줄이기
-2. 사용하지 않는 탭 닫기
-3. 앱 재시작
-
 #### 높은 CPU 사용량
 
 **증상**: 지속적으로 CPU 50% 이상
-
-**진단**:
-```bash
-# macOS
-top -pid $(pgrep -f ferrum)
-
-# Linux
-htop -p $(pgrep -f ferrum)
-```
 
 **일반적인 원인**:
 - LSP 서버 과부하 → 재시작
@@ -382,7 +307,6 @@ htop -p $(pgrep -f ferrum)
 
 - **버퍼 제한**: 동시에 열 수 있는 파일 수 제한 (기본: 50)
 - **캐시 정리**: LRU 캐시로 오래된 항목 자동 제거
-- **스냅샷**: 비동기 작업용 BufferSnapshot 사용
 
 ### LSP 최적화
 
@@ -411,15 +335,14 @@ git checkout <commit-hash>
 git checkout v0.0.9
 
 # 의존성 재설치
-npm install
+bun install
 cargo build --release
 ```
 
 ### 3. 재빌드 및 배포
 
 ```bash
-npm run build
-# 빌드 결과물 배포
+bun run build
 ```
 
 ### 4. 롤백 후 확인
@@ -431,41 +354,6 @@ npm run build
 
 ---
 
-## 긴급 대응
-
-### 앱 크래시 시
-
-1. **로그 수집**
-```bash
-# 크래시 로그 위치
-# macOS: ~/Library/Logs/DiagnosticReports/
-# Windows: Event Viewer
-# Linux: journalctl -u ferrum
-```
-
-2. **최소 재현 케이스 작성**
-
-3. **GitHub Issue 등록**
-
-### 데이터 손실 시
-
-1. **백업 확인**
-   - 자동 저장 파일: `~/.ferrum/autosave/`
-   - 스왑 파일: 작업 디렉토리의 `.swp` 파일
-
-2. **Git 히스토리 확인** (Git 프로젝트인 경우)
-```bash
-git reflog
-git stash list
-```
-
-### 긴급 연락처
-
-- **GitHub Issues**: https://github.com/[repo]/issues
-- **문서**: `/docs/` 및 `/plans/` 디렉토리
-
----
-
 ## 버전 정보
 
 | 항목 | 버전 |
@@ -473,7 +361,7 @@ git stash list
 | **Ferrum IDE** | 0.1.0 |
 | **Tauri** | v2 |
 | **SolidJS** | ^1.9.3 |
-| **Rust** | stable (최신) |
+| **Rust** | stable |
 | **tree-sitter** | 0.24+ |
 | **ropey** | 1.6+ |
 
@@ -482,10 +370,6 @@ git stash list
 ## 관련 문서
 
 - **기여 가이드**: `docs/CONTRIB.md`
-- **아키텍처 설계**: `plans/architecture/`
-- **기능 스펙**: `plans/specs/`
-- **기술 문서**: `plans/technical/`
-
----
-
-*마지막 업데이트: 2026-01-24*
+- **아키텍처 설계**: `docs/architecture/`
+- **기능 스펙**: `docs/specs/`
+- **기술 문서**: `docs/technical/`
