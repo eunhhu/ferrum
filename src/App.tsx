@@ -15,7 +15,9 @@ import { StatusBar } from "./components/layout/StatusBar";
 import { StickyHeader } from "./components/tree-viewer/StickyHeader";
 import { TreeViewer } from "./components/tree-viewer/TreeViewer";
 import { CommandPalette } from "./components/ui/CommandPalette";
-import type { ScopeInfo } from "./ipc/types";
+import type { ScopeInfo } from "./ipc/commands";
+import * as ipc from "./ipc/commands";
+import { isTauriEnvironment } from "./ipc/tauri-check";
 import { commandsStore, editorStore, uiStore } from "./stores";
 
 function App() {
@@ -69,8 +71,7 @@ function App() {
         e.preventDefault();
         const activeTab = editorStore.getActiveTab();
         if (activeTab) {
-          // Save logic would go here
-          editorStore.markSaved(activeTab.id);
+          editorStore.saveFile(activeTab.id);
         }
         return;
       }
@@ -80,13 +81,19 @@ function App() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   });
 
-  // Update scopes when active tab changes (mock data for now)
-  createEffect(() => {
+  // Update scopes when active tab changes
+  createEffect(async () => {
     const activeTab = editorStore.getActiveTab();
-    if (activeTab?.language === "typescript" || activeTab?.language === "typescriptreact") {
-      // In production, this would come from tree-sitter analysis
+    if (!activeTab?.bufferId || !isTauriEnvironment()) {
       setScopes([]);
-    } else {
+      return;
+    }
+
+    try {
+      const scopeData = await ipc.getScopes(activeTab.bufferId);
+      setScopes(scopeData);
+    } catch (e) {
+      console.warn("Failed to get scopes:", e);
       setScopes([]);
     }
   });

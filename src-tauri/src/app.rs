@@ -65,6 +65,7 @@ pub fn build() -> tauri::Builder<tauri::Wry> {
             commands::syntax::expand_selection,
             commands::syntax::shrink_selection,
             commands::syntax::analyze_dependencies,
+            commands::syntax::get_scopes,
             // Settings
             commands::settings::get_settings,
             commands::settings::update_settings,
@@ -82,6 +83,7 @@ pub fn build() -> tauri::Builder<tauri::Wry> {
             commands::lsp::lsp_did_change,
             commands::lsp::lsp_did_save,
             commands::lsp::lsp_did_close,
+            commands::lsp::lsp_rename,
             // Terminal
             commands::terminal::terminal_create,
             commands::terminal::terminal_write,

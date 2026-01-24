@@ -215,6 +215,45 @@ pub fn shrink_selection(
   })
 }
 
+/// Scope information for sticky headers
+#[derive(Debug, Serialize, Deserialize)]
+pub struct ScopeInfo {
+  pub scope_name: String,
+  pub scope_type: String,
+  pub start_line: u32,
+  pub end_line: u32,
+  pub depth: u32,
+}
+
+/// Get scope information for a buffer (functions, classes, etc.)
+#[tauri::command]
+pub fn get_scopes(
+  state: State<'_, AppState>,
+  buffer_id: String,
+) -> Result<Vec<ScopeInfo>, String> {
+  let id: BufferId = buffer_id
+    .parse()
+    .map_err(|_| "Invalid buffer ID".to_string())?;
+
+  let result = state
+    .editor
+    .get_scopes(id)
+    .map_err(|e| e.to_string())?;
+
+  Ok(
+    result
+      .into_iter()
+      .map(|(name, scope_type, start, end, depth)| ScopeInfo {
+        scope_name: name,
+        scope_type,
+        start_line: start,
+        end_line: end,
+        depth,
+      })
+      .collect(),
+  )
+}
+
 /// Dependency link between two symbols
 #[derive(Debug, Serialize, Deserialize)]
 pub struct DependencyLink {

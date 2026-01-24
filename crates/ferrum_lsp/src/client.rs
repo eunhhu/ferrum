@@ -8,13 +8,14 @@ use lsp_types::{
   DidChangeTextDocumentParams, DidCloseTextDocumentParams, DidOpenTextDocumentParams,
   DocumentSymbolParams, DocumentSymbolResponse, GotoDefinitionParams, GotoDefinitionResponse,
   Hover, HoverParams, InitializeParams, InitializeResult, InitializedParams, Location,
-  ReferenceParams, ServerCapabilities, TextDocumentClientCapabilities,
+  ReferenceParams, RenameParams, ServerCapabilities, TextDocumentClientCapabilities,
   TextDocumentContentChangeEvent, TextDocumentIdentifier, TextDocumentItem,
   TextDocumentPositionParams, TextDocumentSyncClientCapabilities, Uri,
-  VersionedTextDocumentIdentifier,
+  VersionedTextDocumentIdentifier, WorkspaceEdit,
   notification::{DidChangeTextDocument, DidCloseTextDocument, DidOpenTextDocument, Initialized},
   request::{
     Completion, DocumentSymbolRequest, GotoDefinition, HoverRequest, Initialize, References,
+    Rename,
   },
 };
 use parking_lot::{Mutex, RwLock};
@@ -394,6 +395,26 @@ impl LspClient {
     let response: Option<DocumentSymbolResponse> =
       self.request::<DocumentSymbolRequest>(params).await?;
     Ok(response.unwrap_or(DocumentSymbolResponse::Flat(Vec::new())))
+  }
+
+  /// Rename a symbol
+  pub async fn rename(
+    &self,
+    uri: Uri,
+    position: lsp_types::Position,
+    new_name: &str,
+  ) -> Result<WorkspaceEdit> {
+    let params = RenameParams {
+      text_document_position: TextDocumentPositionParams {
+        text_document: TextDocumentIdentifier { uri },
+        position,
+      },
+      new_name: new_name.to_string(),
+      work_done_progress_params: Default::default(),
+    };
+
+    let response: Option<WorkspaceEdit> = self.request::<Rename>(params).await?;
+    Ok(response.unwrap_or_else(|| WorkspaceEdit::default()))
   }
 
   // ========== JSON-RPC Communication ==========

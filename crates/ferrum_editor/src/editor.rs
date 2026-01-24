@@ -404,6 +404,25 @@ impl Editor {
 
     Ok(dependencies)
   }
+
+  /// Get scopes (functions, classes, etc.) for sticky headers
+  /// Returns Vec<(name, scope_type, start_line, end_line, depth)>
+  pub fn get_scopes(&self, buffer_id: BufferId) -> Result<Vec<(String, String, u32, u32, u32)>> {
+    let manager = self
+      .syntax_managers
+      .get(&buffer_id)
+      .ok_or(Error::BufferNotFound(buffer_id))?;
+
+    let buffer = self
+      .buffers
+      .get(&buffer_id)
+      .ok_or(Error::BufferNotFound(buffer_id))?;
+
+    let text = buffer.to_string();
+    let scopes = manager.get_scopes(text.as_bytes());
+
+    Ok(scopes)
+  }
 }
 
 impl Default for Editor {

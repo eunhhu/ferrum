@@ -7,7 +7,7 @@
  */
 
 import { createMemo, For, Show } from "solid-js";
-import type { ScopeInfo } from "../../ipc/types";
+import type { ScopeInfo } from "../../ipc/commands";
 
 interface StickyHeaderProps {
   scopes: ScopeInfo[];

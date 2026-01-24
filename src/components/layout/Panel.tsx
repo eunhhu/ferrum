@@ -1,5 +1,14 @@
-import { createSignal, For, Show } from "solid-js";
-import { uiStore } from "../../stores";
+import { createEffect, createSignal, For, Show } from "solid-js";
+import type { LspDiagnostic } from "../../ipc/commands";
+import * as ipc from "../../ipc/commands";
+import { isTauriEnvironment } from "../../ipc/tauri-check";
+import { editorStore, uiStore } from "../../stores";
+import { Terminal } from "../terminal/Terminal";
+
+interface FileDiagnostics {
+  path: string;
+  diagnostics: LspDiagnostic[];
+}
 
 type PanelTabType = "terminal" | "output" | "problems" | "debug";
 
@@ -14,24 +23,64 @@ export function Panel() {
   const [activeTab, setActiveTab] = createSignal<PanelTabType>("terminal");
   const [isResizing, setIsResizing] = createSignal(false);
 
-  // Demo problems for display
-  const [problems] = createSignal([
-    {
-      type: "error",
-      file: "src/main.tsx",
-      line: 15,
-      message: "Cannot find name 'undefined_var'",
-    },
-    {
-      type: "warning",
-      file: "src/utils/api.ts",
-      line: 23,
-      message: "'response' is defined but never used",
-    },
-  ]);
+  // Real LSP diagnostics
+  const [fileDiagnostics, setFileDiagnostics] = createSignal<FileDiagnostics[]>([]);
+
+  // Load diagnostics when active tab changes or on interval
+  const loadDiagnostics = async () => {
+    if (!isTauriEnvironment()) return;
+
+    const activeTab = editorStore.getActiveTab();
+    if (!activeTab?.filePath) return;
+
+    try {
+      const diagnostics = await ipc.lspDiagnostics(activeTab.filePath);
+      if (diagnostics.length > 0) {
+        setFileDiagnostics([
+          {
+            path: activeTab.filePath,
+            diagnostics,
+          },
+        ]);
+      } else {
+        setFileDiagnostics([]);
+      }
+    } catch (e) {
+      console.warn("Failed to load diagnostics:", e);
+    }
+  };
+
+  // Load diagnostics when active editor changes
+  createEffect(() => {
+    const tab = editorStore.getActiveTab();
+    if (tab?.filePath) {
+      loadDiagnostics();
+    }
+  });
+
+  // Calculate problem count
+  const problemCount = () => {
+    return fileDiagnostics().reduce((sum, f) => sum + f.diagnostics.length, 0);
+  };
+
+  // Convert to legacy format for existing ProblemsContent
+  const problems = () => {
+    const result: Array<{ type: string; file: string; line: number; message: string }> = [];
+    for (const fd of fileDiagnostics()) {
+      for (const d of fd.diagnostics) {
+        result.push({
+          type: d.severity === 1 ? "error" : d.severity === 2 ? "warning" : "info",
+          file: fd.path.split("/").pop() || fd.path,
+          line: d.range.start.line + 1,
+          message: d.message,
+        });
+      }
+    }
+    return result;
+  };
 
   const tabs: PanelTab[] = [
-    { id: "problems", label: "Problems", badge: problems().length },
+    { id: "problems", label: "Problems", badge: problemCount() },
     { id: "output", label: "Output" },
     { id: "terminal", label: "Terminal" },
     { id: "debug", label: "Debug Console" },
@@ -136,8 +185,15 @@ export function Panel() {
 }
 
 function TerminalContent() {
+  // Use real PTY terminal in Tauri environment
+  if (isTauriEnvironment()) {
+    return <Terminal />;
+  }
+
+  // Fallback mock terminal for browser-only mode
   const [history, setHistory] = createSignal<string[]>([
-    "Welcome to Ferrum IDE Terminal",
+    "Welcome to Ferrum IDE Terminal (Demo Mode)",
+    "Real terminal requires Tauri desktop app",
     "Type 'help' for available commands",
     "",
   ]);

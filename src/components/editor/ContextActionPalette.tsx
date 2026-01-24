@@ -11,7 +11,6 @@ import {
   type LspLocation,
   lspGotoDefinition,
   lspHover,
-  lspReferences,
   shrinkSelection,
 } from "../../ipc/commands";
 
@@ -37,6 +36,8 @@ interface ContextActionPaletteProps {
   errorMessage?: string;
   onClose: () => void;
   onGotoLocation?: (location: LspLocation) => void;
+  onFindReferences?: () => void;
+  onRenameSymbol?: () => void;
   onSelectionChange?: (
     startLine: number,
     startChar: number,
@@ -151,19 +152,20 @@ export function ContextActionPalette(props: ContextActionPaletteProps) {
         icon: "🔍",
         shortcut: "⇧F12",
         category: "navigation",
-        action: async () => {
-          if (!props.filePath) return;
-          try {
-            const locations = await lspReferences(
-              props.filePath,
-              props.line,
-              props.character,
-              true
-            );
-            console.log("References:", locations);
-          } catch (e) {
-            console.error("Find references failed:", e);
-          }
+        action: () => {
+          props.onFindReferences?.();
+          props.onClose();
+        },
+      });
+
+      newActions.push({
+        id: "rename-symbol",
+        label: "Rename Symbol",
+        icon: "✏️",
+        shortcut: "F2",
+        category: "refactor",
+        action: () => {
+          props.onRenameSymbol?.();
           props.onClose();
         },
       });

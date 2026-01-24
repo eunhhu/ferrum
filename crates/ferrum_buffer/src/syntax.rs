@@ -705,6 +705,93 @@ impl SyntaxManager {
     ))
   }
 
+  /// Get scope information for sticky headers (functions, classes, etc.)
+  /// Returns Vec<(name, scope_type, start_line, end_line, depth)>
+  pub fn get_scopes(&self, source: &[u8]) -> Vec<(String, String, u32, u32, u32)> {
+    let tree = self.tree.read();
+    let Some(tree) = tree.as_ref() else {
+      return Vec::new();
+    };
+
+    let root = tree.root_node();
+    let mut scopes = Vec::new();
+    self.collect_scopes(root, source, 0, &mut scopes);
+    scopes
+  }
+
+  /// Collect scopes recursively
+  fn collect_scopes(
+    &self,
+    node: Node,
+    source: &[u8],
+    depth: u32,
+    scopes: &mut Vec<(String, String, u32, u32, u32)>,
+  ) {
+    let kind = node.kind();
+
+    // Check if this is a scope-creating node
+    let scope_info: Option<(String, String)> = match kind {
+      // Functions
+      "function_item" | "function_declaration" | "function_definition" | "method_definition" => {
+        node.child_by_field_name("name")
+          .and_then(|n| n.utf8_text(source).ok())
+          .map(|name| (name.to_string(), kind.to_string()))
+      },
+      // Arrow functions (get from variable declarator parent if exists)
+      "arrow_function" => {
+        if let Some(parent) = node.parent() {
+          if parent.kind() == "variable_declarator" {
+            parent.child_by_field_name("name")
+              .and_then(|n| n.utf8_text(source).ok())
+              .map(|name| (name.to_string(), "arrow_function".to_string()))
+          } else {
+            Some(("<anonymous>".to_string(), "arrow_function".to_string()))
+          }
+        } else {
+          Some(("<anonymous>".to_string(), "arrow_function".to_string()))
+        }
+      },
+      // Classes and structs
+      "class_declaration" | "struct_item" | "class_definition" => {
+        node.child_by_field_name("name")
+          .and_then(|n| n.utf8_text(source).ok())
+          .map(|name| (name.to_string(), kind.to_string()))
+      },
+      // Impl blocks (Rust)
+      "impl_item" => {
+        node.child_by_field_name("type")
+          .and_then(|n| n.utf8_text(source).ok())
+          .map(|name| (format!("impl {}", name), "impl_item".to_string()))
+      },
+      // Control flow (optional - for more detailed context)
+      "if_statement" => Some(("if".to_string(), "if_statement".to_string())),
+      "for_statement" | "for_in_statement" => Some(("for".to_string(), "for_statement".to_string())),
+      "while_statement" => Some(("while".to_string(), "while_statement".to_string())),
+      "try_statement" => Some(("try".to_string(), "try_statement".to_string())),
+      "match_expression" => Some(("match".to_string(), "match_expression".to_string())),
+      _ => None,
+    };
+
+    // Add scope if found
+    let is_scope = scope_info.is_some();
+    if let Some((name, scope_type)) = scope_info {
+      let start_line = node.start_position().row as u32;
+      let end_line = node.end_position().row as u32;
+
+      // Only add if it spans multiple lines (meaningful scope)
+      if end_line > start_line {
+        scopes.push((name, scope_type, start_line, end_line, depth));
+      }
+    }
+
+    // Recurse into children with incremented depth for scope-creating nodes
+    let new_depth = if is_scope { depth + 1 } else { depth };
+    let mut cursor = node.walk();
+    for child in node.children(&mut cursor) {
+      self.collect_scopes(child, source, new_depth, scopes);
+    }
+  }
+
   /// Analyze code dependencies (imports, function calls, references)
   /// Returns Vec<(from_name, from_line, from_col, to_name, to_line, to_col, link_type)>
   pub fn analyze_dependencies(

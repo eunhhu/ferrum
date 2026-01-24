@@ -15,8 +15,10 @@ import { textMeasurer } from "../../utils/textMeasurer";
 import { Autocomplete } from "./Autocomplete";
 import { ContextActionPalette } from "./ContextActionPalette";
 import { Editor } from "./Editor";
+import { FindReferencesPanel, findReferences } from "./FindReferencesPanel";
 import { HoverTooltip } from "./HoverTooltip";
 import { PeekView } from "./PeekView";
+import { RenameSymbolDialog, renameSymbol } from "./RenameSymbolDialog";
 import { EDITOR_CONFIG, type EditorProps, LEFT_OFFSET } from "./types";
 
 const { LINE_HEIGHT } = EDITOR_CONFIG;
@@ -59,6 +61,17 @@ export function EditorWithFeatures(props: EditorWithFeaturesProps) {
   const [peekVisible, setPeekVisible] = createSignal(false);
   const [peekLocation, setPeekLocation] = createSignal<ipc.LspLocation | null>(null);
   const [peekPosition, setPeekPosition] = createSignal({ x: 100, y: 100 });
+
+  // Find references state
+  const [referencesVisible, setReferencesVisible] = createSignal(false);
+  const [references, setReferences] = createSignal<ipc.LspLocation[]>([]);
+  const [referencesSymbol, setReferencesSymbol] = createSignal("");
+  const [referencesPosition, setReferencesPosition] = createSignal({ x: 100, y: 100 });
+
+  // Rename symbol state
+  const [renameVisible, setRenameVisible] = createSignal(false);
+  const [renameSymbolName, setRenameSymbolName] = createSignal("");
+  const [renamePosition, setRenamePosition] = createSignal({ x: 100, y: 100 });
 
   // Content for selection tracking
   const [content, setContent] = createSignal(props.content);
@@ -298,6 +311,84 @@ export function EditorWithFeatures(props: EditorWithFeaturesProps) {
     console.log("Show AI panel:", { action, code, error });
   }
 
+  // Handle find references
+  async function handleFindReferences() {
+    if (!props.filePath) return;
+
+    const refs = await findReferences(props.filePath, cursorLine(), cursorColumn());
+    if (refs.length > 0) {
+      // Get symbol name from current word
+      const lines = content().split("\n");
+      const currentLine = lines[cursorLine()] || "";
+      let wordStart = cursorColumn();
+      let wordEnd = cursorColumn();
+
+      // Find word boundaries
+      while (wordStart > 0 && /[a-zA-Z0-9_$]/.test(currentLine[wordStart - 1] || "")) {
+        wordStart--;
+      }
+      while (wordEnd < currentLine.length && /[a-zA-Z0-9_$]/.test(currentLine[wordEnd] || "")) {
+        wordEnd++;
+      }
+
+      const symbolName = currentLine.substring(wordStart, wordEnd);
+
+      setReferences(refs);
+      setReferencesSymbol(symbolName);
+      setReferencesPosition({ x: 100, y: 50 });
+      setReferencesVisible(true);
+    }
+    setContextMenuVisible(false);
+  }
+
+  // Handle rename symbol
+  async function handleRenameSymbol() {
+    if (!props.filePath) return;
+
+    // Get symbol name from current word
+    const lines = content().split("\n");
+    const currentLine = lines[cursorLine()] || "";
+    let wordStart = cursorColumn();
+    let wordEnd = cursorColumn();
+
+    // Find word boundaries
+    while (wordStart > 0 && /[a-zA-Z0-9_$]/.test(currentLine[wordStart - 1] || "")) {
+      wordStart--;
+    }
+    while (wordEnd < currentLine.length && /[a-zA-Z0-9_$]/.test(currentLine[wordEnd] || "")) {
+      wordEnd++;
+    }
+
+    const symbolName = currentLine.substring(wordStart, wordEnd);
+
+    if (symbolName) {
+      setRenameSymbolName(symbolName);
+      setRenamePosition({ x: 150, y: 100 });
+      setRenameVisible(true);
+    }
+    setContextMenuVisible(false);
+  }
+
+  // Perform rename
+  async function performRename(newName: string) {
+    if (!props.filePath || !props.bufferId) return;
+
+    const success = await renameSymbol(props.filePath, cursorLine(), cursorColumn(), newName);
+
+    if (success) {
+      // Reload the file content
+      try {
+        const bufferInfo = await ipc.bufferContent(props.bufferId);
+        setContent(bufferInfo.content);
+        props.onContentChange?.(bufferInfo.content);
+      } catch (e) {
+        console.error("Failed to reload content after rename:", e);
+      }
+    }
+
+    setRenameVisible(false);
+  }
+
   // Calculate byte offsets for selection
   function getSelectionBytes(): { start: number; end: number } {
     const lines = content().split("\n");
@@ -364,8 +455,31 @@ export function EditorWithFeatures(props: EditorWithFeaturesProps) {
         selectedText={selectedText()}
         onClose={handleContextMenuClose}
         onGotoLocation={handleGotoLocation}
+        onFindReferences={handleFindReferences}
+        onRenameSymbol={handleRenameSymbol}
         onSelectionChange={handleSelectionChange}
         onShowAiPanel={handleShowAiPanel}
+      />
+
+      {/* Find References Panel */}
+      <FindReferencesPanel
+        visible={referencesVisible()}
+        symbolName={referencesSymbol()}
+        references={references()}
+        position={referencesPosition()}
+        onClose={() => setReferencesVisible(false)}
+        onNavigate={(location) => {
+          console.log("Navigate to reference:", location);
+        }}
+      />
+
+      {/* Rename Symbol Dialog */}
+      <RenameSymbolDialog
+        visible={renameVisible()}
+        currentName={renameSymbolName()}
+        position={renamePosition()}
+        onRename={performRename}
+        onClose={() => setRenameVisible(false)}
       />
 
       {/* Peek View */}

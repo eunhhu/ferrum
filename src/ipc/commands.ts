@@ -398,6 +398,41 @@ export async function lspDidClose(filePath: string): Promise<void> {
   return await invoke<void>("lsp_did_close", { file_path: filePath });
 }
 
+export interface LspTextEdit {
+  range: {
+    start: { line: number; character: number };
+    end: { line: number; character: number };
+  };
+  new_text: string;
+}
+
+export async function lspRename(
+  filePath: string,
+  line: number,
+  character: number,
+  newName: string
+): Promise<LspTextEdit[]> {
+  return await invoke<LspTextEdit[]>("lsp_rename", {
+    file_path: filePath,
+    line,
+    character,
+    new_name: newName,
+  });
+}
+
+// Scope info for sticky headers
+export interface ScopeInfo {
+  scope_name: string;
+  scope_type: string;
+  start_line: number;
+  end_line: number;
+  depth: number;
+}
+
+export async function getScopes(bufferId: string): Promise<ScopeInfo[]> {
+  return await invoke<ScopeInfo[]>("get_scopes", { buffer_id: bufferId });
+}
+
 // Terminal operations
 export interface TerminalInfo {
   id: string;

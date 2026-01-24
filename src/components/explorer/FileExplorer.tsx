@@ -1,7 +1,19 @@
-import { createSignal, For, Show } from "solid-js";
+import { createSignal, For, onCleanup, onMount, Show } from "solid-js";
+import * as ipc from "../../ipc/commands";
 import { isTauriEnvironment } from "../../ipc/tauri-check";
 import { editorStore, filesStore } from "../../stores";
 import type { FileNode } from "../../types";
+
+// Flatten file tree for keyboard navigation
+function flattenTree(nodes: FileNode[], result: FileNode[] = []): FileNode[] {
+  for (const node of nodes) {
+    result.push(node);
+    if (node.type === "directory" && node.isExpanded && node.children) {
+      flattenTree(node.children, result);
+    }
+  }
+  return result;
+}
 
 // File extension to icon color mapping
 const extColors: Record<string, string> = {
@@ -427,6 +439,7 @@ function FileTreeItem(props: {
   onToggle?: ((path: string) => void) | undefined;
   onSelect?: ((node: FileNode) => void) | undefined;
   selectedPath?: string | null | undefined;
+  focusedPath?: string | null | undefined;
 }) {
   const [isLoading, setIsLoading] = createSignal(false);
 
@@ -449,10 +462,12 @@ function FileTreeItem(props: {
         class="flex items-center gap-1.5 py-0.5 cursor-pointer hover:bg-bg-hover transition-colors"
         classList={{
           "bg-bg-active": props.selectedPath === props.node.path,
+          "ring-1 ring-accent/50": props.focusedPath === props.node.path,
           "opacity-50": props.node.isHidden,
         }}
         style={{ "padding-left": `${props.depth * 12 + 8}px` }}
         onClick={handleClick}
+        data-path={props.node.path}
       >
         <Show when={props.node.type === "directory"}>
           <svg
@@ -488,6 +503,7 @@ function FileTreeItem(props: {
               onToggle={props.onToggle}
               onSelect={props.onSelect}
               selectedPath={props.selectedPath}
+              focusedPath={props.focusedPath}
             />
           )}
         </For>
@@ -500,7 +516,10 @@ export function FileExplorer() {
   const { fileTree, projectInfo, isLoading } = filesStore;
   const [demoTree, setDemoTree] = createSignal<FileNode[]>([]);
   const [selectedPath, setSelectedPath] = createSignal<string | null>(null);
+  const [focusedPath, setFocusedPath] = createSignal<string | null>(null);
   const [isDemoMode, setIsDemoMode] = createSignal(!isTauriEnvironment());
+  const [isFocused, setIsFocused] = createSignal(false);
+  let containerRef: HTMLDivElement | undefined;
 
   // Initialize demo tree in browser mode
   const loadDemoProject = () => {
@@ -573,12 +592,176 @@ export function FileExplorer() {
     }
   };
 
+  // Create new file
+  const [isCreatingFile, setIsCreatingFile] = createSignal(false);
+  const [newFileName, setNewFileName] = createSignal("");
+
+  const handleNewFile = async () => {
+    if (!isTauriEnvironment()) {
+      // Demo mode - just show input
+      setIsCreatingFile(true);
+      return;
+    }
+
+    setIsCreatingFile(true);
+  };
+
+  const confirmNewFile = async () => {
+    const name = newFileName().trim();
+    if (!name) {
+      setIsCreatingFile(false);
+      return;
+    }
+
+    const rootPath = filesStore.rootPath();
+    if (!rootPath && !isDemoMode()) {
+      setIsCreatingFile(false);
+      return;
+    }
+
+    if (isTauriEnvironment() && rootPath) {
+      try {
+        const filePath = `${rootPath}/${name}`;
+        await ipc.writeFile(filePath, "");
+        await filesStore.refresh();
+        await editorStore.openFileWithBuffer(filePath);
+      } catch (e) {
+        console.error("Failed to create file:", e);
+      }
+    } else {
+      // Demo mode - create in memory
+      editorStore.openFile(`/demo/${name}`, "");
+    }
+
+    setNewFileName("");
+    setIsCreatingFile(false);
+  };
+
   // Determine which tree to show
   const currentTree = () => (isDemoMode() ? demoTree() : fileTree);
   const hasProject = () => currentTree().length > 0;
 
+  // Keyboard navigation handlers
+  const handleKeyDown = (e: KeyboardEvent) => {
+    if (!hasProject() || !isFocused()) return;
+
+    const flatNodes = flattenTree(currentTree());
+    if (flatNodes.length === 0) return;
+
+    const currentIndex = flatNodes.findIndex((n) => n.path === focusedPath());
+    let newIndex = currentIndex;
+    let handled = false;
+
+    switch (e.key) {
+      case "j":
+      case "ArrowDown":
+        newIndex = Math.min(currentIndex + 1, flatNodes.length - 1);
+        if (currentIndex === -1) newIndex = 0;
+        handled = true;
+        break;
+      case "k":
+      case "ArrowUp":
+        newIndex = Math.max(currentIndex - 1, 0);
+        if (currentIndex === -1) newIndex = flatNodes.length - 1;
+        handled = true;
+        break;
+      case "h":
+      case "ArrowLeft": {
+        // Collapse directory or go to parent
+        const current = flatNodes[currentIndex];
+        if (current?.type === "directory" && current.isExpanded) {
+          if (isDemoMode()) {
+            toggleDemoFolder(current.path);
+          } else {
+            filesStore.toggleExpand(current.path);
+          }
+        } else if (current) {
+          // Find parent directory
+          const parentPath = current.path.split("/").slice(0, -1).join("/");
+          const parentIndex = flatNodes.findIndex((n) => n.path === parentPath);
+          if (parentIndex >= 0) newIndex = parentIndex;
+        }
+        handled = true;
+        break;
+      }
+      case "l":
+      case "ArrowRight": {
+        // Expand directory or enter
+        const current = flatNodes[currentIndex];
+        if (current?.type === "directory") {
+          if (!current.isExpanded) {
+            if (isDemoMode()) {
+              toggleDemoFolder(current.path);
+            } else {
+              filesStore.toggleExpand(current.path);
+            }
+          } else if (current.children && current.children.length > 0) {
+            // Move to first child
+            newIndex = currentIndex + 1;
+          }
+        }
+        handled = true;
+        break;
+      }
+      case "Enter":
+      case " ": {
+        const current = flatNodes[currentIndex];
+        if (current) {
+          if (current.type === "directory") {
+            if (isDemoMode()) {
+              toggleDemoFolder(current.path);
+            } else {
+              filesStore.toggleExpand(current.path);
+            }
+          } else {
+            if (isDemoMode()) {
+              openDemoFile(current);
+            } else {
+              handleTauriFileSelect(current);
+            }
+          }
+        }
+        handled = true;
+        break;
+      }
+      case "g":
+        // Go to top
+        if (e.shiftKey) {
+          newIndex = flatNodes.length - 1; // G = go to bottom
+        } else {
+          newIndex = 0; // g = go to top
+        }
+        handled = true;
+        break;
+    }
+
+    if (handled) {
+      e.preventDefault();
+      e.stopPropagation();
+      if (newIndex !== currentIndex && flatNodes[newIndex]) {
+        setFocusedPath(flatNodes[newIndex]?.path ?? null);
+        // Scroll into view
+        const element = containerRef?.querySelector(`[data-path="${flatNodes[newIndex]?.path}"]`);
+        element?.scrollIntoView({ block: "nearest" });
+      }
+    }
+  };
+
+  onMount(() => {
+    // Add keyboard listener
+    const handler = (e: KeyboardEvent) => handleKeyDown(e);
+    document.addEventListener("keydown", handler);
+    onCleanup(() => document.removeEventListener("keydown", handler));
+  });
+
   return (
-    <div class="h-full flex flex-col">
+    <div
+      ref={containerRef}
+      class="h-full flex flex-col outline-none"
+      tabIndex={0}
+      onFocus={() => setIsFocused(true)}
+      onBlur={() => setIsFocused(false)}
+    >
       {/* Toolbar */}
       <div class="flex items-center gap-1 px-2 py-1 border-b border-border">
         <button
@@ -599,7 +782,11 @@ export function FileExplorer() {
             <path d="M17.65 6.35A7.958 7.958 0 0012 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08A5.99 5.99 0 0112 18c-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z" />
           </svg>
         </button>
-        <button class="p-1 hover:bg-bg-hover rounded transition-colors" title="New File">
+        <button
+          class="p-1 hover:bg-bg-hover rounded transition-colors"
+          title="New File"
+          onClick={handleNewFile}
+        >
           <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
             <path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm2 14h-3v3h-2v-3H8v-2h3v-3h2v3h3v2zm-3-7V3.5L18.5 9H13z" />
           </svg>
@@ -610,6 +797,32 @@ export function FileExplorer() {
           </svg>
         </button>
       </div>
+
+      {/* New File Input */}
+      <Show when={isCreatingFile()}>
+        <div class="px-2 py-1 border-b border-border">
+          <input
+            type="text"
+            class="w-full px-2 py-1 bg-bg-tertiary text-text-primary text-sm rounded border border-accent outline-none"
+            placeholder="Enter file name..."
+            value={newFileName()}
+            onInput={(e) => setNewFileName(e.currentTarget.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") confirmNewFile();
+              if (e.key === "Escape") {
+                setIsCreatingFile(false);
+                setNewFileName("");
+              }
+            }}
+            onBlur={() => {
+              if (!newFileName().trim()) {
+                setIsCreatingFile(false);
+              }
+            }}
+            autofocus
+          />
+        </div>
+      </Show>
 
       {/* File Tree */}
       <div class="flex-1 overflow-auto py-1">
@@ -660,6 +873,7 @@ export function FileExplorer() {
                   }
                   onSelect={isDemoMode() ? openDemoFile : handleTauriFileSelect}
                   selectedPath={isDemoMode() ? selectedPath() : filesStore.selectedPath()}
+                  focusedPath={focusedPath()}
                 />
               )}
             </For>

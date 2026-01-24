@@ -1,10 +1,33 @@
-import { For, Show } from "solid-js";
-import { editorStore } from "../../stores";
+import { createEffect, createSignal, For, onMount, Show } from "solid-js";
+import * as ipc from "../../ipc/commands";
+import { isTauriEnvironment } from "../../ipc/tauri-check";
+import type { ProjectInfo } from "../../ipc/types";
+import { editorStore, filesStore } from "../../stores";
 import { EditorTabs } from "../editor/EditorTabs";
 import { EditorWithFeatures } from "../editor/EditorWithFeatures";
 
-// Recent files for welcome screen (demo)
-const recentFiles = [
+// Track initialized LSP servers to avoid duplicate starts
+const initializedLspLanguages = new Set<string>();
+
+// Auto-start LSP for a language
+async function autoStartLsp(language: string, rootPath: string) {
+  if (!isTauriEnvironment()) return;
+  if (initializedLspLanguages.has(language)) return;
+
+  try {
+    const status = await ipc.lspStatus(language);
+    if (!status.running) {
+      await ipc.lspStart(language, rootPath);
+      initializedLspLanguages.add(language);
+      console.log(`LSP started for ${language}`);
+    }
+  } catch (e) {
+    console.warn(`Failed to start LSP for ${language}:`, e);
+  }
+}
+
+// Demo recent files for non-Tauri environment
+const demoRecentFiles = [
   { name: "App.tsx", path: "/demo/src/components/App.tsx" },
   { name: "main.tsx", path: "/demo/src/main.tsx" },
   { name: "package.json", path: "/demo/package.json" },
@@ -22,6 +45,32 @@ const shortcuts = [
 
 export function EditorArea() {
   const { tabs, getActiveTab, updateContent, setCursorPosition, saveFile } = editorStore;
+
+  // Auto-start LSP when active tab changes
+  createEffect(() => {
+    const tab = getActiveTab();
+    if (tab?.language && tab.filePath) {
+      const rootPath = filesStore.rootPath() || tab.filePath.split("/").slice(0, -1).join("/");
+
+      // Map language to LSP language ID
+      const lspLanguageMap: Record<string, string> = {
+        typescript: "typescript",
+        typescriptreact: "typescript",
+        javascript: "typescript",
+        javascriptreact: "typescript",
+        rust: "rust",
+        python: "python",
+        go: "go",
+        cpp: "cpp",
+        c: "cpp",
+      };
+
+      const lspLanguage = lspLanguageMap[tab.language];
+      if (lspLanguage) {
+        autoStartLsp(lspLanguage, rootPath);
+      }
+    }
+  });
 
   const handleOpenFolder = async () => {
     // Trigger file explorer open folder
@@ -60,6 +109,45 @@ export function EditorArea() {
 }
 
 function WelcomeScreen(props: { onOpenFolder: () => void }) {
+  const [recentProjects, setRecentProjects] = createSignal<ProjectInfo[]>([]);
+  const [isLoadingRecent, setIsLoadingRecent] = createSignal(false);
+
+  // Load recent projects from backend
+  onMount(async () => {
+    if (!isTauriEnvironment()) return;
+
+    setIsLoadingRecent(true);
+    try {
+      const projects = await ipc.getRecentProjects();
+      setRecentProjects(projects);
+    } catch (e) {
+      console.warn("Failed to load recent projects:", e);
+    } finally {
+      setIsLoadingRecent(false);
+    }
+  });
+
+  // Open a recent project
+  const openRecentProject = async (project: ProjectInfo) => {
+    try {
+      await filesStore.openProject(project.path);
+    } catch (e) {
+      console.error("Failed to open project:", e);
+    }
+  };
+
+  // Get display items - real projects or demo files
+  const displayItems = () => {
+    if (isTauriEnvironment() && recentProjects().length > 0) {
+      return recentProjects().map((p) => ({
+        name: p.name,
+        path: p.path,
+        isProject: true,
+      }));
+    }
+    return demoRecentFiles.map((f) => ({ ...f, isProject: false }));
+  };
+
   return (
     <div class="flex-1 flex items-center justify-center">
       <div class="max-w-lg w-full px-8">
@@ -118,24 +206,46 @@ function WelcomeScreen(props: { onOpenFolder: () => void }) {
           <h2 class="text-sm font-medium text-text-secondary uppercase tracking-wider mb-2">
             Recent
           </h2>
-          <div class="space-y-1">
-            <For each={recentFiles}>
-              {(file) => (
-                <button
-                  class="w-full flex items-center gap-2 py-2 px-3 rounded hover:bg-bg-hover transition-colors text-left"
-                  onClick={() => {
-                    // Open recent file
-                  }}
-                >
-                  <svg class="w-4 h-4 text-text-tertiary" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm4 18H6V4h7v5h5v11z" />
-                  </svg>
-                  <span class="text-text-primary text-sm">{file.name}</span>
-                  <span class="text-text-tertiary text-xs ml-auto">{file.path}</span>
-                </button>
-              )}
-            </For>
-          </div>
+          <Show when={isLoadingRecent()}>
+            <div class="flex items-center justify-center py-4">
+              <div class="w-5 h-5 border-2 border-accent border-t-transparent rounded-full animate-spin" />
+            </div>
+          </Show>
+          <Show when={!isLoadingRecent()}>
+            <div class="space-y-1">
+              <For each={displayItems()}>
+                {(item) => (
+                  <button
+                    class="w-full flex items-center gap-2 py-2 px-3 rounded hover:bg-bg-hover transition-colors text-left"
+                    onClick={() => {
+                      if (item.isProject) {
+                        const project = recentProjects().find((p) => p.path === item.path);
+                        if (project) openRecentProject(project);
+                      } else {
+                        // Demo mode - trigger file explorer
+                        props.onOpenFolder();
+                      }
+                    }}
+                  >
+                    <svg class="w-4 h-4 text-text-tertiary" viewBox="0 0 24 24" fill="currentColor">
+                      <Show
+                        when={item.isProject}
+                        fallback={
+                          <path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm4 18H6V4h7v5h5v11z" />
+                        }
+                      >
+                        <path d="M20 6h-8l-2-2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm0 12H4V8h16v10z" />
+                      </Show>
+                    </svg>
+                    <span class="text-text-primary text-sm">{item.name}</span>
+                    <span class="text-text-tertiary text-xs ml-auto truncate max-w-48">
+                      {item.path}
+                    </span>
+                  </button>
+                )}
+              </For>
+            </div>
+          </Show>
         </div>
 
         {/* Shortcuts */}

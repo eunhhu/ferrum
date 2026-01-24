@@ -552,3 +552,53 @@ pub async fn lsp_did_close(
     Ok(()) // No client running, nothing to do
   }
 }
+
+/// Text edit for rename operations
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct TextEdit {
+  pub range: Range,
+  pub new_text: String,
+}
+
+/// Rename a symbol
+#[tauri::command]
+pub async fn lsp_rename(
+  state: State<'_, AppState>,
+  file_path: String,
+  line: u32,
+  character: u32,
+  new_name: String,
+) -> Result<Vec<TextEdit>, String> {
+  let language = detect_language(&file_path).ok_or("Unknown language")?;
+
+  let client = state
+    .lsp
+    .get_client(&language)
+    .ok_or_else(|| format!("LSP not running for {}", language))?;
+
+  let uri = file_uri(&file_path);
+  let position = lsp_types::Position { line, character };
+
+  match client.rename(uri, position, &new_name).await {
+    Ok(workspace_edit) => {
+      let mut edits = Vec::new();
+
+      if let Some(changes) = workspace_edit.changes {
+        for (_uri, file_edits) in changes {
+          for edit in file_edits {
+            edits.push(TextEdit {
+              range: edit.range.into(),
+              new_text: edit.new_text,
+            });
+          }
+        }
+      }
+
+      Ok(edits)
+    },
+    Err(e) => {
+      error!("LSP rename failed: {}", e);
+      Err(e.to_string())
+    },
+  }
+}

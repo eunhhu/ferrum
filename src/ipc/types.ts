@@ -193,10 +193,4 @@ export interface FoldState {
   fold_ranges: Record<number, FoldRegion>;
 }
 
-export interface ScopeInfo {
-  start_line: number;
-  end_line: number;
-  depth: number;
-  scope_name: string;
-  scope_type: string;
-}
+// ScopeInfo is defined in commands.ts
