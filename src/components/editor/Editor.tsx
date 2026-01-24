@@ -210,12 +210,28 @@ export function Editor(props: EditorProps) {
 
   // Handle key events
   function handleKeyDown(e: KeyboardEvent) {
+    const isMod = e.metaKey || e.ctrlKey;
+
     // Undo/Redo
-    if (e.metaKey || e.ctrlKey) {
+    if (isMod) {
       if (e.key === "z") {
         e.preventDefault();
         if (e.shiftKey) handleRedo();
         else handleUndo();
+        return;
+      }
+    }
+
+    // Smart Selection Expansion (Cmd+Shift+Arrow)
+    if (isMod && e.shiftKey) {
+      if (e.key === "ArrowUp") {
+        e.preventDefault();
+        handleExpandSelection();
+        return;
+      }
+      if (e.key === "ArrowDown") {
+        e.preventDefault();
+        handleShrinkSelection();
         return;
       }
     }
@@ -237,6 +253,102 @@ export function Editor(props: EditorProps) {
       handleNavigation(e.key, e.shiftKey);
       // e.preventDefault(); // Prevent scrolling if needed, but let's keep default for now
     }
+  }
+
+  // Smart Selection Expansion (AST-based)
+  async function handleExpandSelection() {
+    if (!props.bufferId) return;
+
+    try {
+      // Calculate current selection bytes
+      const { startByte, endByte } = getSelectionBytes();
+
+      const result = await ipc.expandSelection(props.bufferId, startByte, endByte);
+
+      // Apply the new selection
+      batch(() => {
+        setState("selectionAnchor", {
+          line: result.start_line,
+          column: result.start_character,
+          offset: 0,
+        });
+        setState("cursor", {
+          line: result.end_line,
+          column: result.end_character,
+          offset: 0,
+        });
+      });
+    } catch (e) {
+      console.error("Expand selection failed:", e);
+    }
+  }
+
+  async function handleShrinkSelection() {
+    if (!props.bufferId) return;
+
+    try {
+      // Calculate current selection bytes
+      const { startByte, endByte } = getSelectionBytes();
+
+      const result = await ipc.shrinkSelection(props.bufferId, startByte, endByte);
+
+      // Apply the new selection
+      batch(() => {
+        setState("selectionAnchor", {
+          line: result.start_line,
+          column: result.start_character,
+          offset: 0,
+        });
+        setState("cursor", {
+          line: result.end_line,
+          column: result.end_character,
+          offset: 0,
+        });
+      });
+    } catch (e) {
+      console.error("Shrink selection failed:", e);
+    }
+  }
+
+  // Calculate byte offsets for current selection
+  function getSelectionBytes(): { startByte: number; endByte: number } {
+    let startLine = state.cursor.line;
+    let startCol = state.cursor.column;
+    let endLine = state.cursor.line;
+    let endCol = state.cursor.column;
+
+    if (state.selectionAnchor) {
+      const anchor = state.selectionAnchor;
+      if (
+        anchor.line < state.cursor.line ||
+        (anchor.line === state.cursor.line && anchor.column < state.cursor.column)
+      ) {
+        startLine = anchor.line;
+        startCol = anchor.column;
+        endLine = state.cursor.line;
+        endCol = state.cursor.column;
+      } else {
+        startLine = state.cursor.line;
+        startCol = state.cursor.column;
+        endLine = anchor.line;
+        endCol = anchor.column;
+      }
+    }
+
+    // Calculate byte offset
+    let startByte = 0;
+    for (let i = 0; i < startLine; i++) {
+      startByte += (state.lines[i]?.length ?? 0) + 1; // +1 for newline
+    }
+    startByte += startCol;
+
+    let endByte = 0;
+    for (let i = 0; i < endLine; i++) {
+      endByte += (state.lines[i]?.length ?? 0) + 1;
+    }
+    endByte += endCol;
+
+    return { startByte, endByte };
   }
 
   function handleNavigation(key: string, shiftKey: boolean) {

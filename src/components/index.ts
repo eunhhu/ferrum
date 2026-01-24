@@ -16,6 +16,7 @@ export { LocalAiPanel } from "./ai/LocalAiPanel";
 export { LocalAiProvider } from "./ai/LocalAiProvider";
 export { UnifiedAiPanel } from "./ai/UnifiedAiPanel";
 export { Autocomplete } from "./editor/Autocomplete";
+export { BlockRegionHighlight } from "./editor/BlockRegionHighlight";
 export { useComponentify } from "./editor/Componentify";
 export { ContextActionPalette } from "./editor/ContextActionPalette";
 export { DependencyHighlight } from "./editor/DependencyHighlight";

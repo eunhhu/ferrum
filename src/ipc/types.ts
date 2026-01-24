@@ -179,6 +179,7 @@ export interface DepthRegionInfo {
   start_line: number;
   end_line: number;
   depth: number;
+  node_type?: string;
 }
 
 export interface FoldRegion {
