@@ -18,87 +18,45 @@
 ### 3. Architecture (아키텍처)
 
 #### 3.1 핵심 시스템
-- **[editor-engine.md](./architecture/editor-engine.md)** ✅ - 에디터 엔진 설계
-  - Rope 데이터 구조 (ropey)
-  - Anchor 시스템
-  - 멀티 커서/선택
-  - Edit History (Undo/Redo)
-  - DisplayMap (좌표 변환 파이프라인)
-
-- **[ipc-protocol.md](./architecture/ipc-protocol.md)** ✅ - Tauri IPC 프로토콜
-  - Command (Frontend → Backend)
-  - Event (Backend → Frontend)
-  - 최적화 (배치 업데이트, 델타 전송, 디바운싱)
-  - TypeScript API 래퍼
-
-- **[lsp-integration.md](./architecture/lsp-integration.md)** ✅ - LSP 통합
-  - LSP 클라이언트 구조
-  - 16개 언어 번들 LSP 서버
-  - JSON-RPC 통신
-  - 증분 동기화
-  - 성능 최적화
-
-- **[state-management.md](./architecture/state-management.md)** ✅ - 상태 관리
-  - AppState 구조
-  - BufferManager
-  - Editor, ProjectManager, Workspace
-  - ThemeManager, Config
-  - 세션 저장/복원
+| Document | Status | Description |
+|----------|--------|-------------|
+| [architecture.md](./architecture.md) | ✅ | 전체 아키텍처 개요, 데이터 타입, IPC |
+| [editor-engine.md](./architecture/editor-engine.md) | ✅ | Rope, Anchor, DisplayMap, Edit History |
+| [ipc-protocol.md](./architecture/ipc-protocol.md) | ✅ | Tauri IPC, 배치 업데이트, MessagePack |
+| [lsp-integration.md](./architecture/lsp-integration.md) | ✅ | LSP 클라이언트, 16개 언어 번들 |
+| [state-management.md](./architecture/state-management.md) | ✅ | AppState, BufferManager, 세션 저장 |
+| [file-explorer.md](./architecture/file-explorer.md) | ✅ | 파일 트리, Git 상태, 가상화 |
+| [search-system.md](./architecture/search-system.md) | ✅ | 파일/텍스트/심볼 검색, 스트리밍 |
+| [view-mode-system.md](./architecture/view-mode-system.md) | ✅ | 다중 뷰 모드, 플러그인 확장 |
 
 ### 4. Core Features (핵심 기능 스펙)
 
 #### 4.1 혁신 기능
-- **[tree-viewer.md](./specs/tree-viewer.md)** ✅ - Tree Viewer & Tree Fold
-  - 깊이별 컬러 컨테이닝
-  - 스티키 헤더 (Monaco Sticky Scroll++)
-  - 피그마식 Tree Fold (n-depth 접기)
-  - Depth Navigation (같은 깊이 블록 간 이동)
-  - Breadcrumb Navigation
-  - Depth Highlight on Hover
-  - Structural Minimap
-
-- **[context-action-palette.md](./specs/context-action-palette.md)** ✅ - Context Action Palette
-  - 컨텍스트 분석 (Cursor, File, Project, Workflow)
-  - 스마트 액션 제안 (테스트 생성, 리팩토링, 문서화, Git)
-  - Tab Completion (가장 추천하는 액션 즉시 실행)
-  - 학습 시스템 (사용 패턴 추적)
-  - AI 통합 (선택적, OpenRouter)
-
-- **[visual-coding.md](./specs/visual-coding.md)** ✅ - Visual Coding (Node-based)
-  - Code ↔ Visual 양방향 동기화
-  - PixiJS 기반 렌더링 (WebGPU/WebGL2)
-  - 노드 시스템 (Data, Operations, Control Flow, I/O)
-  - 자동 레이아웃 (ELK)
-  - 실시간 동기화
-  - 노드 팔레트, 미니맵
-
-#### 4.2 추가 기능
-- **[additional-features.md](./specs/additional-features.md)** ✅ - 기타 혁신 기능
-  - Navigation Trail (브라우저 뒤로/앞으로 스타일)
-  - Dependency Highlight (파일 간 의존성 시각화)
-  - Related Files (Component + Test + Types + Styles)
-  - Componentify (After Effects Precomp 스타일)
-  - Error Flow Inline (에러 전파 경로 시각화)
-  - Env Manager (환경변수 자동 감지 & 관리)
-  - Smart Selection Expansion (AST 기반)
-  - Peek View (인라인 정의 팝업)
-  - Inline Blame (Git Lens 스타일)
-  - Block Region Highlight
+| Document | Status | Description |
+|----------|--------|-------------|
+| [navigation.md](./specs/navigation.md) | ✅ | Tree Viewer, Tree Fold, Navigation Trail, Dependency Highlight |
+| [tree-viewer.md](./specs/tree-viewer.md) | ✅ | 깊이별 컬러, 스티키 헤더, Depth Navigation |
+| [context-action-palette.md](./specs/context-action-palette.md) | ✅ | 컨텍스트 분석, 스마트 제안, Tab Completion |
+| [visual-coding.md](./specs/visual-coding.md) | ✅ | Node-based, Code↔Visual 양방향 동기화 |
+| [additional-features.md](./specs/additional-features.md) | ✅ | 12개 추가 기능 (Componentify, Template 등) |
 
 ### 5. Technical (기술 설계)
-- **[plugin-system.md](./technical/plugin-system.md)** ✅ - Plugin System
-  - QuickJS 런타임 (작은 크기, 빠른 시작)
-  - Plugin API (Editor, UI, FileSystem)
-  - 권한 시스템 (샌드박싱)
-  - Plugin Manifest
-  - 마켓플레이스
+| Document | Status | Description |
+|----------|--------|-------------|
+| [plugin-system.md](./technical/plugin-system.md) | ✅ | WASM 런타임, Plugin API, 권한 시스템 |
+| [frontend-optimization.md](./technical/frontend-optimization.md) | ✅ | SolidJS 최적화, WAAPI, GPU 가속 |
+| [testing-strategy.md](./technical/testing-strategy.md) | ✅ | 테스트 피라미드, Rust/TS 테스트 |
+| [accessibility.md](./technical/accessibility.md) | ✅ | WCAG 2.1 AA, 스크린 리더, 키보드 |
+| [internationalization.md](./technical/internationalization.md) | ✅ | i18n, 다국어, RTL 지원 |
 
-- **[frontend-optimization.md](./technical/frontend-optimization.md)** ✅ - Frontend 성능 최적화
-  - SolidJS Fine-grained Signals
-  - 컴포넌트 렌더링 최적화
-  - CSS Containment
-  - WAAPI 애니메이션 (Motion One)
-  - GPU 가속 레이아웃 전환
+### 6. Design (디자인)
+- **[design/README.md](./design/README.md)** - 디자인 가이드라인 인덱스
+
+### 7. Review (검토)
+- **[document-review.md](./review/document-review.md)** ✅ - 문서 완성도 평가, 성능 병목 분석
+
+### 8. Scenarios (시나리오)
+- **[ide-scenarios.md](./scenarios/ide-scenarios.md)** ✅ - 12개 상세 사용 시나리오
 
 ---
 
@@ -129,7 +87,7 @@
 | **Text Buffer** | ropey | Rope 자료구조, 대용량 파일 |
 | **AST Parsing** | tree-sitter | 범용 언어, 증분 파싱 |
 | **LSP** | 공식 LSP 서버 | 오프라인 번들 LSP |
-| **Plugin Runtime** | QuickJS | 작은 크기, 샌드박싱 |
+| **Plugin Runtime** | Wasmtime (WASM) | 고성능, 샌드박싱 |
 | **Language** | Rust + TypeScript | Backend/Frontend |
 
 ---
@@ -163,7 +121,7 @@
 │  │                                                        │  │
 │  │  ┌──────────────┐  ┌──────────────┐  ┌─────────────┐  │  │
 │  │  │   Indexing   │  │    Search    │  │    State    │  │  │
-│  │  │              │  │    (grep)    │  │  Management │  │  │
+│  │  │              │  │   (ripgrep)  │  │  Management │  │  │
 │  │  └──────────────┘  └──────────────┘  └─────────────┘  │  │
 │  │                                                        │  │
 │  └────────────────────────────────────────────────────────┘  │
@@ -207,16 +165,20 @@
 - [ ] Plugin System (WASM)
 - [ ] Plugin API (Editor, UI, FS)
 
-#### Phase 5: AI (Week 33-36)
+#### Phase 5: AI & Polish (Week 33-40)
 - [ ] OpenRouter SDK 연동
 - [ ] 로컬 오픈소스 모델 연동
 - [ ] Context Action Palette AI 통합
+- [ ] 접근성 (Accessibility)
+- [ ] 국제화 (i18n)
 
 ### Post-MVP
 - [ ] Plugin Marketplace
 - [ ] Theme System 확장
+- [ ] Collaboration (실시간 협업)
+- [ ] Terminal Integration
+- [ ] Debugger (DAP 통합)
 - [ ] Mobile (클라우드 + 비주얼 코딩 전용)
-- [ ] 제스처 시스템
 
 ---
 
@@ -225,23 +187,35 @@
 ### Research (1개)
 ✅ **Zed 분석** - 209개 크레이트 구조, Rope + SumTree, GPUI, LSP, IPC 전체 분석
 
-### Architecture (4개)
-1. ✅ **Editor Engine** - Rope, Anchor, Selection, DisplayMap (10주 로드맵)
-2. ✅ **IPC Protocol** - Command/Event, 최적화 (배치, 델타, 디바운싱)
-3. ✅ **LSP Integration** - 클라이언트 구조, 번들 LSP, 성능 최적화
-4. ✅ **State Management** - AppState, BufferManager, Workspace, 세션 저장
+### Architecture (8개)
+1. ✅ **Architecture Overview** - 전체 아키텍처, 데이터 타입, IPC
+2. ✅ **Editor Engine** - Rope, Anchor, Selection, DisplayMap
+3. ✅ **IPC Protocol** - Command/Event, 최적화 (배치, 델타, 디바운싱)
+4. ✅ **LSP Integration** - 클라이언트 구조, 번들 LSP, 성능 최적화
+5. ✅ **State Management** - AppState, BufferManager, Workspace, 세션 저장
+6. ✅ **File Explorer** - 파일 트리, Git 상태, 가상화
+7. ✅ **Search System** - 파일/텍스트/심볼 검색, 스트리밍 결과
+8. ✅ **View Mode System** - 다중 뷰 모드, Production Preview
 
-### Core Features (4개)
-1. ✅ **Tree Viewer** - 깊이 컬러, 스티키 헤더, n-depth 접기, Navigation (10주)
-2. ✅ **Context Action Palette** - 컨텍스트 분석, 스마트 제안, 학습, AI (7주)
-3. ✅ **Visual Coding** - Code↔Visual 동기화, PixiJS, 노드 시스템 (10주)
-4. ✅ **Additional Features** - 12개 혁신 기능 (Navigation Trail, Dependency Highlight 등)
+### Core Features (5개)
+1. ✅ **Navigation** - Tree Viewer, Tree Fold, Navigation Trail, Dependency Highlight
+2. ✅ **Tree Viewer** - 깊이 컬러, 스티키 헤더, n-depth 접기
+3. ✅ **Context Action Palette** - 컨텍스트 분석, 스마트 제안, 학습
+4. ✅ **Visual Coding** - Code↔Visual 동기화, PixiJS, 노드 시스템
+5. ✅ **Additional Features** - 12개 혁신 기능
 
-### Technical (2개)
-1. ✅ **Plugin System** - QuickJS 런타임, API, 권한, Marketplace (8주)
+### Technical (5개)
+1. ✅ **Plugin System** - WASM 런타임, API, 권한, Marketplace
 2. ✅ **Frontend Optimization** - SolidJS 렌더링, 애니메이션, 성능 최적화
+3. ✅ **Testing Strategy** - 테스트 피라미드, Rust/TS 테스트
+4. ✅ **Accessibility** - WCAG 2.1 AA, 스크린 리더, 키보드
+5. ✅ **Internationalization** - i18n, 다국어, RTL 지원
 
-**총 11개 핵심 설계 문서 완성**
+### Review & Scenarios (2개)
+1. ✅ **Document Review** - 문서 완성도 평가, 성능 병목 분석, 권장 도구
+2. ✅ **IDE Scenarios** - 12개 상세 사용 시나리오
+
+**총 21개 핵심 설계 문서 완성**
 
 ---
 
@@ -254,6 +228,22 @@
 | **Performance First** | 고급 기능을 넣더라도 성능은 최적 유지 |
 | **Full Control** | 에디터 자체 구현으로 완전한 커스터마이징 |
 | **VSCode Parity+** | VSCode 편의 기능 전부 포함 + 추가 혁신 |
+
+---
+
+## 📈 성능 목표
+
+| 작업 | 목표 시간 | 비고 |
+|------|----------|------|
+| 키 입력 → 화면 반영 | < 16ms | 60fps 유지 |
+| 파일 열기 (10KB) | < 100ms | |
+| 파일 열기 (1MB) | < 500ms | |
+| 자동완성 표시 | < 100ms | 첫 결과 |
+| 정의로 이동 | < 200ms | 캐시된 경우 < 50ms |
+| 전역 검색 시작 | < 50ms | 첫 결과 스트리밍 |
+| 앱 시작 | < 2s | 콜드 스타트 |
+
+상세 분석: [document-review.md](./review/document-review.md)
 
 ---
 
@@ -279,27 +269,10 @@
 - **CSS Containment** (레이아웃 격리)
 - **WAAPI/Motion One** (GPU 가속 애니메이션)
 
-### LSP
-- **별도 OS 스레드** (UI 블로킹 방지)
-- 120초 타임아웃 + 진행 상황 표시
-- **동시 요청** (completion, hover, definition 병렬)
-
 ### 검색
 - **스트리밍 결과** (첫 결과 즉시 표시)
 - 배치 전송 (16ms/10개 단위)
 - ignore 크레이트 병렬 처리
-
-### Visual Coding
-- **PixiJS 배경 레이어** (DOM 대신 WebGL)
-- 뷰포트 클리핑
-- LOD (Level of Detail)
-- Object Pooling
-- **좌표 동기화** (DisplayMap ↔ PixiJS)
-
-### Context Action Palette
-- **백그라운드 예측** (Tab 누르기 전 미리 계산)
-- **Tree-sitter Queries** (빠른 노드 분석)
-- 캐시 기반 즉시 반환
 
 ---
 
@@ -309,21 +282,22 @@
 1. `overview.md` - 프로젝트 전체 개요
 2. `research/zed-analysis.md` - 참고 아키텍처 (Zed)
 
-### 3.1 핵심 시스템
-- **[editor-engine.md](./architecture/editor-engine.md)** ✅ - 에디터 엔진 설계
-- **[ipc-protocol.md](./architecture/ipc-protocol.md)** ✅ - Tauri IPC 프로토콜 (MsgPack, SAB 최적화)
-- **[lsp-integration.md](./architecture/lsp-integration.md)** ✅ - LSP 통합
-- **[state-management.md](./architecture/state-management.md)** ✅ - 상태 관리
+### 아키텍처 이해 (구현 준비)
+3. `architecture.md` - 전체 아키텍처
+4. `architecture/editor-engine.md` - 에디터 엔진
+5. `architecture/ipc-protocol.md` - IPC 프로토콜
+6. `architecture/state-management.md` - 상태 관리
 
 ### 핵심 기능 (차별화 포인트)
-7. `specs/tree-viewer.md` - Tree Viewer (가장 혁신적)
-8. `specs/context-action-palette.md` - Context Action Palette
-9. `specs/visual-coding.md` - Visual Coding
-10. `specs/additional-features.md` - 기타 12개 혁신 기능
+7. `specs/navigation.md` - Navigation 전체
+8. `specs/tree-viewer.md` - Tree Viewer (가장 혁신적)
+9. `specs/context-action-palette.md` - Context Action Palette
+10. `specs/visual-coding.md` - Visual Coding
 
-### 5. Technical (기술 설계)
-- **[plugin-system.md](./technical/plugin-system.md)** ✅ - Plugin System (WASM)
-- **[frontend-optimization.md](./technical/frontend-optimization.md)** ✅ - Frontend 성능 최적화
+### 기술 상세 (구현 시 참조)
+11. `technical/plugin-system.md` - 플러그인 시스템
+12. `technical/frontend-optimization.md` - 프론트엔드 최적화
+13. `review/document-review.md` - 성능 목표, 권장 도구
 
 ---
 
@@ -354,9 +328,9 @@
 이 문서들은 **설계 단계**입니다. 실제 구현 시:
 
 1. 각 문서의 "구현 로드맵" 섹션 참고
-2. 테스트 전략 포함
-3. 성능 벤치마크 목표 달성
-4. 사용자 편의성 우선
+2. 테스트 전략 포함 (`testing-strategy.md`)
+3. 성능 벤치마크 목표 달성 (`document-review.md`)
+4. 접근성 준수 (`accessibility.md`)
 
 ---
 
@@ -368,12 +342,6 @@
 
 ---
 
-## 📧 Contact
-
-프로젝트 관련 문의: [TBD]
-
----
-
-**Last Updated**: 2026-01-10
-**Version**: 1.1.0 (Design Phase - Performance Optimizations Added)
-**Total Documents**: 11 (완성)
+**Last Updated**: 2026-01-24
+**Version**: 1.2.0 (Design Phase - Full Documentation)
+**Total Documents**: 21 (완성)

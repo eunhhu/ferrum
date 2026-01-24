@@ -1,9 +1,25 @@
 # Ferrum Editor Architecture
 
-## Overview
+## 개요
 
 Ferrum Editor는 확장 가능하고 고성능인 코드 에디터 아키텍처를 목표로 합니다.
-토큰/블록 추적, GUI 오버레이, 플러그인 시스템 등 향후 확장을 고려한 설계입니다.
+이 문서는 프론트엔드 레이어 구조와 확장 시스템에 대한 개요를 제공합니다.
+
+> **상세 백엔드 아키텍처**: `plans/architecture/editor-engine.md` 참조  
+> **IPC 프로토콜**: `plans/architecture/ipc-protocol.md` 참조
+
+---
+
+## 설계 원칙
+
+| 원칙 | 설명 |
+|------|------|
+| **Full Control** | Monaco/CodeMirror 없이 에디터 자체 구현 |
+| **Performance First** | 대용량 파일 (100MB+) 지원 |
+| **Rust Backend** | 모든 텍스트 연산은 Rust에서 수행 |
+| **Frontend Display Only** | SolidJS는 순수 View 렌더링만 담당 |
+
+---
 
 ## Core Architecture
 
@@ -35,9 +51,68 @@ Ferrum Editor는 확장 가능하고 고성능인 코드 에디터 아키텍처�
 └─────────────────────────────────────────────────────────────┘
 ```
 
-## Key Components
+---
 
-### 1. Document Model
+## 백엔드 핵심 컴포넌트
+
+### 1. Text Buffer (ropey)
+
+Rope 데이터 구조 기반의 고성능 텍스트 버퍼입니다.
+
+```rust
+pub struct TextBuffer {
+    rope: Rope,           // ropey 라이브러리
+    id: BufferId,
+    path: Option<PathBuf>,
+    language: LanguageId,
+    dirty: bool,
+    version: u64,
+}
+```
+
+**성능 특성:**
+- O(log n) 삽입/삭제
+- 100MB+ 파일 효율적 처리
+- 증분 파싱 지원
+
+### 2. Anchor 시스템
+
+편집 시 자동으로 위치가 업데이트되는 마커 시스템입니다.
+
+```rust
+pub struct Anchor {
+    char_offset: usize,
+    bias: Bias,      // Left 또는 Right
+    version: u64,
+}
+```
+
+**사용처:**
+- 커서/선택 위치
+- 북마크
+- 진단 (Diagnostics) 위치
+- 코드 폴딩 범위
+
+### 3. DisplayMap (좌표 변환)
+
+버퍼 좌표 → 화면 좌표 변환 파이프라인입니다.
+
+```
+Buffer Text → InlayMap → FoldMap → TabMap → WrapMap → BlockMap → Display
+```
+
+각 레이어:
+- **InlayMap**: LSP 인레이 힌트 삽입
+- **FoldMap**: 코드 폴딩
+- **TabMap**: 탭 → 스페이스 변환
+- **WrapMap**: 소프트 래핑
+- **BlockMap**: 커스텀 블록 (진단, 위젯)
+
+---
+
+## 프론트엔드 컴포넌트
+
+### Document Model
 
 ```typescript
 interface Document {
@@ -47,11 +122,9 @@ interface Document {
   language: string;
   version: number;
   
-  // Token/Block tracking
+  // Token/Block tracking (백엔드에서 제공)
   tokens: Token[];
   blocks: Block[];
-  
-  // AST from tree-sitter
   syntaxTree: SyntaxTree | null;
 }
 
@@ -61,7 +134,6 @@ interface Token {
   start: Position;
   end: Position;
   text: string;
-  metadata?: Record<string, unknown>;
 }
 
 interface Block {
@@ -70,13 +142,12 @@ interface Block {
   range: Range;
   children: Block[];
   collapsed: boolean;
-  decorations: Decoration[];
 }
 ```
 
-### 2. Decoration System
+### Decoration System
 
-데코레이션은 에디터에 시각적 요소를 추가하는 확장 포인트입니다.
+에디터에 시각적 요소를 추가하는 확장 포인트입니다.
 
 ```typescript
 interface Decoration {
@@ -93,34 +164,18 @@ type DecorationType =
   | 'widget'         // 커스텀 위젯
   | 'gutter-icon'    // 거터 아이콘
   | 'line-class';    // 라인 전체 스타일
-
-interface DecorationOptions {
-  className?: string;
-  style?: CSSProperties;
-  hoverMessage?: string;
-  widget?: () => JSX.Element;  // 커스텀 위젯 렌더러
-}
 ```
 
-### 3. Extension Points
+---
 
-#### 3.1 Token Tracker
+## Extension Points
 
-토큰을 추적하여 GUI 오버레이를 생성할 수 있습니다.
+### Token Tracker
+
+토큰을 추적하여 GUI 오버레이를 생성합니다.
 
 ```typescript
-interface TokenTracker {
-  // 특정 타입의 토큰 추적
-  trackTokens(type: TokenType, callback: TokenCallback): Disposable;
-  
-  // 토큰 위치에 위젯 추가
-  addWidgetAtToken(tokenId: string, widget: Widget): Disposable;
-  
-  // 토큰 범위 가져오기
-  getTokenBounds(tokenId: string): DOMRect | null;
-}
-
-// 사용 예: 함수 호출에 인라인 타입 힌트 추가
+// 함수 호출에 인라인 타입 힌트 추가 예시
 tokenTracker.trackTokens('function_call', (token) => {
   const typeHint = inferType(token);
   return {
@@ -133,54 +188,33 @@ tokenTracker.trackTokens('function_call', (token) => {
 });
 ```
 
-#### 3.2 Block Tracker
+### Block Tracker
 
 코드 블록을 추적하여 폴딩, 아웃라인 등을 구현합니다.
 
 ```typescript
 interface BlockTracker {
-  // 블록 변경 감지
   onBlockChange(callback: BlockChangeCallback): Disposable;
-  
-  // 블록에 데코레이션 추가
   decorateBlock(blockId: string, decoration: Decoration): Disposable;
-  
-  // 블록 접기/펼치기
   toggleBlock(blockId: string): void;
-  
-  // 블록 위에 GUI 오버레이 추가
   addOverlay(blockId: string, overlay: OverlayConfig): Disposable;
 }
 ```
 
-#### 3.3 GUI Overlay System
+### GUI Overlay System
 
 에디터 위에 커스텀 GUI를 렌더링합니다.
 
 ```typescript
-interface OverlayManager {
-  // 특정 위치에 오버레이 추가
-  addOverlay(config: OverlayConfig): OverlayHandle;
-  
-  // 오버레이 업데이트
-  updateOverlay(handle: OverlayHandle, config: Partial<OverlayConfig>): void;
-  
-  // 오버레이 제거
-  removeOverlay(handle: OverlayHandle): void;
-}
-
 interface OverlayConfig {
-  // 위치 지정 방식
   anchor: 
     | { type: 'position'; line: number; column: number }
     | { type: 'token'; tokenId: string }
     | { type: 'block'; blockId: string }
     | { type: 'selection' };
   
-  // 렌더링할 컴포넌트
   component: () => JSX.Element;
   
-  // 옵션
   options?: {
     followScroll?: boolean;
     zIndex?: number;
@@ -189,7 +223,9 @@ interface OverlayConfig {
 }
 ```
 
-### 4. Event System
+---
+
+## Event System
 
 ```typescript
 interface EditorEvents {
@@ -212,54 +248,18 @@ interface EditorEvents {
 }
 ```
 
-## Scroll System
-
-### 스크롤 관련 핵심 기능
-
-```typescript
-interface ScrollController {
-  // 특정 라인으로 스크롤
-  scrollToLine(line: number, options?: ScrollOptions): void;
-  
-  // 특정 위치로 스크롤
-  scrollToPosition(position: Position, options?: ScrollOptions): void;
-  
-  // 커서가 보이도록 스크롤
-  ensureCursorVisible(): void;
-  
-  // 현재 보이는 범위
-  getVisibleRange(): Range;
-  
-  // 스크롤 위치
-  getScrollPosition(): { top: number; left: number };
-}
-
-interface ScrollOptions {
-  behavior?: 'auto' | 'smooth';
-  block?: 'start' | 'center' | 'end';
-  padding?: number;
-}
-```
+---
 
 ## Virtual Scrolling
 
-대용량 파일을 위한 가상 스크롤링 구현:
+대용량 파일을 위한 가상 스크롤링 구현입니다.
 
 ```typescript
 interface VirtualScrollState {
-  // 전체 라인 수
   totalLines: number;
-  
-  // 보이는 라인 범위
   visibleRange: { start: number; end: number };
-  
-  // 버퍼 (위아래 여유 라인)
-  buffer: number;
-  
-  // 라인 높이
+  buffer: number;        // 위아래 여유 라인
   lineHeight: number;
-  
-  // 스크롤 위치
   scrollTop: number;
 }
 
@@ -272,6 +272,28 @@ const visibleLines = createMemo(() => {
   }));
 });
 ```
+
+---
+
+## Scroll Controller
+
+```typescript
+interface ScrollController {
+  scrollToLine(line: number, options?: ScrollOptions): void;
+  scrollToPosition(position: Position, options?: ScrollOptions): void;
+  ensureCursorVisible(): void;
+  getVisibleRange(): Range;
+  getScrollPosition(): { top: number; left: number };
+}
+
+interface ScrollOptions {
+  behavior?: 'auto' | 'smooth';
+  block?: 'start' | 'center' | 'end';
+  padding?: number;
+}
+```
+
+---
 
 ## Future Extensions
 
@@ -297,7 +319,7 @@ function myFunction() { ... }
 
 ### 4. Collaborative Cursors
 ```typescript
-// 다른 사용자의 커서 위치 표시
+// 다른 사용자의 커서 위치 표시 (협업 기능)
 interface RemoteCursor {
   userId: string;
   userName: string;
@@ -307,6 +329,8 @@ interface RemoteCursor {
 }
 ```
 
+---
+
 ## File Structure
 
 ```
@@ -314,12 +338,12 @@ src/components/editor/
 ├── Editor.tsx              # 메인 에디터 컴포넌트
 ├── types.ts                # 타입 정의
 ├── layers/
-│   ├── BackgroundLayer.tsx # 배경 레이어
-│   ├── TextLayer.tsx       # 텍스트 렌더링
-│   ├── HighlightLayer.tsx  # 구문 강조
-│   ├── CursorLayer.tsx     # 커서/선택
-│   ├── DecorationLayer.tsx # 데코레이션
-│   └── OverlayLayer.tsx    # 오버레이
+│   ├── BackgroundLayer.tsx # L0: 배경 레이어
+│   ├── TextLayer.tsx       # L1: 텍스트 렌더링
+│   ├── HighlightLayer.tsx  # L2: 구문 강조
+│   ├── CursorLayer.tsx     # L3: 커서/선택
+│   ├── DecorationLayer.tsx # L4: 데코레이션
+│   └── OverlayLayer.tsx    # L5: 오버레이
 ├── hooks/
 │   ├── useDocument.ts      # 문서 상태 관리
 │   ├── useTokenTracker.ts  # 토큰 추적
@@ -333,20 +357,47 @@ src/components/editor/
     └── InlineDiff.ts       # 인라인 diff 확장
 ```
 
+---
+
 ## Performance Considerations
 
-1. **Virtual Scrolling**: 보이는 라인만 렌더링
-2. **Debounced Highlights**: 구문 강조 디바운싱
-3. **Memoization**: SolidJS의 `createMemo`로 불필요한 재계산 방지
-4. **Layer Separation**: 각 레이어 독립적 업데이트
-5. **Web Workers**: 무거운 작업은 워커에서 처리
+| 최적화 | 설명 |
+|--------|------|
+| **Virtual Scrolling** | 보이는 라인만 렌더링 |
+| **Debounced Highlights** | 구문 강조 디바운싱 (50ms) |
+| **Memoization** | SolidJS `createMemo`로 재계산 방지 |
+| **Layer Separation** | 각 레이어 독립적 업데이트 |
+| **Web Workers** | 무거운 작업은 워커에서 처리 |
+| **Incremental Parsing** | tree-sitter 증분 파싱 |
+
+### 성능 타겟
+
+| 지표 | 목표 |
+|------|------|
+| 입력 지연 | < 16ms (60fps) |
+| 초기 로딩 | < 500ms |
+| 대용량 파일 (10MB) | < 50ms 입력 지연 |
+| 구문 강조 | < 50ms (증분) |
+
+---
+
+## 관련 문서
+
+- **백엔드 엔진**: `plans/architecture/editor-engine.md`
+- **IPC 프로토콜**: `plans/architecture/ipc-protocol.md`
+- **플러그인 시스템**: `plans/architecture/plugin-system.md`
+- **View Mode 시스템**: `plans/architecture/view-mode-system.md`
+
+---
 
 ## Migration Path
 
 현재 구조에서 확장 가능한 구조로의 마이그레이션:
 
-1. **Phase 1**: 레이어 분리 (현재 진행 중)
-2. **Phase 2**: 토큰/블록 트래커 구현
-3. **Phase 3**: 데코레이션 시스템 구현
-4. **Phase 4**: 오버레이 시스템 구현
-5. **Phase 5**: 확장 API 공개
+| Phase | 내용 | 상태 |
+|-------|------|------|
+| 1 | 레이어 분리 | ✅ 완료 |
+| 2 | 토큰/블록 트래커 구현 | 🔄 진행 중 |
+| 3 | 데코레이션 시스템 구현 | ⏳ 예정 |
+| 4 | 오버레이 시스템 구현 | ⏳ 예정 |
+| 5 | 확장 API 공개 | ⏳ 예정 |

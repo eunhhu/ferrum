@@ -1414,6 +1414,39 @@ fn test_tree_fold_integration() {
 
 ---
 
+---
+
+## 13. 성능 타겟
+
+> 상세: [review/document-review.md](../review/document-review.md)
+
+| 작업 | 목표 시간 | 비고 |
+|------|----------|------|
+| 깊이 분석 (10K 라인) | < 50ms | 초기 파싱 |
+| 깊이 분석 (증분) | < 5ms | 편집 후 |
+| 스티키 헤더 추출 | < 10ms | |
+| 깊이별 배경 렌더링 | < 8ms | 60fps 유지 |
+| Tree Fold 적용 | < 20ms | |
+| Depth Navigation | < 10ms | |
+
+---
+
+## 14. 관련 문서
+
+### 아키텍처
+- [editor-engine.md](../architecture/editor-engine.md) - DisplayMap, FoldMap
+- [ipc-protocol.md](../architecture/ipc-protocol.md) - IPC 최적화
+
+### 기능 스펙
+- [navigation.md](./navigation.md) - Navigation 전체 개요
+- [additional-features.md](./additional-features.md) - Block Region Highlight, Structural Minimap
+
+### 기술 문서
+- [frontend-optimization.md](../technical/frontend-optimization.md) - SolidJS/PixiJS 최적화
+- [testing-strategy.md](../technical/testing-strategy.md) - 테스트 전략
+
+---
+
 ## 참고 자료
 
 - [Figma Layers](https://www.figma.com/best-practices/layer-organization-in-figma/)

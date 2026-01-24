@@ -1495,6 +1495,37 @@ priority_threshold = 50
 
 ---
 
+## 10. 성능 타겟
+
+> 상세: [review/document-review.md](../review/document-review.md)
+
+| 작업 | 목표 시간 | 비고 |
+|------|----------|------|
+| 컨텍스트 분석 | < 50ms | 전체 분석 |
+| Action 제안 생성 | < 20ms | 규칙 기반 |
+| Palette 표시 | < 16ms | 60fps |
+| Tab Completion | < 10ms | 즉각 반응 |
+| AI 제안 (선택적) | < 500ms | 비동기 |
+
+---
+
+## 11. 관련 문서
+
+### 아키텍처
+- [editor-engine.md](../architecture/editor-engine.md) - 에디터 엔진
+- [lsp-integration.md](../architecture/lsp-integration.md) - LSP 심볼 정보
+- [state-management.md](../architecture/state-management.md) - 상태 관리
+
+### 기능 스펙
+- [navigation.md](./navigation.md) - Navigation 기능
+- [additional-features.md](./additional-features.md) - Componentify, Template System
+
+### 기술 문서
+- [plugin-system.md](../technical/plugin-system.md) - 플러그인 Action 확장
+- [testing-strategy.md](../technical/testing-strategy.md) - 테스트 전략
+
+---
+
 ## 참고 자료
 
 - [VSCode Command Palette](https://code.visualstudio.com/docs/getstarted/userinterface#_command-palette)

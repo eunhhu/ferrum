@@ -1280,6 +1280,24 @@ async function getSyntaxTree(bufferId: string): Promise<SyntaxTree> {
 
 ---
 
+## 16. 관련 문서
+
+### 아키텍처
+- [editor-engine.md](./editor-engine.md) - 에디터 엔진
+- [lsp-integration.md](./lsp-integration.md) - LSP 통합
+- [state-management.md](./state-management.md) - 상태 관리
+
+### 기능 스펙
+- [visual-coding.md](../specs/visual-coding.md) - Visual Coding (노드 동기화)
+
+### 기술 문서
+- [frontend-optimization.md](../technical/frontend-optimization.md) - 프론트엔드 최적화
+
+### 리서치
+- [zed-analysis.md](../research/zed-analysis.md) - Zed IPC/RPC 분석
+
+---
+
 ## 참고 자료
 
 - [Tauri IPC Documentation](https://tauri.app/v1/guides/features/command)

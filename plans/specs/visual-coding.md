@@ -802,6 +802,38 @@ class LODManager {
 
 ---
 
+## 10. 성능 타겟
+
+> 상세: [review/document-review.md](../review/document-review.md)
+
+| 작업 | 목표 시간 | 비고 |
+|------|----------|------|
+| Code → Visual 변환 | < 200ms | 초기 변환 |
+| Visual → Code 동기화 | < 100ms | 노드 변경 시 |
+| 노드 렌더링 (100개) | < 16ms | 60fps |
+| 노드 드래그 | < 8ms | 즉각 반응 |
+| 레이아웃 계산 | < 500ms | ELK 알고리즘 |
+| 줌/팬 | < 16ms | 부드러운 동작 |
+
+---
+
+## 11. 관련 문서
+
+### 아키텍처
+- [editor-engine.md](../architecture/editor-engine.md) - AST 엔진
+- [view-mode-system.md](../architecture/view-mode-system.md) - 뷰 모드 전환
+- [ipc-protocol.md](../architecture/ipc-protocol.md) - IPC 최적화
+
+### 기능 스펙
+- [navigation.md](./navigation.md) - Navigation 기능
+- [additional-features.md](./additional-features.md) - Code/View Mode
+
+### 기술 문서
+- [frontend-optimization.md](../technical/frontend-optimization.md) - PixiJS 최적화
+- [plugin-system.md](../technical/plugin-system.md) - 커스텀 노드 타입 확장
+
+---
+
 ## 참고 자료
 
 - [Unreal Engine Blueprints](https://docs.unrealengine.com/4.27/en-US/ProgrammingAndScripting/Blueprints/)

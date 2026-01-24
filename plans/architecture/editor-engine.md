@@ -1259,6 +1259,43 @@ async fn test_edit_history() {
 
 ---
 
+## 14. 성능 타겟
+
+> 상세: [review/document-review.md](../review/document-review.md)
+
+| 작업 | 목표 시간 | 비고 |
+|------|----------|------|
+| 키 입력 → 버퍼 반영 | < 1ms | Rope O(log n) |
+| 버퍼 → 화면 반영 | < 16ms | 60fps |
+| 파일 열기 (1MB) | < 500ms | |
+| 파일 열기 (10MB) | < 2s | |
+| Undo/Redo | < 5ms | |
+| 증분 파싱 | < 50ms | tree-sitter |
+| DisplayMap 변환 | < 5ms | |
+
+---
+
+## 15. 관련 문서
+
+### 아키텍처
+- [ipc-protocol.md](./ipc-protocol.md) - IPC 통신
+- [lsp-integration.md](./lsp-integration.md) - LSP 통합
+- [state-management.md](./state-management.md) - 상태 관리
+
+### 기능 스펙
+- [tree-viewer.md](../specs/tree-viewer.md) - Tree Viewer (깊이 분석)
+- [navigation.md](../specs/navigation.md) - Navigation (커서 이동)
+- [additional-features.md](../specs/additional-features.md) - Smart Selection
+
+### 기술 문서
+- [frontend-optimization.md](../technical/frontend-optimization.md) - 렌더링 최적화
+- [testing-strategy.md](../technical/testing-strategy.md) - 테스트 전략
+
+### 리서치
+- [zed-analysis.md](../research/zed-analysis.md) - Zed Rope/SumTree 분석
+
+---
+
 ## 참고 자료
 
 - [Zed Editor - Rope](https://github.com/zed-industries/zed/tree/main/crates/rope)
