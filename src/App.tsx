@@ -6,18 +6,17 @@
  * and bottom panel.
  */
 
-import { onMount, createEffect, Show } from "solid-js";
+import { createEffect, createSignal, onMount, Show } from "solid-js";
 import { ActivityBar } from "./components/layout/ActivityBar";
-import { Sidebar } from "./components/layout/Sidebar";
 import { EditorArea } from "./components/layout/EditorArea";
 import { Panel } from "./components/layout/Panel";
+import { Sidebar } from "./components/layout/Sidebar";
 import { StatusBar } from "./components/layout/StatusBar";
-import { CommandPalette } from "./components/ui/CommandPalette";
-import { TreeViewer } from "./components/tree-viewer/TreeViewer";
 import { StickyHeader } from "./components/tree-viewer/StickyHeader";
-import { uiStore, editorStore, commandsStore } from "./stores";
+import { TreeViewer } from "./components/tree-viewer/TreeViewer";
+import { CommandPalette } from "./components/ui/CommandPalette";
 import type { ScopeInfo } from "./ipc/types";
-import { createSignal } from "solid-js";
+import { commandsStore, editorStore, uiStore } from "./stores";
 
 function App() {
   const [commandPaletteOpen, setCommandPaletteOpen] = createSignal(false);
@@ -84,10 +83,7 @@ function App() {
   // Update scopes when active tab changes (mock data for now)
   createEffect(() => {
     const activeTab = editorStore.getActiveTab();
-    if (
-      activeTab?.language === "typescript" ||
-      activeTab?.language === "typescriptreact"
-    ) {
+    if (activeTab?.language === "typescript" || activeTab?.language === "typescriptreact") {
       // In production, this would come from tree-sitter analysis
       setScopes([]);
     } else {
@@ -97,9 +93,8 @@ function App() {
 
   const handleScopeClick = (scope: ScopeInfo) => {
     // Scroll to scope start line
-    const scrollFn = (
-      window as { __ferrum_editor_scrollToLine?: (line: number) => void }
-    ).__ferrum_editor_scrollToLine;
+    const scrollFn = (window as { __ferrum_editor_scrollToLine?: (line: number) => void })
+      .__ferrum_editor_scrollToLine;
     if (typeof scrollFn === "function") {
       scrollFn(scope.start_line);
     }

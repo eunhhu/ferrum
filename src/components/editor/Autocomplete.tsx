@@ -4,13 +4,7 @@
  * Displays LSP completion suggestions in a dropdown list.
  */
 
-import {
-  createSignal,
-  createEffect,
-  For,
-  Show,
-  onCleanup,
-} from "solid-js";
+import { createEffect, createSignal, For, onCleanup, Show } from "solid-js";
 import type { LspCompletionItem } from "../../ipc/commands";
 
 // Completion item kind icons (LSP spec)
@@ -86,7 +80,7 @@ export function Autocomplete(props: AutocompleteProps) {
         setSelectedIndex((i) => Math.max(i - 1, 0));
         break;
       case "Enter":
-      case "Tab":
+      case "Tab": {
         e.preventDefault();
         e.stopPropagation();
         const selected = props.items[selectedIndex()];
@@ -94,6 +88,7 @@ export function Autocomplete(props: AutocompleteProps) {
           props.onSelect(selected);
         }
         break;
+      }
       case "Escape":
         e.preventDefault();
         e.stopPropagation();
@@ -178,15 +173,11 @@ export function Autocomplete(props: AutocompleteProps) {
                 </span>
 
                 {/* Label */}
-                <span class="flex-1 text-text-primary text-sm truncate">
-                  {item.label}
-                </span>
+                <span class="flex-1 text-text-primary text-sm truncate">{item.label}</span>
 
                 {/* Detail */}
                 <Show when={item.detail}>
-                  <span class="text-text-tertiary text-xs truncate max-w-32">
-                    {item.detail}
-                  </span>
+                  <span class="text-text-tertiary text-xs truncate max-w-32">{item.detail}</span>
                 </Show>
               </div>
             )}

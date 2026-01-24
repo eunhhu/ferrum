@@ -19,9 +19,7 @@ interface UnifiedAiPanelProps {
 
 export function UnifiedAiPanel(props: UnifiedAiPanelProps) {
   const [mode, setMode] = createSignal<AiPanelMode>(
-    props.defaultMode ||
-      (localStorage.getItem("ferrum_ai_panel_mode") as AiPanelMode) ||
-      "cloud"
+    props.defaultMode || (localStorage.getItem("ferrum_ai_panel_mode") as AiPanelMode) || "cloud"
   );
 
   const handleModeChange = (newMode: AiPanelMode) => {
@@ -38,8 +36,7 @@ export function UnifiedAiPanel(props: UnifiedAiPanelProps) {
             class="px-3 py-1 text-xs font-medium transition-colors"
             classList={{
               "bg-accent text-white": mode() === "cloud",
-              "bg-transparent text-text-secondary hover:text-text-primary":
-                mode() !== "cloud",
+              "bg-transparent text-text-secondary hover:text-text-primary": mode() !== "cloud",
             }}
             onClick={() => handleModeChange("cloud")}
           >
@@ -49,8 +46,7 @@ export function UnifiedAiPanel(props: UnifiedAiPanelProps) {
             class="px-3 py-1 text-xs font-medium transition-colors border-l border-border"
             classList={{
               "bg-green-600 text-white": mode() === "local",
-              "bg-transparent text-text-secondary hover:text-text-primary":
-                mode() !== "local",
+              "bg-transparent text-text-secondary hover:text-text-primary": mode() !== "local",
             }}
             onClick={() => handleModeChange("local")}
           >
@@ -66,22 +62,14 @@ export function UnifiedAiPanel(props: UnifiedAiPanelProps) {
       <div class="flex-1 overflow-hidden">
         <Show when={mode() === "cloud"}>
           <AiChatPanel
-            {...(props.onInsertCode
-              ? { onInsertCode: props.onInsertCode }
-              : {})}
-            {...(props.selectedCode
-              ? { selectedCode: props.selectedCode }
-              : {})}
+            {...(props.onInsertCode ? { onInsertCode: props.onInsertCode } : {})}
+            {...(props.selectedCode ? { selectedCode: props.selectedCode } : {})}
           />
         </Show>
         <Show when={mode() === "local"}>
           <LocalAiPanel
-            {...(props.onInsertCode
-              ? { onInsertCode: props.onInsertCode }
-              : {})}
-            {...(props.selectedCode
-              ? { selectedCode: props.selectedCode }
-              : {})}
+            {...(props.onInsertCode ? { onInsertCode: props.onInsertCode } : {})}
+            {...(props.selectedCode ? { selectedCode: props.selectedCode } : {})}
           />
         </Show>
       </div>

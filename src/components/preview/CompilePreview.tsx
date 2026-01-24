@@ -5,7 +5,7 @@
  * Supports hot reloading and error boundary.
  */
 
-import { createSignal, createEffect, Show, onCleanup } from "solid-js";
+import { createEffect, createSignal, onCleanup, Show } from "solid-js";
 
 interface CompilePreviewProps {
   filePath: string | null;
@@ -34,7 +34,7 @@ export function CompilePreview(props: CompilePreviewProps) {
 
   // Debounced code update
   createEffect(() => {
-    if (!props.enabled || !props.code) return;
+    if (!(props.enabled && props.code)) return;
 
     // Only preview JSX/TSX files
     if (!isPreviewable(props.filePath, props.language)) {
@@ -109,7 +109,10 @@ export function CompilePreview(props: CompilePreviewProps) {
   const generatePreviewHtml = (code: string, filePath: string | null): string => {
     // Extract component name from file path
     const componentName = filePath
-      ? filePath.split("/").pop()?.replace(/\.(tsx|jsx)$/, "") || "Component"
+      ? filePath
+          .split("/")
+          .pop()
+          ?.replace(/\.(tsx|jsx)$/, "") || "Component"
       : "Component";
 
     // Simple transformation for preview (in production, use proper bundler)
@@ -286,9 +289,7 @@ export function CompilePreview(props: CompilePreviewProps) {
 
         <Show when={state().status === "error"}>
           <div class="absolute bottom-4 left-4 right-4 bg-red-900/90 border border-red-500 rounded-lg p-3">
-            <div class="text-red-200 text-xs font-mono whitespace-pre-wrap">
-              {state().error}
-            </div>
+            <div class="text-red-200 text-xs font-mono whitespace-pre-wrap">{state().error}</div>
           </div>
         </Show>
       </div>

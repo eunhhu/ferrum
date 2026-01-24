@@ -2,7 +2,7 @@
  * TextMeasurer Utility Tests
  */
 
-import { describe, it, expect, beforeEach } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
 import { textMeasurer } from "../../utils/textMeasurer";
 
 describe("TextMeasurer", () => {

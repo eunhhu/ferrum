@@ -2,7 +2,7 @@
  * Tests for Editor Store
  */
 
-import { describe, it, expect } from "vitest";
+import { describe, expect, it } from "vitest";
 
 // Mock the store directly since it uses SolidJS signals
 describe("Editor Store Logic", () => {
@@ -59,9 +59,7 @@ describe("Editor Store Logic", () => {
     });
 
     it("handles paths with directories", () => {
-      expect(getLanguageFromPath("/home/user/project/src/main.ts")).toBe(
-        "typescript"
-      );
+      expect(getLanguageFromPath("/home/user/project/src/main.ts")).toBe("typescript");
       expect(getLanguageFromPath("./relative/path/file.rs")).toBe("rust");
     });
 

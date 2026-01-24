@@ -5,12 +5,7 @@
  * into a unified interface that can switch between them.
  */
 
-import {
-  createContext,
-  useContext,
-  createSignal,
-  ParentComponent,
-} from "solid-js";
+import { createContext, createSignal, type ParentComponent, useContext } from "solid-js";
 import { AiProvider, useAi } from "./AiProvider";
 import { LocalAiProvider, useLocalAi } from "./LocalAiProvider";
 
@@ -52,15 +47,10 @@ function AiHubProviderInner(props: { children: any }) {
     if (mode() === "cloud") {
       return !!cloudAi.state.apiKey;
     }
-    return (
-      localAi.state.isConnected && localAi.state.availableModels.length > 0
-    );
+    return localAi.state.isConnected && localAi.state.availableModels.length > 0;
   };
 
-  const sendMessage = async (
-    message: string,
-    systemPrompt?: string
-  ): Promise<string> => {
+  const sendMessage = async (message: string, systemPrompt?: string): Promise<string> => {
     if (mode() === "cloud") {
       return cloudAi.sendMessage(message, systemPrompt ? { systemPrompt } : {});
     }
@@ -76,17 +66,10 @@ function AiHubProviderInner(props: { children: any }) {
       // Cloud streaming - for now use non-streaming
       return cloudAi.sendMessage(message, systemPrompt ? { systemPrompt } : {});
     }
-    return localAi.chatStream(
-      [{ role: "user", content: message }],
-      systemPrompt,
-      onChunk
-    );
+    return localAi.chatStream([{ role: "user", content: message }], systemPrompt, onChunk);
   };
 
-  const getCodeSuggestion = async (
-    code: string,
-    instruction: string
-  ): Promise<string> => {
+  const getCodeSuggestion = async (code: string, instruction: string): Promise<string> => {
     const prompt = `Given the following code:
 
 \`\`\`
@@ -118,8 +101,7 @@ Provide a clear, concise explanation of what this code does, including:
 2. Key concepts used
 3. Step-by-step breakdown`;
 
-    const systemPrompt =
-      "You are a helpful coding tutor. Explain code clearly and thoroughly.";
+    const systemPrompt = "You are a helpful coding tutor. Explain code clearly and thoroughly.";
 
     if (mode() === "cloud") {
       return cloudAi.sendMessage(prompt, { systemPrompt, temperature: 0.5 });
@@ -149,9 +131,7 @@ Provide the corrected code and a brief explanation of the fix.`;
   };
 
   const isLoading = () => {
-    return mode() === "cloud"
-      ? cloudAi.state.isLoading
-      : localAi.state.isLoading;
+    return mode() === "cloud" ? cloudAi.state.isLoading : localAi.state.isLoading;
   };
 
   const error = () => {
@@ -171,11 +151,7 @@ Provide the corrected code and a brief explanation of the fix.`;
     error,
   };
 
-  return (
-    <AiHubContext.Provider value={contextValue}>
-      {props.children}
-    </AiHubContext.Provider>
-  );
+  return <AiHubContext.Provider value={contextValue}>{props.children}</AiHubContext.Provider>;
 }
 
 export const CombinedAiProvider: ParentComponent = (props) => {

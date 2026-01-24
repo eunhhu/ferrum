@@ -1,4 +1,4 @@
-import { Show, createSignal } from "solid-js";
+import { createSignal, Show } from "solid-js";
 import { editorStore, uiStore } from "../../stores";
 
 export function StatusBar() {
@@ -79,9 +79,7 @@ export function StatusBar() {
               </button>
 
               {/* Spaces/Tabs */}
-              <button class="h-full px-2 hover:bg-white/10 transition-colors">
-                Spaces: 2
-              </button>
+              <button class="h-full px-2 hover:bg-white/10 transition-colors">Spaces: 2</button>
 
               {/* Encoding */}
               <button class="h-full px-2 hover:bg-white/10 transition-colors">
@@ -107,9 +105,7 @@ export function StatusBar() {
             <path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.89 2 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z" />
           </svg>
           <Show when={notifications() > 0}>
-            <span class="px-1 bg-white/20 rounded text-[10px]">
-              {notifications()}
-            </span>
+            <span class="px-1 bg-white/20 rounded text-[10px]">{notifications()}</span>
           </Show>
         </button>
 

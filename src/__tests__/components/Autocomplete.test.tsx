@@ -2,8 +2,8 @@
  * Autocomplete Component Tests
  */
 
-import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, fireEvent } from "@solidjs/testing-library";
+import { fireEvent, render } from "@solidjs/testing-library";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { Autocomplete } from "../../components/editor/Autocomplete";
 import type { LspCompletionItem } from "../../ipc/commands";
 
@@ -13,8 +13,7 @@ describe("Autocomplete", () => {
       label: "console",
       kind: 6, // Variable
       detail: "var console: Console",
-      documentation:
-        "The Console object provides access to the browser debugging console.",
+      documentation: "The Console object provides access to the browser debugging console.",
       insert_text: "console",
       sort_text: "0console",
     },
@@ -65,18 +64,14 @@ describe("Autocomplete", () => {
     });
 
     it("does not render when visible is false", () => {
-      const { container } = render(() => (
-        <Autocomplete {...defaultProps} visible={false} />
-      ));
+      const { container } = render(() => <Autocomplete {...defaultProps} visible={false} />);
 
       const dropdown = container.querySelector(".fixed.z-50");
       expect(dropdown).toBeFalsy();
     });
 
     it("does not render when items are empty", () => {
-      const { container } = render(() => (
-        <Autocomplete {...defaultProps} items={[]} />
-      ));
+      const { container } = render(() => <Autocomplete {...defaultProps} items={[]} />);
 
       const dropdown = container.querySelector(".fixed.z-50");
       expect(dropdown).toBeFalsy();
@@ -170,9 +165,7 @@ describe("Autocomplete", () => {
       }
 
       const items = container.querySelectorAll(".cursor-pointer");
-      expect(
-        items[mockItems.length - 1]?.classList.contains("bg-accent/20")
-      ).toBe(true);
+      expect(items[mockItems.length - 1]?.classList.contains("bg-accent/20")).toBe(true);
     });
 
     it("handles Enter to select item", async () => {
@@ -217,9 +210,7 @@ describe("Autocomplete", () => {
   describe("Mouse Interaction", () => {
     it("calls onSelect when item is clicked", async () => {
       const onSelect = vi.fn();
-      const { container } = render(() => (
-        <Autocomplete {...defaultProps} onSelect={onSelect} />
-      ));
+      const { container } = render(() => <Autocomplete {...defaultProps} onSelect={onSelect} />);
 
       const items = container.querySelectorAll(".cursor-pointer");
       await fireEvent.click(items[1]!);
@@ -280,13 +271,7 @@ describe("Autocomplete", () => {
   describe("Edge Cases", () => {
     it("handles single item list", async () => {
       const onSelect = vi.fn();
-      render(() => (
-        <Autocomplete
-          {...defaultProps}
-          items={[mockItems[0]!]}
-          onSelect={onSelect}
-        />
-      ));
+      render(() => <Autocomplete {...defaultProps} items={[mockItems[0]!]} onSelect={onSelect} />);
 
       await fireEvent.keyDown(document, { key: "Enter" });
       expect(onSelect).toHaveBeenCalledWith(mockItems[0]);
@@ -303,7 +288,7 @@ describe("Autocomplete", () => {
       await fireEvent.keyDown(document, { key: "ArrowDown" });
 
       // Second item should be highlighted
-      let items = container.querySelectorAll(".cursor-pointer");
+      const items = container.querySelectorAll(".cursor-pointer");
       expect(items[2]?.classList.contains("bg-accent/20")).toBe(true);
 
       // First item should not be highlighted

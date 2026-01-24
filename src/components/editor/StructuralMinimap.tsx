@@ -5,8 +5,8 @@
  * instead of just a scaled-down version of the text.
  */
 
-import { createSignal, createEffect, For, Show, onCleanup } from "solid-js";
-import { lspDocumentSymbols, type LspSymbolInfo } from "../../ipc/commands";
+import { createEffect, createSignal, For, onCleanup, Show } from "solid-js";
+import { type LspSymbolInfo, lspDocumentSymbols } from "../../ipc/commands";
 import { isTauriEnvironment } from "../../ipc/tauri-check";
 
 interface MinimapBlock {
@@ -38,10 +38,7 @@ interface StructuralMinimapProps {
 }
 
 // Symbol cache to avoid repeated LSP calls
-const symbolCache = new Map<
-  string,
-  { blocks: MinimapBlock[]; timestamp: number }
->();
+const symbolCache = new Map<string, { blocks: MinimapBlock[]; timestamp: number }>();
 const CACHE_TTL = 30000; // 30 seconds
 
 export function StructuralMinimap(props: StructuralMinimapProps) {
@@ -99,8 +96,7 @@ export function StructuralMinimap(props: StructuralMinimapProps) {
       // Update cache
       symbolCache.set(filePath, { blocks: newBlocks, timestamp: Date.now() });
     } catch (e) {
-      const errorMsg =
-        e instanceof Error ? e.message : "Failed to load symbols";
+      const errorMsg = e instanceof Error ? e.message : "Failed to load symbols";
       console.error("Failed to load symbols for minimap:", e);
       setError(errorMsg);
       setBlocks([]);
@@ -109,10 +105,7 @@ export function StructuralMinimap(props: StructuralMinimapProps) {
     }
   };
 
-  const symbolsToBlocks = (
-    symbols: LspSymbolInfo[],
-    depth: number
-  ): MinimapBlock[] => {
+  const symbolsToBlocks = (symbols: LspSymbolInfo[], depth: number): MinimapBlock[] => {
     return symbols.map((symbol, index) => ({
       id: `${depth}-${index}-${symbol.name}`,
       type: symbolKindToType(symbol.kind),
@@ -120,9 +113,7 @@ export function StructuralMinimap(props: StructuralMinimapProps) {
       startLine: symbol.range.start.line,
       endLine: symbol.range.end.line,
       depth,
-      children: symbol.children
-        ? symbolsToBlocks(symbol.children, depth + 1)
-        : [],
+      children: symbol.children ? symbolsToBlocks(symbol.children, depth + 1) : [],
     }));
   };
 
@@ -188,8 +179,7 @@ export function StructuralMinimap(props: StructuralMinimapProps) {
     const height = lineToHeight(block.startLine, block.endLine);
     const isHovered = hoveredBlock() === block.id;
     const isCurrentLine =
-      props.currentLine >= block.startLine &&
-      props.currentLine <= block.endLine;
+      props.currentLine >= block.startLine && props.currentLine <= block.endLine;
 
     return (
       <>
@@ -197,7 +187,7 @@ export function StructuralMinimap(props: StructuralMinimapProps) {
           class={`absolute cursor-pointer transition-all duration-100 ${getBlockColor(block.type)}`}
           classList={{
             "opacity-80": isHovered || isCurrentLine,
-            "opacity-40": !isHovered && !isCurrentLine,
+            "opacity-40": !(isHovered || isCurrentLine),
           }}
           style={{
             top: `${y}%`,
@@ -219,8 +209,7 @@ export function StructuralMinimap(props: StructuralMinimapProps) {
 
   // Viewport indicator
   const viewportY = () => lineToY(props.visibleStartLine);
-  const viewportHeight = () =>
-    lineToHeight(props.visibleStartLine, props.visibleEndLine);
+  const viewportHeight = () => lineToHeight(props.visibleStartLine, props.visibleEndLine);
 
   return (
     <div class="structural-minimap relative w-20 h-full bg-bg-tertiary border-l border-border">

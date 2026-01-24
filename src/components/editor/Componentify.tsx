@@ -10,7 +10,7 @@
  * - 새 파일 생성 또는 현재 파일에 추가
  */
 
-import { createSignal, Show, For } from "solid-js";
+import { createSignal, For, Show } from "solid-js";
 
 interface ExtractedProp {
   name: string;
@@ -76,9 +76,7 @@ export function ComponentifyDialog(props: ComponentifyDialogProps) {
       <div class="bg-bg-primary border border-border rounded-lg shadow-2xl w-[600px] max-h-[80vh] flex flex-col">
         {/* Header */}
         <div class="flex items-center justify-between px-4 py-3 border-b border-border">
-          <h2 class="text-lg font-medium text-text-primary">
-            Extract Component
-          </h2>
+          <h2 class="text-lg font-medium text-text-primary">Extract Component</h2>
           <button
             class="text-text-tertiary hover:text-text-primary transition-colors"
             onClick={props.onCancel}
@@ -91,9 +89,7 @@ export function ComponentifyDialog(props: ComponentifyDialogProps) {
         <div class="flex-1 overflow-y-auto p-4 space-y-4">
           {/* Component Name */}
           <div>
-            <label class="block text-sm text-text-secondary mb-1">
-              Component Name
-            </label>
+            <label class="block text-sm text-text-secondary mb-1">Component Name</label>
             <input
               type="text"
               class="w-full px-3 py-2 bg-bg-secondary border border-border rounded text-text-primary focus:outline-none focus:border-accent"
@@ -125,9 +121,7 @@ export function ComponentifyDialog(props: ComponentifyDialogProps) {
                 onChange={() => setCreateNewFile(false)}
                 class="accent-accent"
               />
-              <span class="text-sm text-text-secondary">
-                Add to current file
-              </span>
+              <span class="text-sm text-text-secondary">Add to current file</span>
             </label>
           </div>
 
@@ -149,23 +143,15 @@ export function ComponentifyDialog(props: ComponentifyDialogProps) {
                   </h3>
                   <Show
                     when={result().props.length > 0}
-                    fallback={
-                      <div class="text-sm text-text-tertiary">
-                        No props detected
-                      </div>
-                    }
+                    fallback={<div class="text-sm text-text-tertiary">No props detected</div>}
                   >
                     <div class="space-y-1">
                       <For each={result().props}>
                         {(prop) => (
                           <div class="flex items-center gap-2 px-2 py-1 bg-bg-secondary rounded">
-                            <span class="font-mono text-sm text-accent">
-                              {prop.name}
-                            </span>
+                            <span class="font-mono text-sm text-accent">{prop.name}</span>
                             <span class="text-text-tertiary">:</span>
-                            <span class="font-mono text-sm text-text-secondary">
-                              {prop.type}
-                            </span>
+                            <span class="font-mono text-sm text-text-secondary">{prop.type}</span>
                             <Show when={prop.isCallback}>
                               <span class="px-1 py-0.5 text-[10px] bg-purple-900/50 text-purple-300 rounded">
                                 callback
@@ -185,9 +171,7 @@ export function ComponentifyDialog(props: ComponentifyDialogProps) {
 
                 {/* Generated Interface */}
                 <div>
-                  <h3 class="text-sm font-medium text-text-primary mb-2">
-                    Generated Interface
-                  </h3>
+                  <h3 class="text-sm font-medium text-text-primary mb-2">Generated Interface</h3>
                   <pre class="p-3 bg-bg-tertiary rounded text-xs font-mono text-text-secondary overflow-x-auto">
                     {result().interfaceCode}
                   </pre>
@@ -195,9 +179,7 @@ export function ComponentifyDialog(props: ComponentifyDialogProps) {
 
                 {/* Generated Component */}
                 <div>
-                  <h3 class="text-sm font-medium text-text-primary mb-2">
-                    Generated Component
-                  </h3>
+                  <h3 class="text-sm font-medium text-text-primary mb-2">Generated Component</h3>
                   <pre class="p-3 bg-bg-tertiary rounded text-xs font-mono text-text-secondary overflow-x-auto max-h-48">
                     {result().componentCode}
                   </pre>
@@ -205,9 +187,7 @@ export function ComponentifyDialog(props: ComponentifyDialogProps) {
 
                 {/* Usage */}
                 <div>
-                  <h3 class="text-sm font-medium text-text-primary mb-2">
-                    Usage
-                  </h3>
+                  <h3 class="text-sm font-medium text-text-primary mb-2">Usage</h3>
                   <pre class="p-3 bg-bg-tertiary rounded text-xs font-mono text-text-secondary overflow-x-auto">
                     {result().usageCode}
                   </pre>
@@ -264,9 +244,7 @@ function analyzeJsx(code: string, componentName: string): ComponentifyResult {
   }
 
   // Match onClick={handler} and similar event handlers
-  const handlerMatches = code.matchAll(
-    /on[A-Z][a-zA-Z]*=\{([a-zA-Z_$][a-zA-Z0-9_$]*)\}/g
-  );
+  const handlerMatches = code.matchAll(/on[A-Z][a-zA-Z]*=\{([a-zA-Z_$][a-zA-Z0-9_$]*)\}/g);
   for (const match of handlerMatches) {
     if (match[1]) usedCallbacks.add(match[1]);
   }
@@ -282,28 +260,15 @@ function analyzeJsx(code: string, componentName: string): ComponentifyResult {
   // Build props list
   for (const varName of usedVariables) {
     // Skip common React/DOM variables
-    if (["className", "style", "children", "key", "ref"].includes(varName))
-      continue;
+    if (["className", "style", "children", "key", "ref"].includes(varName)) continue;
 
     // Infer type (simple heuristics)
     let type = "unknown";
-    if (
-      varName.startsWith("is") ||
-      varName.startsWith("has") ||
-      varName.startsWith("show")
-    ) {
+    if (varName.startsWith("is") || varName.startsWith("has") || varName.startsWith("show")) {
       type = "boolean";
-    } else if (
-      varName.endsWith("List") ||
-      varName.endsWith("Array") ||
-      varName.endsWith("Items")
-    ) {
+    } else if (varName.endsWith("List") || varName.endsWith("Array") || varName.endsWith("Items")) {
       type = "any[]";
-    } else if (
-      varName.endsWith("Count") ||
-      varName.endsWith("Index") ||
-      varName.endsWith("Id")
-    ) {
+    } else if (varName.endsWith("Count") || varName.endsWith("Index") || varName.endsWith("Id")) {
       type = "number";
     } else {
       type = "string";
@@ -359,11 +324,7 @@ ${propsLines.join("\n")}
 }`;
 }
 
-function generateComponent(
-  name: string,
-  props: ExtractedProp[],
-  jsxCode: string
-): string {
+function generateComponent(name: string, props: ExtractedProp[], jsxCode: string): string {
   const propsDestructure =
     props.length > 0 ? `{ ${props.map((p) => p.name).join(", ")} }` : "props";
 

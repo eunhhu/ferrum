@@ -1,4 +1,4 @@
-export { uiStore } from "./ui";
+export { commandsStore } from "./commands";
 export { editorStore } from "./editor";
 export { filesStore } from "./files";
-export { commandsStore } from "./commands";
+export { uiStore } from "./ui";

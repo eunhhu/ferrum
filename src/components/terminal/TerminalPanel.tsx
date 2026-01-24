@@ -4,12 +4,7 @@
  * Manages multiple terminal tabs.
  */
 
-import {
-  createSignal,
-  createMemo,
-  For,
-  Show,
-} from "solid-js";
+import { createMemo, createSignal, For, Show } from "solid-js";
 import { createStore } from "solid-js/store";
 import { Terminal } from "./Terminal";
 
@@ -23,9 +18,7 @@ export function TerminalPanel() {
   const [tabs, setTabs] = createStore<TerminalTab[]>([]);
   const [activeTabId, setActiveTabId] = createSignal<string | null>(null);
 
-  const activeTab = createMemo(() =>
-    tabs.find((t) => t.id === activeTabId())
-  );
+  const activeTab = createMemo(() => tabs.find((t) => t.id === activeTabId()));
 
   // Create a new terminal
   function createTerminal(cwd?: string) {
@@ -57,11 +50,7 @@ export function TerminalPanel() {
 
   // Update terminal title
   function updateTitle(id: string, title: string) {
-    setTabs(
-      (t) => t.id === id,
-      "title",
-      title || "Terminal"
-    );
+    setTabs((t) => t.id === id, "title", title || "Terminal");
   }
 
   // Create first terminal if none

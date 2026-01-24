@@ -4,7 +4,7 @@
  * Displays diagnostics (errors, warnings) from LSP servers.
  */
 
-import { createSignal, createMemo, For, Show } from "solid-js";
+import { createMemo, createSignal, For, Show } from "solid-js";
 import type { LspDiagnostic } from "../../ipc/commands";
 
 // Diagnostic severity icons and colors
@@ -31,14 +31,16 @@ export function ProblemsPanel(props: ProblemsPanelProps) {
 
   // Filter diagnostics
   const filteredDiagnostics = createMemo(() => {
-    return props.diagnostics.map((file) => ({
-      ...file,
-      diagnostics: file.diagnostics.filter((d) => {
-        if (filter() === "errors") return d.severity === 1;
-        if (filter() === "warnings") return d.severity === 2;
-        return true;
-      }),
-    })).filter((file) => file.diagnostics.length > 0);
+    return props.diagnostics
+      .map((file) => ({
+        ...file,
+        diagnostics: file.diagnostics.filter((d) => {
+          if (filter() === "errors") return d.severity === 1;
+          if (filter() === "warnings") return d.severity === 2;
+          return true;
+        }),
+      }))
+      .filter((file) => file.diagnostics.length > 0);
   });
 
   // Count totals
@@ -87,15 +89,9 @@ export function ProblemsPanel(props: ProblemsPanelProps) {
 
           {/* Counts */}
           <div class="flex items-center gap-3 text-xs">
-            <span class="flex items-center gap-1 text-red-400">
-              ❌ {counts().errors}
-            </span>
-            <span class="flex items-center gap-1 text-yellow-400">
-              ⚠️ {counts().warnings}
-            </span>
-            <span class="flex items-center gap-1 text-blue-400">
-              ℹ️ {counts().infos}
-            </span>
+            <span class="flex items-center gap-1 text-red-400">❌ {counts().errors}</span>
+            <span class="flex items-center gap-1 text-yellow-400">⚠️ {counts().warnings}</span>
+            <span class="flex items-center gap-1 text-blue-400">ℹ️ {counts().infos}</span>
           </div>
         </div>
 
@@ -169,14 +165,10 @@ export function ProblemsPanel(props: ProblemsPanelProps) {
                   <span class="text-sm">📄</span>
 
                   {/* File name */}
-                  <span class="text-text-primary text-sm">
-                    {getFileName(file.path)}
-                  </span>
+                  <span class="text-text-primary text-sm">{getFileName(file.path)}</span>
 
                   {/* Path */}
-                  <span class="text-text-tertiary text-xs truncate flex-1">
-                    {file.path}
-                  </span>
+                  <span class="text-text-tertiary text-xs truncate flex-1">{file.path}</span>
 
                   {/* Count badge */}
                   <span class="text-text-tertiary text-xs bg-bg-tertiary px-1.5 py-0.5 rounded">
@@ -201,13 +193,13 @@ export function ProblemsPanel(props: ProblemsPanelProps) {
                           }
                         >
                           {/* Severity icon */}
-                          <span class={config?.color ?? "text-gray-400"}>{config?.icon ?? "?"}</span>
+                          <span class={config?.color ?? "text-gray-400"}>
+                            {config?.icon ?? "?"}
+                          </span>
 
                           {/* Message */}
                           <div class="flex-1 min-w-0">
-                            <div class="text-text-primary text-sm">
-                              {diagnostic.message}
-                            </div>
+                            <div class="text-text-primary text-sm">{diagnostic.message}</div>
                             <div class="text-text-tertiary text-xs flex items-center gap-2">
                               <span>
                                 [{diagnostic.range.start.line + 1}:

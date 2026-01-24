@@ -2,7 +2,7 @@
  * Tests for Tauri Environment Check
  */
 
-import { describe, it, expect, beforeEach, afterEach } from "vitest";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 describe("Tauri Environment Detection", () => {
   // Mock the window object
@@ -19,9 +19,7 @@ describe("Tauri Environment Detection", () => {
   });
 
   const isTauriEnvironment = (): boolean => {
-    return (
-      typeof window !== "undefined" && window !== null && "__TAURI__" in window
-    );
+    return typeof window !== "undefined" && window !== null && "__TAURI__" in window;
   };
 
   it("returns false when window is undefined", () => {

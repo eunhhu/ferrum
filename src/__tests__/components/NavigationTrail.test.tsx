@@ -2,8 +2,8 @@
  * NavigationTrail Component Tests
  */
 
-import { describe, it, expect, vi } from "vitest";
-import { render, fireEvent } from "@solidjs/testing-library";
+import { fireEvent, render } from "@solidjs/testing-library";
+import { describe, expect, it, vi } from "vitest";
 import { NavigationTrail } from "../../components/editor/NavigationTrail";
 
 describe("NavigationTrail", () => {
@@ -49,9 +49,7 @@ describe("NavigationTrail", () => {
     });
 
     it("handles empty file path", () => {
-      const { container } = render(() => (
-        <NavigationTrail {...defaultProps} filePath="" />
-      ));
+      const { container } = render(() => <NavigationTrail {...defaultProps} filePath="" />);
 
       expect(container.firstChild).toBeTruthy();
     });
@@ -65,9 +63,7 @@ describe("NavigationTrail", () => {
       ));
 
       // Find clickable symbol element
-      const symbolButtons = container.querySelectorAll(
-        "button, [role='button']"
-      );
+      const symbolButtons = container.querySelectorAll("button, [role='button']");
       const firstButton = symbolButtons[0];
       if (symbolButtons.length > 0 && firstButton) {
         await fireEvent.click(firstButton);

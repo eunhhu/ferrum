@@ -5,8 +5,8 @@
  * Displays author, time, and commit message on hover.
  */
 
-import { createSignal, createEffect, Show, For, onCleanup } from "solid-js";
-import { gitBlameFile, type GitBlameLineInfo } from "../../ipc/commands";
+import { createEffect, createSignal, For, onCleanup, Show } from "solid-js";
+import { type GitBlameLineInfo, gitBlameFile } from "../../ipc/commands";
 import { isTauriEnvironment } from "../../ipc/tauri-check";
 
 interface InlineBlameProps {
@@ -18,10 +18,7 @@ interface InlineBlameProps {
 }
 
 // Cache for blame data
-const blameCache = new Map<
-  string,
-  { data: GitBlameLineInfo[]; timestamp: number }
->();
+const blameCache = new Map<string, { data: GitBlameLineInfo[]; timestamp: number }>();
 const CACHE_TTL = 60000; // 1 minute
 
 export function InlineBlame(props: InlineBlameProps) {
@@ -39,7 +36,7 @@ export function InlineBlame(props: InlineBlameProps) {
 
   // Load blame data when file changes
   createEffect(() => {
-    if (!props.enabled || !props.repoPath || !props.filePath) {
+    if (!(props.enabled && props.repoPath && props.filePath)) {
       setBlameData([]);
       return;
     }
@@ -171,12 +168,8 @@ export function InlineBlame(props: InlineBlameProps) {
                   {/* Expanded view on hover */}
                   <Show when={hoveredLine() === lineNumber}>
                     <div class="flex items-center gap-2 bg-bg-secondary border border-border rounded px-2 py-1 shadow-lg whitespace-nowrap">
-                      <span class="text-accent font-mono text-[10px]">
-                        {blame()!.short_id}
-                      </span>
-                      <span class="text-text-secondary text-[11px]">
-                        {blame()!.author}
-                      </span>
+                      <span class="text-accent font-mono text-[10px]">{blame()!.short_id}</span>
+                      <span class="text-text-secondary text-[11px]">{blame()!.author}</span>
                       <span class="text-text-quaternary">•</span>
                       <span
                         class="text-text-tertiary text-[10px]"

@@ -2,7 +2,7 @@
  * Event listener hook with proper cleanup
  */
 
-import { onCleanup, onMount, Accessor } from "solid-js";
+import { type Accessor, onCleanup, onMount } from "solid-js";
 
 type EventMap = WindowEventMap & DocumentEventMap & HTMLElementEventMap;
 

@@ -1,7 +1,7 @@
-import { createSignal, batch } from "solid-js";
+import { batch, createSignal } from "solid-js";
 import { createStore } from "solid-js/store";
-import type { FileNode, FileTreeNode, ProjectInfo } from "../types";
 import * as ipc from "../ipc/commands";
+import type { FileNode, FileTreeNode, ProjectInfo } from "../types";
 
 const [rootPath, setRootPath] = createSignal<string | null>(null);
 const [projectInfo, setProjectInfo] = createSignal<ProjectInfo | null>(null);

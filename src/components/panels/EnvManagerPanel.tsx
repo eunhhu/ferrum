@@ -9,13 +9,13 @@
  * - Visual indication of missing/unused variables
  */
 
-import { createSignal, createEffect, For, Show } from "solid-js";
+import { createEffect, createSignal, For, Show } from "solid-js";
 import {
+  type EnvScanResult,
+  type EnvVariableInfo,
   scanEnvVariables,
   writeEnvExample,
   writeEnvTypes,
-  type EnvScanResult,
-  type EnvVariableInfo,
 } from "../../ipc/commands";
 import { isTauriEnvironment } from "../../ipc/tauri-check";
 
@@ -53,8 +53,7 @@ export function EnvManagerPanel(props: EnvManagerPanelProps) {
       const result = await scanEnvVariables(projectPath);
       setScanResult(result);
     } catch (e) {
-      const errorMsg =
-        e instanceof Error ? e.message : "Failed to scan environment variables";
+      const errorMsg = e instanceof Error ? e.message : "Failed to scan environment variables";
       console.error("Failed to scan env variables:", e);
       setError(errorMsg);
     } finally {
@@ -71,9 +70,7 @@ export function EnvManagerPanel(props: EnvManagerPanelProps) {
       // Refresh after generation
       await loadEnvVariables(props.projectPath);
     } catch (e) {
-      setError(
-        e instanceof Error ? e.message : "Failed to generate .env.example"
-      );
+      setError(e instanceof Error ? e.message : "Failed to generate .env.example");
     } finally {
       setGenerating(null);
     }
@@ -130,9 +127,7 @@ export function EnvManagerPanel(props: EnvManagerPanelProps) {
     return [...vars].sort((a, b) => a.name.localeCompare(b.name));
   };
 
-  const getVarStatus = (
-    varInfo: EnvVariableInfo
-  ): "ok" | "missing" | "unused" => {
+  const getVarStatus = (varInfo: EnvVariableInfo): "ok" | "missing" | "unused" => {
     const result = scanResult();
     if (!result) return "ok";
 
@@ -168,20 +163,14 @@ export function EnvManagerPanel(props: EnvManagerPanelProps) {
       {/* Header */}
       <div class="flex items-center justify-between px-3 py-2 border-b border-border">
         <div class="flex items-center gap-2">
-          <span class="text-sm font-medium text-text-primary">
-            Environment Variables
-          </span>
+          <span class="text-sm font-medium text-text-primary">Environment Variables</span>
           <Show when={scanResult()}>
-            <span class="text-xs text-text-tertiary">
-              ({scanResult()!.variables.length} vars)
-            </span>
+            <span class="text-xs text-text-tertiary">({scanResult()!.variables.length} vars)</span>
           </Show>
         </div>
         <button
           class="text-xs text-text-secondary hover:text-text-primary transition-colors"
-          onClick={() =>
-            props.projectPath && loadEnvVariables(props.projectPath)
-          }
+          onClick={() => props.projectPath && loadEnvVariables(props.projectPath)}
           disabled={loading()}
         >
           ↻ Refresh
@@ -242,9 +231,7 @@ export function EnvManagerPanel(props: EnvManagerPanelProps) {
             onClick={handleGenerateEnvExample}
             disabled={generating() !== null || !scanResult()}
           >
-            {generating() === "example"
-              ? "Generating..."
-              : "Generate .env.example"}
+            {generating() === "example" ? "Generating..." : "Generate .env.example"}
           </button>
           <button
             class="px-2 py-1 text-xs bg-bg-secondary hover:bg-bg-tertiary text-text-secondary hover:text-text-primary border border-border rounded transition-colors disabled:opacity-50"
@@ -262,9 +249,7 @@ export function EnvManagerPanel(props: EnvManagerPanelProps) {
         <Show when={loading()}>
           <div class="flex items-center justify-center py-8">
             <div class="w-5 h-5 border-2 border-accent border-t-transparent rounded-full animate-spin" />
-            <span class="ml-2 text-sm text-text-tertiary">
-              Scanning project...
-            </span>
+            <span class="ml-2 text-sm text-text-tertiary">Scanning project...</span>
           </div>
         </Show>
 
@@ -299,24 +284,16 @@ export function EnvManagerPanel(props: EnvManagerPanelProps) {
                     class="flex items-center gap-2 px-3 py-2 cursor-pointer hover:bg-bg-secondary transition-colors"
                     onClick={() => toggleVarExpanded(varInfo.name)}
                   >
-                    <span class="text-text-tertiary text-xs">
-                      {isExpanded() ? "▼" : "▶"}
-                    </span>
-                    <span
-                      class={`w-2 h-2 rounded-full ${getStatusColor(status)}`}
-                    />
-                    <span class="font-mono text-sm text-text-primary">
-                      {varInfo.name}
-                    </span>
+                    <span class="text-text-tertiary text-xs">{isExpanded() ? "▼" : "▶"}</span>
+                    <span class={`w-2 h-2 rounded-full ${getStatusColor(status)}`} />
+                    <span class="font-mono text-sm text-text-primary">{varInfo.name}</span>
                     <Show when={varInfo.is_secret}>
                       <span class="px-1 py-0.5 text-[10px] bg-red-900/50 text-red-300 rounded">
                         SECRET
                       </span>
                     </Show>
                     <span class="flex-1" />
-                    <span class="text-xs text-text-tertiary">
-                      {getStatusText(status)}
-                    </span>
+                    <span class="text-xs text-text-tertiary">{getStatusText(status)}</span>
                     <Show when={varInfo.usages.length > 0}>
                       <span class="text-xs text-text-quaternary">
                         ({varInfo.usages.length} usages)
@@ -330,9 +307,7 @@ export function EnvManagerPanel(props: EnvManagerPanelProps) {
                       {/* Value */}
                       <Show when={varInfo.value !== null}>
                         <div class="flex items-center gap-2">
-                          <span class="text-xs text-text-tertiary w-16">
-                            Value:
-                          </span>
+                          <span class="text-xs text-text-tertiary w-16">Value:</span>
                           <span class="font-mono text-xs text-text-secondary">
                             {varInfo.is_secret ? "••••••••" : varInfo.value}
                           </span>
@@ -342,9 +317,7 @@ export function EnvManagerPanel(props: EnvManagerPanelProps) {
                       {/* Usages */}
                       <Show when={varInfo.usages.length > 0}>
                         <div>
-                          <span class="text-xs text-text-tertiary">
-                            Usages:
-                          </span>
+                          <span class="text-xs text-text-tertiary">Usages:</span>
                           <div class="mt-1 space-y-1">
                             <For each={varInfo.usages.slice(0, 5)}>
                               {(usage) => (
@@ -352,18 +325,13 @@ export function EnvManagerPanel(props: EnvManagerPanelProps) {
                                   class="flex items-center gap-2 px-2 py-1 rounded bg-bg-tertiary/50 hover:bg-bg-tertiary cursor-pointer transition-colors"
                                   onClick={(e) => {
                                     e.stopPropagation();
-                                    props.onFileClick?.(
-                                      usage.file_path,
-                                      usage.line
-                                    );
+                                    props.onFileClick?.(usage.file_path, usage.line);
                                   }}
                                 >
                                   <span class="font-mono text-xs text-accent truncate">
                                     {usage.file_path}
                                   </span>
-                                  <span class="text-xs text-text-quaternary">
-                                    :{usage.line}
-                                  </span>
+                                  <span class="text-xs text-text-quaternary">:{usage.line}</span>
                                 </div>
                               )}
                             </For>
@@ -395,7 +363,7 @@ export function EnvManagerPanel(props: EnvManagerPanelProps) {
         </Show>
 
         {/* No project state */}
-        <Show when={!props.projectPath && !loading()}>
+        <Show when={!(props.projectPath || loading())}>
           <div class="px-3 py-8 text-center">
             <div class="text-text-tertiary text-sm">
               Open a project to scan for environment variables

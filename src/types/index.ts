@@ -71,13 +71,7 @@ export interface PanelState {
 }
 
 // Activity
-export type ActivityType =
-  | "explorer"
-  | "search"
-  | "git"
-  | "debug"
-  | "extensions"
-  | "settings";
+export type ActivityType = "explorer" | "search" | "git" | "debug" | "extensions" | "settings";
 
 // Theme
 export interface ThemeColors {

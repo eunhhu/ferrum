@@ -1,11 +1,11 @@
 /**
  * Tree Viewer Component (Figma-style)
- * 
+ *
  * Visualizes code nesting depth with colored containers and provides
  * folding functionality with smooth animations and hover effects.
  */
 
-import { createSignal, createEffect, For, Show, type JSX } from "solid-js";
+import { createEffect, createSignal, For, type JSX, Show } from "solid-js";
 import { getDepthRegions, getFoldState, toggleFold } from "../../ipc/commands";
 import type { DepthRegionInfo, FoldState } from "../../ipc/types";
 
@@ -25,12 +25,12 @@ const INDENT_WIDTH = CHAR_WIDTH * 2;
 
 // Figma-inspired depth colors (subtle, professional)
 const DEPTH_COLORS = [
-  { bg: "rgba(59, 130, 246, 0.03)", border: "rgba(59, 130, 246, 0.15)" },  // blue
-  { bg: "rgba(139, 92, 246, 0.04)", border: "rgba(139, 92, 246, 0.18)" },  // purple
-  { bg: "rgba(236, 72, 153, 0.04)", border: "rgba(236, 72, 153, 0.18)" },  // pink
-  { bg: "rgba(245, 158, 11, 0.04)", border: "rgba(245, 158, 11, 0.18)" },  // amber
-  { bg: "rgba(16, 185, 129, 0.04)", border: "rgba(16, 185, 129, 0.18)" },  // green
-  { bg: "rgba(99, 102, 241, 0.04)", border: "rgba(99, 102, 241, 0.18)" },  // indigo
+  { bg: "rgba(59, 130, 246, 0.03)", border: "rgba(59, 130, 246, 0.15)" }, // blue
+  { bg: "rgba(139, 92, 246, 0.04)", border: "rgba(139, 92, 246, 0.18)" }, // purple
+  { bg: "rgba(236, 72, 153, 0.04)", border: "rgba(236, 72, 153, 0.18)" }, // pink
+  { bg: "rgba(245, 158, 11, 0.04)", border: "rgba(245, 158, 11, 0.18)" }, // amber
+  { bg: "rgba(16, 185, 129, 0.04)", border: "rgba(16, 185, 129, 0.18)" }, // green
+  { bg: "rgba(99, 102, 241, 0.04)", border: "rgba(99, 102, 241, 0.18)" }, // indigo
 ];
 
 export function TreeViewer(props: TreeViewerProps) {
@@ -108,19 +108,19 @@ export function TreeViewer(props: TreeViewerProps) {
     const containers: JSX.Element[] = [];
     const regions = depthRegions();
     const state = foldState();
-    
+
     for (const region of regions) {
       if (region.depth === 0) continue;
-      
+
       const colorIndex = Math.min(region.depth - 1, DEPTH_COLORS.length - 1);
       const colors = DEPTH_COLORS[colorIndex] ?? DEPTH_COLORS[0];
-      
+
       // Check if this region is folded
       const isFolded = state?.folded_lines.includes(region.start_line + 1) ?? false;
-      const displayHeight = isFolded 
-        ? lineHeight() 
+      const displayHeight = isFolded
+        ? lineHeight()
         : (region.end_line - region.start_line + 1) * lineHeight();
-      
+
       containers.push(
         <div
           class="depth-container transition-all duration-200 ease-out"
@@ -139,14 +139,14 @@ export function TreeViewer(props: TreeViewerProps) {
         />
       );
     }
-    
+
     return containers;
   };
 
   // Check if a line is folded (collapsed)
   const isLineFolded = (lineNumber: number): boolean => {
     const state = foldState();
-    if (!state || !state.fold_ranges[lineNumber]) return false;
+    if (!(state && state.fold_ranges[lineNumber])) return false;
     return state.folded_lines.includes(lineNumber + 1);
   };
 
@@ -154,7 +154,7 @@ export function TreeViewer(props: TreeViewerProps) {
     <div class="tree-viewer absolute inset-0 pointer-events-none z-10">
       {/* Depth visualization containers */}
       {renderDepthContainers()}
-      
+
       {/* Fold controls (clickable) */}
       <div class="fold-controls pointer-events-auto z-20">
         <For each={Array.from({ length: props.lineCount }, (_, i) => i)}>

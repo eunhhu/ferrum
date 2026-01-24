@@ -2,12 +2,12 @@
  * ViewModeToggle Component Tests
  */
 
-import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, fireEvent } from "@solidjs/testing-library";
+import { fireEvent, render } from "@solidjs/testing-library";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
-  ViewModeToggle,
-  ViewModeContainer,
   type ViewMode,
+  ViewModeContainer,
+  ViewModeToggle,
 } from "../../components/editor/ViewModeToggle";
 
 describe("ViewModeToggle", () => {
@@ -45,27 +45,21 @@ describe("ViewModeToggle", () => {
     });
 
     it("highlights current mode", () => {
-      const { container } = render(() => (
-        <ViewModeToggle {...defaultProps} currentMode="code" />
-      ));
+      const { container } = render(() => <ViewModeToggle {...defaultProps} currentMode="code" />);
 
       const buttons = container.querySelectorAll("button");
       expect(buttons[0]?.classList.contains("bg-accent")).toBe(true);
     });
 
     it("highlights visual mode when selected", () => {
-      const { container } = render(() => (
-        <ViewModeToggle {...defaultProps} currentMode="visual" />
-      ));
+      const { container } = render(() => <ViewModeToggle {...defaultProps} currentMode="visual" />);
 
       const buttons = container.querySelectorAll("button");
       expect(buttons[1]?.classList.contains("bg-accent")).toBe(true);
     });
 
     it("highlights split mode when selected", () => {
-      const { container } = render(() => (
-        <ViewModeToggle {...defaultProps} currentMode="split" />
-      ));
+      const { container } = render(() => <ViewModeToggle {...defaultProps} currentMode="split" />);
 
       const buttons = container.querySelectorAll("button");
       expect(buttons[2]?.classList.contains("bg-accent")).toBe(true);
@@ -76,11 +70,7 @@ describe("ViewModeToggle", () => {
     it("calls onModeChange when code mode is clicked", async () => {
       const onModeChange = vi.fn();
       const { container } = render(() => (
-        <ViewModeToggle
-          {...defaultProps}
-          currentMode="visual"
-          onModeChange={onModeChange}
-        />
+        <ViewModeToggle {...defaultProps} currentMode="visual" onModeChange={onModeChange} />
       ));
 
       const buttons = container.querySelectorAll("button");
@@ -92,11 +82,7 @@ describe("ViewModeToggle", () => {
     it("calls onModeChange when visual mode is clicked", async () => {
       const onModeChange = vi.fn();
       const { container } = render(() => (
-        <ViewModeToggle
-          {...defaultProps}
-          currentMode="code"
-          onModeChange={onModeChange}
-        />
+        <ViewModeToggle {...defaultProps} currentMode="code" onModeChange={onModeChange} />
       ));
 
       const buttons = container.querySelectorAll("button");
@@ -108,11 +94,7 @@ describe("ViewModeToggle", () => {
     it("calls onModeChange when split mode is clicked", async () => {
       const onModeChange = vi.fn();
       const { container } = render(() => (
-        <ViewModeToggle
-          {...defaultProps}
-          currentMode="code"
-          onModeChange={onModeChange}
-        />
+        <ViewModeToggle {...defaultProps} currentMode="code" onModeChange={onModeChange} />
       ));
 
       const buttons = container.querySelectorAll("button");
@@ -145,11 +127,7 @@ describe("ViewModeToggle", () => {
     it("does not call onModeChange when clicking disabled visual mode", async () => {
       const onModeChange = vi.fn();
       const { container } = render(() => (
-        <ViewModeToggle
-          {...defaultProps}
-          visualAvailable={false}
-          onModeChange={onModeChange}
-        />
+        <ViewModeToggle {...defaultProps} visualAvailable={false} onModeChange={onModeChange} />
       ));
 
       const buttons = container.querySelectorAll("button");
@@ -196,9 +174,7 @@ describe("ViewModeContainer", () => {
 
   describe("Code Mode", () => {
     it("shows only code view in code mode", () => {
-      const { queryByTestId } = render(() => (
-        <ViewModeContainer {...defaultProps} mode="code" />
-      ));
+      const { queryByTestId } = render(() => <ViewModeContainer {...defaultProps} mode="code" />);
 
       expect(queryByTestId("code-view")).toBeTruthy();
       expect(queryByTestId("visual-view")).toBeFalsy();
@@ -207,9 +183,7 @@ describe("ViewModeContainer", () => {
 
   describe("Visual Mode", () => {
     it("shows only visual view in visual mode", () => {
-      const { queryByTestId } = render(() => (
-        <ViewModeContainer {...defaultProps} mode="visual" />
-      ));
+      const { queryByTestId } = render(() => <ViewModeContainer {...defaultProps} mode="visual" />);
 
       expect(queryByTestId("code-view")).toBeFalsy();
       expect(queryByTestId("visual-view")).toBeTruthy();
@@ -218,18 +192,14 @@ describe("ViewModeContainer", () => {
 
   describe("Split Mode", () => {
     it("shows both views in split mode", () => {
-      const { queryByTestId } = render(() => (
-        <ViewModeContainer {...defaultProps} mode="split" />
-      ));
+      const { queryByTestId } = render(() => <ViewModeContainer {...defaultProps} mode="split" />);
 
       expect(queryByTestId("code-view")).toBeTruthy();
       expect(queryByTestId("visual-view")).toBeTruthy();
     });
 
     it("adds border between views in split mode", () => {
-      const { container } = render(() => (
-        <ViewModeContainer {...defaultProps} mode="split" />
-      ));
+      const { container } = render(() => <ViewModeContainer {...defaultProps} mode="split" />);
 
       const codeView = container.querySelector(".code-view");
       expect(codeView?.classList.contains("border-r")).toBe(true);
@@ -238,18 +208,14 @@ describe("ViewModeContainer", () => {
 
   describe("Container Styling", () => {
     it("renders main container with flex layout", () => {
-      const { container } = render(() => (
-        <ViewModeContainer {...defaultProps} />
-      ));
+      const { container } = render(() => <ViewModeContainer {...defaultProps} />);
 
       const mainContainer = container.querySelector(".view-mode-container");
       expect(mainContainer?.classList.contains("flex")).toBe(true);
     });
 
     it("visual view has tertiary background", () => {
-      const { container } = render(() => (
-        <ViewModeContainer {...defaultProps} mode="visual" />
-      ));
+      const { container } = render(() => <ViewModeContainer {...defaultProps} mode="visual" />);
 
       const visualView = container.querySelector(".visual-view");
       expect(visualView?.classList.contains("bg-bg-tertiary")).toBe(true);

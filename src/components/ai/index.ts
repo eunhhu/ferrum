@@ -4,31 +4,28 @@
  * Exports all AI-related components and providers.
  */
 
-// OpenRouter (Cloud) AI
-export { AiProvider, useAi, AI_MODELS } from "./AiProvider";
+// UI Components
+export { AiChatPanel } from "./AiChatPanel";
+export type { AiAction } from "./AiContextActions";
+export { AiContextActions } from "./AiContextActions";
 export type {
-  AiModel,
   AiMessage,
+  AiModel,
   AiRequestOptions,
   AiUsage,
 } from "./AiProvider";
-
+// OpenRouter (Cloud) AI
+export { AI_MODELS, AiProvider, useAi } from "./AiProvider";
+export type { AiMode } from "./CombinedAiProvider";
+// Combined Provider
+export { CombinedAiProvider, useAiHub } from "./CombinedAiProvider";
+export { LocalAiPanel } from "./LocalAiPanel";
+export type { LocalAiMessage, LocalModel } from "./LocalAiProvider";
 // Local AI (Ollama)
 export {
   LocalAiProvider,
-  useLocalAi,
   RECOMMENDED_MODELS,
+  useLocalAi,
 } from "./LocalAiProvider";
-export type { LocalModel, LocalAiMessage } from "./LocalAiProvider";
-
-// UI Components
-export { AiChatPanel } from "./AiChatPanel";
-export { LocalAiPanel } from "./LocalAiPanel";
-export { UnifiedAiPanel } from "./UnifiedAiPanel";
 export type { AiPanelMode } from "./UnifiedAiPanel";
-export { AiContextActions } from "./AiContextActions";
-export type { AiAction } from "./AiContextActions";
-
-// Combined Provider
-export { CombinedAiProvider, useAiHub } from "./CombinedAiProvider";
-export type { AiMode } from "./CombinedAiProvider";
+export { UnifiedAiPanel } from "./UnifiedAiPanel";

@@ -5,16 +5,16 @@
  */
 
 import { createSignal } from "solid-js";
+import * as ipc from "../ipc/commands";
 import type { Command } from "../types";
 import { editorStore } from "./editor";
-import { uiStore } from "./ui";
-import * as ipc from "../ipc/commands";
 import {
+  getShortcutDisplay,
   registerHandler,
   registerKeybinding,
-  getShortcutDisplay,
   setupKeybindingListener,
 } from "./keybindings";
+import { uiStore } from "./ui";
 
 const [isCommandPaletteOpen, setCommandPaletteOpen] = createSignal(false);
 

@@ -8,7 +8,7 @@
  * - Displays call stack traces
  */
 
-import { createSignal, createEffect, For, Show, onCleanup } from "solid-js";
+import { createEffect, createSignal, For, onCleanup, Show } from "solid-js";
 
 interface ErrorFlowNode {
   id: string;
@@ -44,7 +44,7 @@ export function ErrorFlowVisualization(props: ErrorFlowProps) {
 
   // Analyze error flow when content changes
   createEffect(() => {
-    if (!props.enabled || !props.content) {
+    if (!(props.enabled && props.content)) {
       setErrorNodes([]);
       return;
     }
@@ -73,11 +73,7 @@ export function ErrorFlowVisualization(props: ErrorFlowProps) {
         const trimmed = line.trim();
 
         // Detect try blocks
-        if (
-          /\btry\s*\{/.test(trimmed) ||
-          trimmed === "try {" ||
-          trimmed === "try"
-        ) {
+        if (/\btry\s*\{/.test(trimmed) || trimmed === "try {" || trimmed === "try") {
           const id = `try-${nodeId++}`;
           tryStack.push({ line: lineIdx, id });
           nodes.push({
@@ -105,9 +101,7 @@ export function ErrorFlowVisualization(props: ErrorFlowProps) {
         }
 
         // Detect throw statements
-        const throwMatch = trimmed.match(
-          /\bthrow\s+(?:new\s+)?(\w+)?\s*\(?\s*['""]?([^'"")]*)?/
-        );
+        const throwMatch = trimmed.match(/\bthrow\s+(?:new\s+)?(\w+)?\s*\(?\s*['""]?([^'"")]*)?/);
         if (throwMatch) {
           const id = `throw-${nodeId++}`;
           const currentTry = tryStack[tryStack.length - 1];
@@ -187,9 +181,7 @@ export function ErrorFlowVisualization(props: ErrorFlowProps) {
   };
 
   const isNodeVisible = (node: ErrorFlowNode): boolean => {
-    return (
-      node.line >= props.visibleStartLine && node.line <= props.visibleEndLine
-    );
+    return node.line >= props.visibleStartLine && node.line <= props.visibleEndLine;
   };
 
   const getRelatedNodes = (nodeId: string): ErrorFlowNode[] => {
@@ -276,19 +268,15 @@ export function ErrorFlowVisualization(props: ErrorFlowProps) {
 
         {/* Connection lines between related nodes */}
         <svg class="absolute inset-0 w-full h-full overflow-visible pointer-events-none">
-          <For
-            each={errorNodes().filter((n) => n.parentId && isNodeVisible(n))}
-          >
+          <For each={errorNodes().filter((n) => n.parentId && isNodeVisible(n))}>
             {(node) => {
               const parent = errorNodes().find((n) => n.id === node.parentId);
               if (!parent) return null;
 
               const y1 =
-                (parent.line - props.visibleStartLine) * props.lineHeight +
-                props.lineHeight / 2;
+                (parent.line - props.visibleStartLine) * props.lineHeight + props.lineHeight / 2;
               const y2 =
-                (node.line - props.visibleStartLine) * props.lineHeight +
-                props.lineHeight / 2;
+                (node.line - props.visibleStartLine) * props.lineHeight + props.lineHeight / 2;
               const isHighlighted = isNodeHighlighted(node);
 
               return (
@@ -303,9 +291,7 @@ export function ErrorFlowVisualization(props: ErrorFlowProps) {
                         : "#eab308"
                   }
                   stroke-width={isHighlighted ? 2 : 1}
-                  stroke-dasharray={
-                    node.type === "propagate" ? "4,2" : undefined
-                  }
+                  stroke-dasharray={node.type === "propagate" ? "4,2" : undefined}
                   class="transition-all duration-150"
                   classList={{
                     "opacity-60": isHighlighted,
@@ -331,19 +317,13 @@ export function ErrorFlowVisualization(props: ErrorFlowProps) {
                 style={{ top: `${y}px` }}
               >
                 <div class="flex items-center gap-2 mb-1">
-                  <span
-                    class={`w-2 h-2 rounded-full ${getNodeColor(node.type)}`}
-                  />
-                  <span class="font-medium text-text-primary capitalize">
-                    {node.type}
-                  </span>
+                  <span class={`w-2 h-2 rounded-full ${getNodeColor(node.type)}`} />
+                  <span class="font-medium text-text-primary capitalize">{node.type}</span>
                   <span class="text-text-tertiary">Line {node.line + 1}</span>
                 </div>
                 <div class="text-text-secondary font-mono">{node.name}</div>
                 <Show when={node.message}>
-                  <div class="text-text-tertiary mt-1 truncate">
-                    "{node.message}"
-                  </div>
+                  <div class="text-text-tertiary mt-1 truncate">"{node.message}"</div>
                 </Show>
                 <Show when={node.parentId}>
                   <div class="text-text-quaternary mt-1 text-[10px]">

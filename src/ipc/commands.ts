@@ -5,19 +5,19 @@
 import { invoke } from "@tauri-apps/api/core";
 import { isTauriEnvironment } from "./tauri-check";
 import type {
-  FileContent,
-  DirectoryEntry,
   BufferInfo,
   BufferMetrics,
-  FileSearchResult,
-  TextSearchResult,
-  TextSearchOptions,
-  Settings,
-  ProjectInfo,
-  FileTreeNode,
-  ParseResult,
   DepthRegionInfo,
+  DirectoryEntry,
+  FileContent,
+  FileSearchResult,
+  FileTreeNode,
   FoldState,
+  ParseResult,
+  ProjectInfo,
+  Settings,
+  TextSearchOptions,
+  TextSearchResult,
 } from "./types";
 
 // File operations
@@ -67,10 +67,7 @@ export async function bufferContent(bufferId: string): Promise<BufferInfo> {
 }
 
 // Search operations
-export async function searchFiles(
-  query: string,
-  limit?: number
-): Promise<FileSearchResult[]> {
+export async function searchFiles(query: string, limit?: number): Promise<FileSearchResult[]> {
   return await invoke<FileSearchResult[]>("search_files", { query, limit });
 }
 
@@ -91,9 +88,7 @@ export async function getSettings(): Promise<Settings> {
   return await invoke<Settings>("get_settings");
 }
 
-export async function updateSettings(
-  updates: Partial<Settings>
-): Promise<Settings> {
+export async function updateSettings(updates: Partial<Settings>): Promise<Settings> {
   return await invoke<Settings>("update_settings", { updates });
 }
 
@@ -120,10 +115,7 @@ export async function bufferReplace(
   });
 }
 
-export async function bufferGetLine(
-  bufferId: string,
-  line: number
-): Promise<string | null> {
+export async function bufferGetLine(bufferId: string, line: number): Promise<string | null> {
   return await invoke<string | null>("buffer_get_line", {
     buffer_id: bufferId,
     line,
@@ -142,10 +134,7 @@ export async function bufferSave(bufferId: string): Promise<BufferInfo> {
   });
 }
 
-export async function bufferSaveAs(
-  bufferId: string,
-  path: string
-): Promise<BufferInfo> {
+export async function bufferSaveAs(bufferId: string, path: string): Promise<BufferInfo> {
   return await invoke<BufferInfo>("buffer_save_as", {
     buffer_id: bufferId,
     path,
@@ -161,10 +150,7 @@ export async function openProject(path: string): Promise<ProjectInfo> {
   return await invoke<ProjectInfo>("open_project", { path });
 }
 
-export async function getFileTree(
-  path: string,
-  maxDepth?: number
-): Promise<FileTreeNode[]> {
+export async function getFileTree(path: string, maxDepth?: number): Promise<FileTreeNode[]> {
   return await invoke<FileTreeNode[]>("get_file_tree", {
     path,
     max_depth: maxDepth,
@@ -301,10 +287,7 @@ export interface LspDiagnostic {
   message: string;
 }
 
-export async function lspStart(
-  language: string,
-  rootPath: string
-): Promise<LspStatus> {
+export async function lspStart(language: string, rootPath: string): Promise<LspStatus> {
   return await invoke<LspStatus>("lsp_start", {
     language,
     root_path: rootPath,
@@ -359,7 +342,7 @@ export async function lspReferences(
   filePath: string,
   line: number,
   character: number,
-  includeDeclaration: boolean = true
+  includeDeclaration = true
 ): Promise<LspLocation[]> {
   return await invoke<LspLocation[]>("lsp_references", {
     file_path: filePath,
@@ -369,17 +352,13 @@ export async function lspReferences(
   });
 }
 
-export async function lspDocumentSymbols(
-  filePath: string
-): Promise<LspSymbolInfo[]> {
+export async function lspDocumentSymbols(filePath: string): Promise<LspSymbolInfo[]> {
   return await invoke<LspSymbolInfo[]>("lsp_document_symbols", {
     file_path: filePath,
   });
 }
 
-export async function lspDiagnostics(
-  filePath: string
-): Promise<LspDiagnostic[]> {
+export async function lspDiagnostics(filePath: string): Promise<LspDiagnostic[]> {
   return await invoke<LspDiagnostic[]>("lsp_diagnostics", {
     file_path: filePath,
   });
@@ -446,11 +425,7 @@ export async function terminalWrite(id: string, data: number[]): Promise<void> {
   return await invoke<void>("terminal_write", { id, data });
 }
 
-export async function terminalResize(
-  id: string,
-  rows: number,
-  cols: number
-): Promise<void> {
+export async function terminalResize(id: string, rows: number, cols: number): Promise<void> {
   return await invoke<void>("terminal_resize", { id, rows, cols });
 }
 
@@ -502,20 +477,14 @@ export async function gitStatus(path: string): Promise<GitStatusResponse> {
   return await invoke<GitStatusResponse>("git_status", { path });
 }
 
-export async function gitStage(
-  repoPath: string,
-  filePath: string
-): Promise<void> {
+export async function gitStage(repoPath: string, filePath: string): Promise<void> {
   return await invoke<void>("git_stage", {
     repo_path: repoPath,
     file_path: filePath,
   });
 }
 
-export async function gitUnstage(
-  repoPath: string,
-  filePath: string
-): Promise<void> {
+export async function gitUnstage(repoPath: string, filePath: string): Promise<void> {
   return await invoke<void>("git_unstage", {
     repo_path: repoPath,
     file_path: filePath,
@@ -526,20 +495,14 @@ export async function gitStageAll(repoPath: string): Promise<void> {
   return await invoke<void>("git_stage_all", { repo_path: repoPath });
 }
 
-export async function gitCommit(
-  repoPath: string,
-  message: string
-): Promise<GitCommitInfo> {
+export async function gitCommit(repoPath: string, message: string): Promise<GitCommitInfo> {
   return await invoke<GitCommitInfo>("git_commit", {
     repo_path: repoPath,
     message,
   });
 }
 
-export async function gitLog(
-  repoPath: string,
-  limit?: number
-): Promise<GitCommitInfo[]> {
+export async function gitLog(repoPath: string, limit?: number): Promise<GitCommitInfo[]> {
   return await invoke<GitCommitInfo[]>("git_log", {
     repo_path: repoPath,
     limit,
@@ -550,17 +513,11 @@ export async function gitBranches(repoPath: string): Promise<GitBranchInfo[]> {
   return await invoke<GitBranchInfo[]>("git_branches", { repo_path: repoPath });
 }
 
-export async function gitCheckout(
-  repoPath: string,
-  branch: string
-): Promise<void> {
+export async function gitCheckout(repoPath: string, branch: string): Promise<void> {
   return await invoke<void>("git_checkout", { repo_path: repoPath, branch });
 }
 
-export async function gitDiscard(
-  repoPath: string,
-  filePath: string
-): Promise<void> {
+export async function gitDiscard(repoPath: string, filePath: string): Promise<void> {
   return await invoke<void>("git_discard", {
     repo_path: repoPath,
     file_path: filePath,
@@ -604,9 +561,7 @@ export async function gitBlameFile(
 }
 
 // Tree Viewer operations
-export async function getDepthRegions(
-  bufferId: string
-): Promise<DepthRegionInfo[]> {
+export async function getDepthRegions(bufferId: string): Promise<DepthRegionInfo[]> {
   if (!isTauriEnvironment()) {
     return [];
   }
@@ -624,10 +579,7 @@ export async function getFoldState(bufferId: string): Promise<FoldState> {
   });
 }
 
-export async function toggleFold(
-  bufferId: string,
-  line: number
-): Promise<boolean> {
+export async function toggleFold(bufferId: string, line: number): Promise<boolean> {
   if (!isTauriEnvironment()) {
     return false;
   }
@@ -649,9 +601,7 @@ export interface DependencyLink {
   type: "import" | "call" | "reference" | "extends" | "implements";
 }
 
-export async function analyzeDependencies(
-  bufferId: string
-): Promise<DependencyLink[]> {
+export async function analyzeDependencies(bufferId: string): Promise<DependencyLink[]> {
   if (!isTauriEnvironment()) {
     return [];
   }
@@ -682,9 +632,7 @@ export interface EnvScanResult {
   unused_in_code: string[];
 }
 
-export async function scanEnvVariables(
-  projectPath: string
-): Promise<EnvScanResult> {
+export async function scanEnvVariables(projectPath: string): Promise<EnvScanResult> {
   if (!isTauriEnvironment()) {
     return {
       variables: [],

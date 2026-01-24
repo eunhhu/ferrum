@@ -1,4 +1,4 @@
-export { useKeyboard } from "./useKeyboard";
 export { useEventListener } from "./useEventListener";
-export { useFileWatcher, useAutoRefresh } from "./useFileWatcher";
-export type { FsEvent, FsEventType, FileWatcherState } from "./useFileWatcher";
+export type { FileWatcherState, FsEvent, FsEventType } from "./useFileWatcher";
+export { useAutoRefresh, useFileWatcher } from "./useFileWatcher";
+export { useKeyboard } from "./useKeyboard";

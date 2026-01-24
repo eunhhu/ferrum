@@ -1,8 +1,8 @@
-import { For, Show, createSignal } from "solid-js";
-import { filesStore, editorStore } from "../../stores";
-import type { FileNode } from "../../types";
+import { createSignal, For, Show } from "solid-js";
 import * as ipc from "../../ipc/commands";
 import { isTauriEnvironment } from "../../ipc/tauri-check";
+import { editorStore, filesStore } from "../../stores";
+import type { FileNode } from "../../types";
 
 // File extension to icon color mapping
 const extColors: Record<string, string> = {
@@ -402,11 +402,7 @@ function FileIcon(props: {
         </svg>
       }
     >
-      <svg
-        class="w-4 h-4 flex-shrink-0"
-        viewBox="0 0 24 24"
-        fill="currentColor"
-      >
+      <svg class="w-4 h-4 flex-shrink-0" viewBox="0 0 24 24" fill="currentColor">
         <Show
           when={props.isExpanded}
           fallback={
@@ -482,9 +478,7 @@ function FileTreeItem(props: {
             isExpanded={props.node.isExpanded}
           />
         </Show>
-        <span class="text-text-primary text-sm truncate">
-          {props.node.name}
-        </span>
+        <span class="text-text-primary text-sm truncate">{props.node.name}</span>
       </div>
       <Show when={props.node.type === "directory" && props.node.isExpanded}>
         <For each={props.node.children}>
@@ -538,8 +532,7 @@ export function FileExplorer() {
     if (node.type !== "file") return;
 
     setSelectedPath(node.path);
-    const content =
-      DEMO_FILE_CONTENTS[node.path] || `// Content for ${node.name}`;
+    const content = DEMO_FILE_CONTENTS[node.path] || `// Content for ${node.name}`;
     editorStore.openFile(node.path, content);
   };
 
@@ -600,27 +593,19 @@ export function FileExplorer() {
         </button>
         <button
           class="p-1 hover:bg-bg-hover rounded transition-colors"
-          onClick={() =>
-            isDemoMode() ? loadDemoProject() : filesStore.refresh()
-          }
+          onClick={() => (isDemoMode() ? loadDemoProject() : filesStore.refresh())}
           title="Refresh"
         >
           <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
             <path d="M17.65 6.35A7.958 7.958 0 0012 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08A5.99 5.99 0 0112 18c-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z" />
           </svg>
         </button>
-        <button
-          class="p-1 hover:bg-bg-hover rounded transition-colors"
-          title="New File"
-        >
+        <button class="p-1 hover:bg-bg-hover rounded transition-colors" title="New File">
           <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
             <path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm2 14h-3v3h-2v-3H8v-2h3v-3h2v3h3v2zm-3-7V3.5L18.5 9H13z" />
           </svg>
         </button>
-        <button
-          class="p-1 hover:bg-bg-hover rounded transition-colors"
-          title="New Folder"
-        >
+        <button class="p-1 hover:bg-bg-hover rounded transition-colors" title="New Folder">
           <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
             <path d="M20 6h-8l-2-2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-1 8h-3v3h-2v-3H8v-2h3v-3h2v3h3v2z" />
           </svg>
@@ -639,9 +624,7 @@ export function FileExplorer() {
             when={hasProject()}
             fallback={
               <div class="px-4 py-8 text-center">
-                <div class="text-text-secondary text-sm mb-4">
-                  No folder opened
-                </div>
+                <div class="text-text-secondary text-sm mb-4">No folder opened</div>
                 <button
                   class="px-4 py-2 bg-accent text-white rounded hover:bg-accent/90 transition-colors text-sm"
                   onClick={handleOpenFolder}
@@ -649,9 +632,7 @@ export function FileExplorer() {
                   Open Folder
                 </button>
                 <Show when={!isTauriEnvironment()}>
-                  <p class="text-text-tertiary text-xs mt-3">
-                    Or click to load demo project
-                  </p>
+                  <p class="text-text-tertiary text-xs mt-3">Or click to load demo project</p>
                 </Show>
               </div>
             }
@@ -676,14 +657,10 @@ export function FileExplorer() {
                   node={node}
                   depth={0}
                   onToggle={
-                    isDemoMode()
-                      ? toggleDemoFolder
-                      : (path) => filesStore.toggleExpand(path)
+                    isDemoMode() ? toggleDemoFolder : (path) => filesStore.toggleExpand(path)
                   }
                   onSelect={isDemoMode() ? openDemoFile : handleTauriFileSelect}
-                  selectedPath={
-                    isDemoMode() ? selectedPath() : filesStore.selectedPath()
-                  }
+                  selectedPath={isDemoMode() ? selectedPath() : filesStore.selectedPath()}
                 />
               )}
             </For>

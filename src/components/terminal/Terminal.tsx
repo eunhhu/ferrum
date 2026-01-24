@@ -5,14 +5,8 @@
  * For production, integrate xterm.js for full terminal emulation.
  */
 
-import {
-  createSignal,
-  onMount,
-  onCleanup,
-  Show,
-  For,
-} from "solid-js";
 import { listen } from "@tauri-apps/api/event";
+import { createSignal, For, onCleanup, onMount, Show } from "solid-js";
 import * as ipc from "../../ipc/commands";
 
 interface TerminalProps {
@@ -34,10 +28,10 @@ export function Terminal(props: TerminalProps) {
 
   // Initialize terminal
   onMount(async () => {
-    if (!props.id) {
-      await createTerminal();
-    } else {
+    if (props.id) {
       await connectToTerminal(props.id);
+    } else {
+      await createTerminal();
     }
   });
 
@@ -151,21 +145,12 @@ export function Terminal(props: TerminalProps) {
       onClick={() => inputRef?.focus()}
     >
       <Show when={error()}>
-        <div class="px-3 py-2 bg-red-900/50 text-red-300 text-sm">
-          {error()}
-        </div>
+        <div class="px-3 py-2 bg-red-900/50 text-red-300 text-sm">{error()}</div>
       </Show>
 
-      <div
-        ref={containerRef}
-        class="flex-1 overflow-auto p-2 text-[#cdd6f4]"
-      >
+      <div ref={containerRef} class="flex-1 overflow-auto p-2 text-[#cdd6f4]">
         <For each={lines()}>
-          {(line) => (
-            <div class="whitespace-pre-wrap break-all leading-5">
-              {line || " "}
-            </div>
-          )}
+          {(line) => <div class="whitespace-pre-wrap break-all leading-5">{line || " "}</div>}
         </For>
         <div class="whitespace-pre-wrap break-all leading-5">
           {currentLine()}

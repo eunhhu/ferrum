@@ -1,12 +1,12 @@
 /**
  * Navigation Trail Component (Breadcrumb)
- * 
+ *
  * Shows the current file path and symbol hierarchy at the top of the editor.
  * Allows quick navigation to parent directories and symbols.
  */
 
-import { createSignal, createEffect, For, Show } from "solid-js";
-import { lspDocumentSymbols, type LspSymbolInfo } from "../../ipc/commands";
+import { createEffect, createSignal, For, Show } from "solid-js";
+import { type LspSymbolInfo, lspDocumentSymbols } from "../../ipc/commands";
 
 interface NavigationTrailProps {
   filePath: string | null;
@@ -17,32 +17,32 @@ interface NavigationTrailProps {
 
 // Symbol kind to icon mapping
 const SYMBOL_ICONS: Record<number, string> = {
-  1: "📄",   // File
-  2: "📦",   // Module
-  3: "🏷️",   // Namespace
-  4: "📦",   // Package
-  5: "🔷",   // Class
-  6: "⚡",   // Method
-  7: "🔑",   // Property
-  8: "📌",   // Field
-  9: "🏗️",   // Constructor
-  10: "📋",  // Enum
-  11: "🔶",  // Interface
-  12: "ƒ",   // Function
-  13: "📌",  // Variable
-  14: "🔢",  // Constant
-  15: "📝",  // String
-  16: "🔢",  // Number
-  17: "✓",   // Boolean
-  18: "[]",  // Array
-  19: "{}",  // Object
-  20: "🔑",  // Key
-  21: "∅",   // Null
-  22: "📋",  // EnumMember
-  23: "🏛️",  // Struct
-  24: "⚡",  // Event
-  25: "➕",  // Operator
-  26: "🔠",  // TypeParameter
+  1: "📄", // File
+  2: "📦", // Module
+  3: "🏷️", // Namespace
+  4: "📦", // Package
+  5: "🔷", // Class
+  6: "⚡", // Method
+  7: "🔑", // Property
+  8: "📌", // Field
+  9: "🏗️", // Constructor
+  10: "📋", // Enum
+  11: "🔶", // Interface
+  12: "ƒ", // Function
+  13: "📌", // Variable
+  14: "🔢", // Constant
+  15: "📝", // String
+  16: "🔢", // Number
+  17: "✓", // Boolean
+  18: "[]", // Array
+  19: "{}", // Object
+  20: "🔑", // Key
+  21: "∅", // Null
+  22: "📋", // EnumMember
+  23: "🏛️", // Struct
+  24: "⚡", // Event
+  25: "➕", // Operator
+  26: "🔠", // TypeParameter
 };
 
 export function NavigationTrail(props: NavigationTrailProps) {
@@ -101,7 +101,7 @@ export function NavigationTrail(props: NavigationTrailProps) {
   });
 
   const handlePathClick = (index: number) => {
-    if (!props.filePath || !props.onNavigate) return;
+    if (!(props.filePath && props.onNavigate)) return;
     const parts = props.filePath.split("/").filter(Boolean);
     const fullParts = parts.slice(0, parts.length - pathParts().length + index + 1);
     props.onNavigate("/" + fullParts.join("/"));

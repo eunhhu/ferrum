@@ -10,8 +10,8 @@
  * - Syntax highlighting
  */
 
-import { describe, it, expect, vi } from "vitest";
-import { render, fireEvent } from "@solidjs/testing-library";
+import { fireEvent, render } from "@solidjs/testing-library";
+import { describe, expect, it, vi } from "vitest";
 import { Editor } from "../../components/editor/Editor";
 
 describe("Editor", () => {
@@ -31,9 +31,7 @@ describe("Editor", () => {
 
     it("displays content lines correctly", () => {
       const content = "line 1\nline 2\nline 3";
-      const { container } = render(() => (
-        <Editor {...defaultProps} content={content} />
-      ));
+      const { container } = render(() => <Editor {...defaultProps} content={content} />);
 
       // Should have elements for visible lines (whitespace-pre class)
       const lineElements = container.querySelectorAll(".whitespace-pre");
@@ -42,14 +40,10 @@ describe("Editor", () => {
 
     it("renders line numbers in gutter", () => {
       const content = "line 1\nline 2\nline 3";
-      const { container } = render(() => (
-        <Editor {...defaultProps} content={content} />
-      ));
+      const { container } = render(() => <Editor {...defaultProps} content={content} />);
 
       // Check for gutter (line number area)
-      const gutter = container.querySelector(
-        ".bg-bg-secondary.text-text-tertiary"
-      );
+      const gutter = container.querySelector(".bg-bg-secondary.text-text-tertiary");
       expect(gutter).toBeTruthy();
     });
 
@@ -74,9 +68,7 @@ describe("Editor", () => {
       const lines = Array.from({ length: 1000 }, (_, i) => `line ${i + 1}`);
       const content = lines.join("\n");
 
-      const { container } = render(() => (
-        <Editor {...defaultProps} content={content} />
-      ));
+      const { container } = render(() => <Editor {...defaultProps} content={content} />);
 
       // Should NOT render all 1000 lines
       const renderedLines = container.querySelectorAll(".whitespace-pre");
@@ -87,9 +79,7 @@ describe("Editor", () => {
       const lines = Array.from({ length: 100 }, (_, i) => `line ${i + 1}`);
       const content = lines.join("\n");
 
-      const { container } = render(() => (
-        <Editor {...defaultProps} content={content} />
-      ));
+      const { container } = render(() => <Editor {...defaultProps} content={content} />);
 
       // Content height should be lines * LINE_HEIGHT (20px)
       const contentContainer = container.querySelector("[style*='height']");
@@ -145,11 +135,7 @@ describe("Editor", () => {
     it("calls onContentChange when text is inserted", async () => {
       const onContentChange = vi.fn();
       const { container } = render(() => (
-        <Editor
-          {...defaultProps}
-          content=""
-          onContentChange={onContentChange}
-        />
+        <Editor {...defaultProps} content="" onContentChange={onContentChange} />
       ));
 
       const textarea = container.querySelector("textarea");
@@ -172,11 +158,7 @@ describe("Editor", () => {
     it("handles Enter key to insert newline", async () => {
       const onContentChange = vi.fn();
       const { container } = render(() => (
-        <Editor
-          {...defaultProps}
-          content="test"
-          onContentChange={onContentChange}
-        />
+        <Editor {...defaultProps} content="test" onContentChange={onContentChange} />
       ));
 
       const textarea = container.querySelector("textarea");
@@ -191,11 +173,7 @@ describe("Editor", () => {
     it("handles Backspace to delete character", async () => {
       const onContentChange = vi.fn();
       const { container } = render(() => (
-        <Editor
-          {...defaultProps}
-          content="abc"
-          onContentChange={onContentChange}
-        />
+        <Editor {...defaultProps} content="abc" onContentChange={onContentChange} />
       ));
 
       const textarea = container.querySelector("textarea");
@@ -213,11 +191,7 @@ describe("Editor", () => {
       const content = "line 1\nline 2\nline 3";
       const onCursorChange = vi.fn();
       const { container } = render(() => (
-        <Editor
-          {...defaultProps}
-          content={content}
-          onCursorChange={onCursorChange}
-        />
+        <Editor {...defaultProps} content={content} onCursorChange={onCursorChange} />
       ));
 
       const textarea = container.querySelector("textarea");
@@ -234,11 +208,7 @@ describe("Editor", () => {
       const content = "line 1\nline 2\nline 3";
       const onCursorChange = vi.fn();
       const { container } = render(() => (
-        <Editor
-          {...defaultProps}
-          content={content}
-          onCursorChange={onCursorChange}
-        />
+        <Editor {...defaultProps} content={content} onCursorChange={onCursorChange} />
       ));
 
       const textarea = container.querySelector("textarea");
@@ -404,9 +374,7 @@ describe("Editor", () => {
 
   describe("Content Updates", () => {
     it("updates when content prop changes", async () => {
-      const { container } = render(() => (
-        <Editor {...defaultProps} content="initial" />
-      ));
+      const { container } = render(() => <Editor {...defaultProps} content="initial" />);
 
       // Initial content
       const lineElements = container.querySelectorAll(".whitespace-pre");
@@ -468,11 +436,7 @@ describe("Editor", () => {
       const onScrollChange = vi.fn();
 
       const { container } = render(() => (
-        <Editor
-          {...defaultProps}
-          content={content}
-          onScrollChange={onScrollChange}
-        />
+        <Editor {...defaultProps} content={content} onScrollChange={onScrollChange} />
       ));
 
       const scrollContainer = container.querySelector(".overflow-auto");
@@ -486,18 +450,14 @@ describe("Editor", () => {
 
   describe("Edge Cases", () => {
     it("handles empty content", () => {
-      const { container } = render(() => (
-        <Editor {...defaultProps} content="" />
-      ));
+      const { container } = render(() => <Editor {...defaultProps} content="" />);
 
       const editorContainer = container.querySelector(".editor-container");
       expect(editorContainer).toBeTruthy();
     });
 
     it("handles single line content", () => {
-      const { container } = render(() => (
-        <Editor {...defaultProps} content="single line" />
-      ));
+      const { container } = render(() => <Editor {...defaultProps} content="single line" />);
 
       const editorContainer = container.querySelector(".editor-container");
       expect(editorContainer).toBeTruthy();
@@ -505,9 +465,7 @@ describe("Editor", () => {
 
     it("handles content with special characters", () => {
       const content = "const x = '<>&\"\\n\\t';";
-      const { container } = render(() => (
-        <Editor {...defaultProps} content={content} />
-      ));
+      const { container } = render(() => <Editor {...defaultProps} content={content} />);
 
       const editorContainer = container.querySelector(".editor-container");
       expect(editorContainer).toBeTruthy();
@@ -515,9 +473,7 @@ describe("Editor", () => {
 
     it("handles content with unicode characters", () => {
       const content = "const greeting = '你好世界 🌍';";
-      const { container } = render(() => (
-        <Editor {...defaultProps} content={content} />
-      ));
+      const { container } = render(() => <Editor {...defaultProps} content={content} />);
 
       const editorContainer = container.querySelector(".editor-container");
       expect(editorContainer).toBeTruthy();
@@ -525,9 +481,7 @@ describe("Editor", () => {
 
     it("handles very long lines", () => {
       const longLine = "a".repeat(10000);
-      const { container } = render(() => (
-        <Editor {...defaultProps} content={longLine} />
-      ));
+      const { container } = render(() => <Editor {...defaultProps} content={longLine} />);
 
       const editorContainer = container.querySelector(".editor-container");
       expect(editorContainer).toBeTruthy();

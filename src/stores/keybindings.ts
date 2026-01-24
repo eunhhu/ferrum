@@ -88,17 +88,17 @@ export function parseShortcut(shortcut: string): Keybinding | null {
  */
 function normalizeKey(key: string): string {
   const keyMap: Record<string, string> = {
-    "esc": "escape",
-    "del": "delete",
-    "ins": "insert",
-    "pgup": "pageup",
-    "pgdn": "pagedown",
-    "return": "enter",
-    "space": " ",
-    "up": "arrowup",
-    "down": "arrowdown",
-    "left": "arrowleft",
-    "right": "arrowright",
+    esc: "escape",
+    del: "delete",
+    ins: "insert",
+    pgup: "pageup",
+    pgdn: "pagedown",
+    return: "enter",
+    space: " ",
+    up: "arrowup",
+    down: "arrowdown",
+    left: "arrowleft",
+    right: "arrowright",
   };
 
   return keyMap[key] || key;
@@ -152,9 +152,7 @@ export function matchesKeybinding(event: KeyboardEvent, kb: Keybinding): boolean
     // On Windows/Linux, treat Meta (Cmd) bindings as Ctrl
     if (kb.modifiers.meta) {
       if (!event.ctrlKey) return false;
-    } else {
-      if (event.ctrlKey !== kb.modifiers.ctrl) return false;
-    }
+    } else if (event.ctrlKey !== kb.modifiers.ctrl) return false;
     if (event.metaKey) return false; // Windows key shouldn't be pressed
   }
 
@@ -181,11 +179,7 @@ export function registerHandler(commandId: string, handler: () => void | Promise
 /**
  * Register a keybinding
  */
-export function registerKeybinding(
-  commandId: string,
-  shortcut: string,
-  when?: string
-): void {
+export function registerKeybinding(commandId: string, shortcut: string, when?: string): void {
   const keybinding = parseShortcut(shortcut);
   if (!keybinding) {
     console.warn(`Invalid keybinding: ${shortcut}`);
@@ -194,10 +188,7 @@ export function registerKeybinding(
 
   const id = `kb-${commandId}-${Date.now()}`;
 
-  setKeybindings((prev) => [
-    ...prev,
-    { id, keybinding, commandId, when },
-  ]);
+  setKeybindings((prev) => [...prev, { id, keybinding, commandId, when }]);
 }
 
 /**
@@ -249,9 +240,7 @@ function evaluateWhen(when: string | undefined): boolean {
     if (trimmed.startsWith("!")) {
       const key = trimmed.slice(1);
       if (ctx[key]) return false;
-    } else {
-      if (!ctx[trimmed]) return false;
-    }
+    } else if (!ctx[trimmed]) return false;
   }
 
   return true;
@@ -286,7 +275,8 @@ export function setupKeybindingListener(): () => void {
   const listener = (event: KeyboardEvent) => {
     // Ignore if inside input/textarea (unless it's a global command)
     const target = event.target as HTMLElement;
-    const isInput = target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable;
+    const isInput =
+      target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable;
 
     // Set context
     setContextKey("inputFocus", isInput);

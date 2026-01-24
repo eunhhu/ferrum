@@ -2,8 +2,8 @@
  * ContextActionPalette Component Tests
  */
 
-import { describe, it, expect, vi } from "vitest";
-import { render, fireEvent } from "@solidjs/testing-library";
+import { fireEvent, render } from "@solidjs/testing-library";
+import { describe, expect, it, vi } from "vitest";
 import { ContextActionPalette } from "../../components/editor/ContextActionPalette";
 
 describe("ContextActionPalette", () => {
@@ -21,9 +21,7 @@ describe("ContextActionPalette", () => {
 
   describe("Rendering", () => {
     it("renders when visible is true", () => {
-      const { container } = render(() => (
-        <ContextActionPalette {...defaultProps} />
-      ));
+      const { container } = render(() => <ContextActionPalette {...defaultProps} />);
 
       // Should have the palette container
       const palette = container.querySelector(".fixed.z-50");
@@ -52,9 +50,7 @@ describe("ContextActionPalette", () => {
     });
 
     it("renders search input", () => {
-      const { container } = render(() => (
-        <ContextActionPalette {...defaultProps} />
-      ));
+      const { container } = render(() => <ContextActionPalette {...defaultProps} />);
 
       const input = container.querySelector("input[type='text']");
       expect(input).toBeTruthy();
@@ -63,9 +59,7 @@ describe("ContextActionPalette", () => {
 
   describe("Actions", () => {
     it("shows selection actions when bufferId is provided", () => {
-      const { container } = render(() => (
-        <ContextActionPalette {...defaultProps} />
-      ));
+      const { container } = render(() => <ContextActionPalette {...defaultProps} />);
 
       // Should have some action buttons
       const actionButtons = container.querySelectorAll("button");
@@ -74,10 +68,7 @@ describe("ContextActionPalette", () => {
 
     it("shows AI actions when selectedText is provided", () => {
       const { container } = render(() => (
-        <ContextActionPalette
-          {...defaultProps}
-          selectedText="function test() { return 42; }"
-        />
+        <ContextActionPalette {...defaultProps} selectedText="function test() { return 42; }" />
       ));
 
       // Should have AI action buttons
@@ -96,9 +87,7 @@ describe("ContextActionPalette", () => {
 
       // Fix Error action should be present
       const buttons = container.querySelectorAll("button");
-      const hasFixError = Array.from(buttons).some((btn) =>
-        btn.textContent?.includes("Fix Error")
-      );
+      const hasFixError = Array.from(buttons).some((btn) => btn.textContent?.includes("Fix Error"));
       expect(hasFixError).toBe(true);
     });
   });
@@ -106,9 +95,7 @@ describe("ContextActionPalette", () => {
   describe("Keyboard Navigation", () => {
     it("handles Escape to close", async () => {
       const onClose = vi.fn();
-      render(() => (
-        <ContextActionPalette {...defaultProps} onClose={onClose} />
-      ));
+      render(() => <ContextActionPalette {...defaultProps} onClose={onClose} />);
 
       await fireEvent.keyDown(document, { key: "Escape" });
 
@@ -116,9 +103,7 @@ describe("ContextActionPalette", () => {
     });
 
     it("handles ArrowDown for navigation", async () => {
-      const { container } = render(() => (
-        <ContextActionPalette {...defaultProps} />
-      ));
+      const { container } = render(() => <ContextActionPalette {...defaultProps} />);
 
       await fireEvent.keyDown(document, { key: "ArrowDown" });
 
@@ -128,9 +113,7 @@ describe("ContextActionPalette", () => {
     });
 
     it("handles ArrowUp for navigation", async () => {
-      const { container } = render(() => (
-        <ContextActionPalette {...defaultProps} />
-      ));
+      const { container } = render(() => <ContextActionPalette {...defaultProps} />);
 
       // Move down first, then up
       await fireEvent.keyDown(document, { key: "ArrowDown" });
@@ -143,9 +126,7 @@ describe("ContextActionPalette", () => {
 
     it("handles Enter to execute action", async () => {
       const onClose = vi.fn();
-      render(() => (
-        <ContextActionPalette {...defaultProps} onClose={onClose} />
-      ));
+      render(() => <ContextActionPalette {...defaultProps} onClose={onClose} />);
 
       await fireEvent.keyDown(document, { key: "Enter" });
 
@@ -157,9 +138,7 @@ describe("ContextActionPalette", () => {
 
     it("handles Tab for quick action", async () => {
       const onClose = vi.fn();
-      render(() => (
-        <ContextActionPalette {...defaultProps} onClose={onClose} />
-      ));
+      render(() => <ContextActionPalette {...defaultProps} onClose={onClose} />);
 
       await fireEvent.keyDown(document, { key: "Tab" });
 
@@ -172,13 +151,9 @@ describe("ContextActionPalette", () => {
 
   describe("Search/Filter", () => {
     it("filters actions based on input", async () => {
-      const { container } = render(() => (
-        <ContextActionPalette {...defaultProps} />
-      ));
+      const { container } = render(() => <ContextActionPalette {...defaultProps} />);
 
-      const input = container.querySelector(
-        "input[type='text']"
-      ) as HTMLInputElement;
+      const input = container.querySelector("input[type='text']") as HTMLInputElement;
       if (input) {
         await fireEvent.input(input, { target: { value: "expand" } });
 
@@ -197,9 +172,7 @@ describe("ContextActionPalette", () => {
       ));
 
       // Should have category headers
-      const categoryHeaders = container.querySelectorAll(
-        ".uppercase.tracking-wider"
-      );
+      const categoryHeaders = container.querySelectorAll(".uppercase.tracking-wider");
       expect(categoryHeaders.length).toBeGreaterThan(0);
     });
   });

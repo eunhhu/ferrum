@@ -2,8 +2,8 @@
  * HoverTooltip Component Tests
  */
 
-import { describe, it, expect } from "vitest";
 import { render } from "@solidjs/testing-library";
+import { describe, expect, it } from "vitest";
 import { HoverTooltip } from "../../components/editor/HoverTooltip";
 
 describe("HoverTooltip", () => {
@@ -15,36 +15,28 @@ describe("HoverTooltip", () => {
 
   describe("Rendering", () => {
     it("renders when visible is true and content exists", () => {
-      const { container } = render(() => (
-        <HoverTooltip {...defaultProps} />
-      ));
+      const { container } = render(() => <HoverTooltip {...defaultProps} />);
 
       const tooltip = container.querySelector(".fixed.z-40");
       expect(tooltip).toBeTruthy();
     });
 
     it("does not render when visible is false", () => {
-      const { container } = render(() => (
-        <HoverTooltip {...defaultProps} visible={false} />
-      ));
+      const { container } = render(() => <HoverTooltip {...defaultProps} visible={false} />);
 
       const tooltip = container.querySelector(".fixed.z-40");
       expect(tooltip).toBeFalsy();
     });
 
     it("does not render when content is null", () => {
-      const { container } = render(() => (
-        <HoverTooltip {...defaultProps} content={null} />
-      ));
+      const { container } = render(() => <HoverTooltip {...defaultProps} content={null} />);
 
       const tooltip = container.querySelector(".fixed.z-40");
       expect(tooltip).toBeFalsy();
     });
 
     it("does not render when content is empty string", () => {
-      const { container } = render(() => (
-        <HoverTooltip {...defaultProps} content="" />
-      ));
+      const { container } = render(() => <HoverTooltip {...defaultProps} content="" />);
 
       // Empty string is falsy, so it shouldn't render
       const tooltip = container.querySelector(".fixed.z-40");
@@ -62,17 +54,13 @@ describe("HoverTooltip", () => {
     });
 
     it("displays content text", () => {
-      const { container } = render(() => (
-        <HoverTooltip {...defaultProps} />
-      ));
+      const { container } = render(() => <HoverTooltip {...defaultProps} />);
 
       expect(container.textContent).toContain("function test(): void");
     });
 
     it("has pointer-events-none to not interfere with mouse", () => {
-      const { container } = render(() => (
-        <HoverTooltip {...defaultProps} />
-      ));
+      const { container } = render(() => <HoverTooltip {...defaultProps} />);
 
       const tooltip = container.querySelector(".pointer-events-none");
       expect(tooltip).toBeTruthy();
@@ -94,18 +82,14 @@ Throws: Error on invalid input`;
     });
 
     it("renders code-like content with monospace font", () => {
-      const { container } = render(() => (
-        <HoverTooltip {...defaultProps} />
-      ));
+      const { container } = render(() => <HoverTooltip {...defaultProps} />);
 
       const pre = container.querySelector("pre.font-mono");
       expect(pre).toBeTruthy();
     });
 
     it("preserves whitespace in content", () => {
-      const { container } = render(() => (
-        <HoverTooltip {...defaultProps} />
-      ));
+      const { container } = render(() => <HoverTooltip {...defaultProps} />);
 
       const pre = container.querySelector(".whitespace-pre-wrap");
       expect(pre).toBeTruthy();
@@ -115,9 +99,7 @@ Throws: Error on invalid input`;
   describe("Edge Cases", () => {
     it("handles very long content", () => {
       const longContent = "a".repeat(1000);
-      const { container } = render(() => (
-        <HoverTooltip {...defaultProps} content={longContent} />
-      ));
+      const { container } = render(() => <HoverTooltip {...defaultProps} content={longContent} />);
 
       const tooltip = container.querySelector(".fixed.z-40");
       expect(tooltip).toBeTruthy();
@@ -125,7 +107,7 @@ Throws: Error on invalid input`;
     });
 
     it("handles special characters in content", () => {
-      const specialContent = "<div>Test & \"quoted\"</div>";
+      const specialContent = '<div>Test & "quoted"</div>';
       const { container } = render(() => (
         <HoverTooltip {...defaultProps} content={specialContent} />
       ));
@@ -147,18 +129,14 @@ Throws: Error on invalid input`;
 
   describe("Styling", () => {
     it("has max-width constraint", () => {
-      const { container } = render(() => (
-        <HoverTooltip {...defaultProps} />
-      ));
+      const { container } = render(() => <HoverTooltip {...defaultProps} />);
 
       const tooltip = container.querySelector(".fixed.z-40") as HTMLElement;
       expect(tooltip?.style.maxWidth).toBe("600px");
     });
 
     it("has max-height constraint", () => {
-      const { container } = render(() => (
-        <HoverTooltip {...defaultProps} />
-      ));
+      const { container } = render(() => <HoverTooltip {...defaultProps} />);
 
       const tooltip = container.querySelector(".fixed.z-40") as HTMLElement;
       expect(tooltip?.style.maxHeight).toBe("300px");

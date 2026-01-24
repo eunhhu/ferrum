@@ -5,14 +5,14 @@
  * Includes AI-powered actions for code improvement, explanation, and fixing.
  */
 
-import { createSignal, createEffect, For, Show, onCleanup } from "solid-js";
+import { createEffect, createSignal, For, onCleanup, Show } from "solid-js";
 import {
-  lspGotoDefinition,
-  lspReferences,
-  lspHover,
   expandSelection,
-  shrinkSelection,
   type LspLocation,
+  lspGotoDefinition,
+  lspHover,
+  lspReferences,
+  shrinkSelection,
 } from "../../ipc/commands";
 
 interface ContextAction {
@@ -134,11 +134,7 @@ export function ContextActionPalette(props: ContextActionPaletteProps) {
         action: async () => {
           if (!props.filePath) return;
           try {
-            const locations = await lspGotoDefinition(
-              props.filePath,
-              props.line,
-              props.character
-            );
+            const locations = await lspGotoDefinition(props.filePath, props.line, props.character);
             if (locations.length > 0 && locations[0]) {
               props.onGotoLocation?.(locations[0]);
             }
@@ -191,11 +187,7 @@ export function ContextActionPalette(props: ContextActionPaletteProps) {
         action: async () => {
           if (!props.filePath) return;
           try {
-            const hover = await lspHover(
-              props.filePath,
-              props.line,
-              props.character
-            );
+            const hover = await lspHover(props.filePath, props.line, props.character);
             if (hover) {
               console.log("Hover:", hover.contents);
             }
@@ -295,11 +287,7 @@ export function ContextActionPalette(props: ContextActionPaletteProps) {
         icon: "🔧",
         category: "ai",
         action: () => {
-          props.onShowAiPanel?.(
-            "fix-error",
-            props.selectedText || "",
-            props.errorMessage
-          );
+          props.onShowAiPanel?.("fix-error", props.selectedText || "", props.errorMessage);
           props.onClose();
         },
       });
@@ -314,9 +302,7 @@ export function ContextActionPalette(props: ContextActionPaletteProps) {
     const f = filter().toLowerCase();
     if (!f) return actions();
     return actions().filter(
-      (a) =>
-        a.label.toLowerCase().includes(f) ||
-        a.category.toLowerCase().includes(f)
+      (a) => a.label.toLowerCase().includes(f) || a.category.toLowerCase().includes(f)
     );
   };
 
@@ -337,7 +323,7 @@ export function ContextActionPalette(props: ContextActionPaletteProps) {
         e.stopPropagation();
         setSelectedIndex((i) => Math.max(i - 1, 0));
         break;
-      case "Enter":
+      case "Enter": {
         e.preventDefault();
         e.stopPropagation();
         const selected = filtered[selectedIndex()];
@@ -345,7 +331,8 @@ export function ContextActionPalette(props: ContextActionPaletteProps) {
           selected.action();
         }
         break;
-      case "Tab":
+      }
+      case "Tab": {
         // Tab completion - execute first action
         e.preventDefault();
         e.stopPropagation();
@@ -354,6 +341,7 @@ export function ContextActionPalette(props: ContextActionPaletteProps) {
           first.action();
         }
         break;
+      }
       case "Escape":
         e.preventDefault();
         e.stopPropagation();
@@ -500,16 +488,10 @@ export function ContextActionPalette(props: ContextActionPaletteProps) {
                         onClick={() => action.action()}
                         onMouseEnter={() => setSelectedIndex(flatIndex)}
                       >
-                        <span
-                          class={`w-5 text-center ${getCategoryColor(
-                            action.category
-                          )}`}
-                        >
+                        <span class={`w-5 text-center ${getCategoryColor(action.category)}`}>
                           {action.icon}
                         </span>
-                        <span class="flex-1 text-text-primary text-sm">
-                          {action.label}
-                        </span>
+                        <span class="flex-1 text-text-primary text-sm">{action.label}</span>
                         <Show when={action.shortcut}>
                           <span class="text-text-tertiary text-xs font-mono bg-bg-tertiary px-1.5 py-0.5 rounded">
                             {action.shortcut}

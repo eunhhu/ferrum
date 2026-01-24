@@ -5,9 +5,9 @@
  * Similar to VS Code's "Peek Definition" feature.
  */
 
-import { createSignal, createEffect, Show, onCleanup } from "solid-js";
-import { readFile } from "../../ipc/commands";
+import { createEffect, createSignal, onCleanup, Show } from "solid-js";
 import type { LspLocation } from "../../ipc/commands";
+import { readFile } from "../../ipc/commands";
 
 interface PeekViewProps {
   visible: boolean;
@@ -90,8 +90,7 @@ export function PeekView(props: PeekViewProps) {
     if (!props.location) return false;
     const actualLine = getStartLine() + index;
     return (
-      actualLine >= props.location.range.start.line &&
-      actualLine <= props.location.range.end.line
+      actualLine >= props.location.range.start.line && actualLine <= props.location.range.end.line
     );
   };
 

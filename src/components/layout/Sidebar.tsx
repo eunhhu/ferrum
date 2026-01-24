@@ -1,4 +1,4 @@
-import { Show, Switch, Match } from "solid-js";
+import { Match, Show, Switch } from "solid-js";
 import { uiStore } from "../../stores";
 import { FileExplorer } from "../explorer/FileExplorer";
 

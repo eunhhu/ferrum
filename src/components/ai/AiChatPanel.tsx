@@ -9,8 +9,8 @@
  * - Usage tracking
  */
 
-import { createSignal, For, Show, createEffect } from "solid-js";
-import { useAi, AI_MODELS } from "./AiProvider";
+import { createEffect, createSignal, For, Show } from "solid-js";
+import { AI_MODELS, useAi } from "./AiProvider";
 
 interface AiChatPanelProps {
   onInsertCode?: (code: string) => void;
@@ -127,9 +127,7 @@ export function AiChatPanel(props: AiChatPanelProps) {
                 </pre>
               </div>
             ) : (
-              <p class="text-text-secondary whitespace-pre-wrap">
-                {part.content}
-              </p>
+              <p class="text-text-secondary whitespace-pre-wrap">{part.content}</p>
             )
           }
         </For>
@@ -142,9 +140,7 @@ export function AiChatPanel(props: AiChatPanelProps) {
       {/* Header */}
       <div class="flex items-center justify-between px-3 py-2 border-b border-border">
         <div class="flex items-center gap-2">
-          <span class="text-sm font-medium text-text-primary">
-            AI Assistant
-          </span>
+          <span class="text-sm font-medium text-text-primary">AI Assistant</span>
           <Show when={ai.state.isLoading}>
             <div class="w-3 h-3 border-2 border-accent border-t-transparent rounded-full animate-spin" />
           </Show>
@@ -155,9 +151,7 @@ export function AiChatPanel(props: AiChatPanelProps) {
             value={ai.state.selectedModel}
             onChange={(e) => ai.selectModel(e.currentTarget.value)}
           >
-            <For each={AI_MODELS}>
-              {(model) => <option value={model.id}>{model.name}</option>}
-            </For>
+            <For each={AI_MODELS}>{(model) => <option value={model.id}>{model.name}</option>}</For>
           </select>
           <button
             class="p-1 text-text-tertiary hover:text-text-primary transition-colors"
@@ -173,9 +167,7 @@ export function AiChatPanel(props: AiChatPanelProps) {
       <Show when={showSettings()}>
         <div class="p-3 border-b border-border bg-bg-secondary space-y-2">
           <div>
-            <label class="block text-xs text-text-tertiary mb-1">
-              OpenRouter API Key
-            </label>
+            <label class="block text-xs text-text-tertiary mb-1">OpenRouter API Key</label>
             <div class="flex gap-2">
               <input
                 type="password"
@@ -197,6 +189,7 @@ export function AiChatPanel(props: AiChatPanelProps) {
                 href="https://openrouter.ai/keys"
                 target="_blank"
                 class="text-accent hover:underline"
+                rel="noopener"
               >
                 openrouter.ai/keys
               </a>
@@ -217,10 +210,7 @@ export function AiChatPanel(props: AiChatPanelProps) {
       {/* No API Key Warning */}
       <Show when={!ai.state.apiKey}>
         <div class="p-3 bg-yellow-900/20 border-b border-yellow-700/50 text-yellow-300 text-sm">
-          <p>
-            ⚠️ No API key configured. Click the ⚙️ icon to add your OpenRouter
-            API key.
-          </p>
+          <p>⚠️ No API key configured. Click the ⚙️ icon to add your OpenRouter API key.</p>
         </div>
       </Show>
 
@@ -229,12 +219,9 @@ export function AiChatPanel(props: AiChatPanelProps) {
         <Show when={ai.state.messages.length === 0}>
           <div class="text-center py-8">
             <div class="text-4xl mb-2">🤖</div>
-            <h3 class="text-lg font-medium text-text-primary mb-1">
-              AI Assistant
-            </h3>
+            <h3 class="text-lg font-medium text-text-primary mb-1">AI Assistant</h3>
             <p class="text-sm text-text-tertiary max-w-xs mx-auto">
-              Ask me to explain code, fix errors, generate snippets, or help
-              with any coding task.
+              Ask me to explain code, fix errors, generate snippets, or help with any coding task.
             </p>
             <Show when={props.selectedCode}>
               <p class="text-xs text-accent mt-2">
@@ -246,9 +233,7 @@ export function AiChatPanel(props: AiChatPanelProps) {
 
         <For each={ai.state.messages}>
           {(message) => (
-            <div
-              class={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}
-            >
+            <div class={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}>
               <div
                 class={`max-w-[85%] rounded-lg px-3 py-2 ${
                   message.role === "user"
@@ -283,8 +268,7 @@ export function AiChatPanel(props: AiChatPanelProps) {
       <div class="p-3 border-t border-border">
         <Show when={props.selectedCode}>
           <div class="mb-2 px-2 py-1 bg-accent/10 border border-accent/30 rounded text-xs text-accent">
-            📎 Code attached ({props.selectedCode?.split("\n").length ?? 0}{" "}
-            lines)
+            📎 Code attached ({props.selectedCode?.split("\n").length ?? 0} lines)
           </div>
         </Show>
 

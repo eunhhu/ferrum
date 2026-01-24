@@ -1,6 +1,6 @@
 import { createSignal } from "solid-js";
 import { createStore } from "solid-js/store";
-import type { EditorTab, EditorPosition } from "../types";
+import type { EditorPosition, EditorTab } from "../types";
 
 const [tabs, setTabs] = createStore<EditorTab[]>([]);
 const [activeTabId, setActiveTabId] = createSignal<string | null>(null);
@@ -81,23 +81,11 @@ export const editorStore = {
   },
 
   updateContent: (tabId: string, content: string) => {
-    setTabs(
-      (t) => t.id === tabId,
-      "content",
-      content
-    );
-    setTabs(
-      (t) => t.id === tabId,
-      "isDirty",
-      true
-    );
+    setTabs((t) => t.id === tabId, "content", content);
+    setTabs((t) => t.id === tabId, "isDirty", true);
   },
 
   markSaved: (tabId: string) => {
-    setTabs(
-      (t) => t.id === tabId,
-      "isDirty",
-      false
-    );
+    setTabs((t) => t.id === tabId, "isDirty", false);
   },
 };

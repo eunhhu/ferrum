@@ -4,16 +4,10 @@
  * VSCode-style settings UI with categories and search.
  */
 
-import {
-  createSignal,
-  createEffect,
-  createMemo,
-  For,
-  Show,
-} from "solid-js";
+import { createEffect, createMemo, createSignal, For, Show } from "solid-js";
 import { createStore } from "solid-js/store";
 import * as ipc from "../../ipc/commands";
-import type { Settings, EditorSettings, TerminalSettings, UISettings } from "../../ipc/types";
+import type { EditorSettings, Settings, TerminalSettings, UISettings } from "../../ipc/types";
 
 interface SettingItem {
   key: string;
@@ -336,7 +330,7 @@ export function SettingsPanel() {
             min={item.min}
             max={item.max}
             onInput={(e) => {
-              const num = parseFloat(e.currentTarget.value);
+              const num = Number.parseFloat(e.currentTarget.value);
               if (!isNaN(num)) {
                 updateValue(item.key, num);
               }
@@ -351,9 +345,7 @@ export function SettingsPanel() {
             value={(value as string) || ""}
             onChange={(e) => updateValue(item.key, e.currentTarget.value)}
           >
-            <For each={item.options}>
-              {(option) => <option value={option}>{option}</option>}
-            </For>
+            <For each={item.options}>{(option) => <option value={option}>{option}</option>}</For>
           </select>
         );
 
@@ -384,7 +376,8 @@ export function SettingsPanel() {
             class="w-full px-3 py-1.5 text-left text-sm"
             classList={{
               "text-text-primary bg-accent/20": selectedCategory() === null,
-              "text-text-secondary hover:text-text-primary hover:bg-bg-hover": selectedCategory() !== null,
+              "text-text-secondary hover:text-text-primary hover:bg-bg-hover":
+                selectedCategory() !== null,
             }}
             onClick={() => setSelectedCategory(null)}
           >
@@ -396,7 +389,8 @@ export function SettingsPanel() {
                 class="w-full px-3 py-1.5 text-left text-sm"
                 classList={{
                   "text-text-primary bg-accent/20": selectedCategory() === category,
-                  "text-text-secondary hover:text-text-primary hover:bg-bg-hover": selectedCategory() !== category,
+                  "text-text-secondary hover:text-text-primary hover:bg-bg-hover":
+                    selectedCategory() !== category,
                 }}
                 onClick={() => setSelectedCategory(category)}
               >
@@ -454,16 +448,10 @@ export function SettingsPanel() {
                                 </span>
                               </Show>
                             </div>
-                            <p class="text-xs text-text-tertiary mt-0.5">
-                              {item.description}
-                            </p>
-                            <code class="text-xs text-text-tertiary mt-1 block">
-                              {item.key}
-                            </code>
+                            <p class="text-xs text-text-tertiary mt-0.5">{item.description}</p>
+                            <code class="text-xs text-text-tertiary mt-1 block">{item.key}</code>
                           </div>
-                          <div class="shrink-0">
-                            {renderSettingControl(item)}
-                          </div>
+                          <div class="shrink-0">{renderSettingControl(item)}</div>
                         </div>
                       </div>
                     )}

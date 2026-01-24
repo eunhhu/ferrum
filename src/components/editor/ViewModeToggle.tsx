@@ -6,7 +6,7 @@
  * Visual view: Node-based visual representation of code structure
  */
 
-import { createSignal, Show, type JSX } from "solid-js";
+import { createSignal, type JSX, Show } from "solid-js";
 
 export type ViewMode = "code" | "visual" | "split";
 
@@ -38,8 +38,7 @@ export function ViewModeToggle(props: ViewModeToggleProps) {
             "bg-accent text-white shadow-sm": props.currentMode === mode.id,
             "text-text-secondary hover:text-text-primary hover:bg-bg-hover":
               props.currentMode !== mode.id,
-            "opacity-50 cursor-not-allowed":
-              mode.id === "visual" && !props.visualAvailable,
+            "opacity-50 cursor-not-allowed": mode.id === "visual" && !props.visualAvailable,
           }}
           onClick={() => {
             if (mode.id === "visual" && !props.visualAvailable) return;
@@ -81,9 +80,7 @@ export function ViewModeContainer(props: ViewModeContainerProps) {
 
       {/* Visual View */}
       <Show when={props.mode === "visual" || props.mode === "split"}>
-        <div class="visual-view flex-1 overflow-hidden bg-bg-tertiary">
-          {props.visualView()}
-        </div>
+        <div class="visual-view flex-1 overflow-hidden bg-bg-tertiary">{props.visualView()}</div>
       </Show>
     </div>
   );

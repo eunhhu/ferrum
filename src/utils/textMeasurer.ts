@@ -8,8 +8,7 @@
 export class TextMeasurer {
   private canvas: HTMLCanvasElement;
   private ctx: CanvasRenderingContext2D;
-  private font: string =
-    "13px 'Fira Code', 'JetBrains Mono', Menlo, Monaco, 'Courier New', monospace";
+  private font = "13px 'Fira Code', 'JetBrains Mono', Menlo, Monaco, 'Courier New', monospace";
 
   constructor() {
     this.canvas = document.createElement("canvas");
@@ -50,9 +49,8 @@ export class TextMeasurer {
         const nextDist = width - clientX;
         if (prevDist < nextDist && i > 0) {
           return i - 1;
-        } else {
-          return i;
         }
+        return i;
       }
       lastWidth = width;
     }

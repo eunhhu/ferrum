@@ -2,14 +2,14 @@
  * Tests for UI Store Logic
  */
 
-import { describe, it, expect } from "vitest";
+import { describe, expect, it } from "vitest";
 
 describe("UI Store Logic", () => {
   describe("Sidebar", () => {
     it("validates sidebar view types", () => {
       const validViews = ["explorer", "search", "git", "extensions"];
 
-      validViews.forEach(view => {
+      validViews.forEach((view) => {
         expect(typeof view).toBe("string");
         expect(view.length).toBeGreaterThan(0);
       });

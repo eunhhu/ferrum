@@ -40,8 +40,7 @@ export function EditorTabs() {
               class="group h-9 flex items-center gap-2 px-3 border-r border-border cursor-pointer min-w-0 max-w-[200px] transition-colors"
               classList={{
                 "bg-bg-primary text-text-active": activeTabId() === tab.id,
-                "bg-bg-tertiary text-text-secondary hover:bg-bg-hover":
-                  activeTabId() !== tab.id,
+                "bg-bg-tertiary text-text-secondary hover:bg-bg-hover": activeTabId() !== tab.id,
               }}
               onClick={() => setActiveTab(tab.id)}
               onMouseDown={(e) => {
@@ -80,18 +79,12 @@ export function EditorTabs() {
 
       {/* Tab Actions */}
       <div class="flex items-center h-9 px-1 border-l border-border bg-bg-secondary">
-        <button
-          class="p-1 hover:bg-bg-hover rounded transition-colors"
-          title="Split Editor Right"
-        >
+        <button class="p-1 hover:bg-bg-hover rounded transition-colors" title="Split Editor Right">
           <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
             <path d="M3 5v14h18V5H3zm8 12H5V7h6v10zm8 0h-6V7h6v10z" />
           </svg>
         </button>
-        <button
-          class="p-1 hover:bg-bg-hover rounded transition-colors"
-          title="More Actions"
-        >
+        <button class="p-1 hover:bg-bg-hover rounded transition-colors" title="More Actions">
           <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
             <path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z" />
           </svg>

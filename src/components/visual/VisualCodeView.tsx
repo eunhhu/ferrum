@@ -5,8 +5,8 @@
  * Shows functions, classes, and their relationships as connected nodes.
  */
 
-import { createSignal, createEffect, For, Show, onMount, onCleanup } from "solid-js";
-import { lspDocumentSymbols, type LspSymbolInfo } from "../../ipc/commands";
+import { createEffect, createSignal, For, onCleanup, onMount, Show } from "solid-js";
+import { type LspSymbolInfo, lspDocumentSymbols } from "../../ipc/commands";
 
 interface VisualNode {
   id: string;
@@ -125,14 +125,11 @@ export function VisualCodeView(props: VisualCodeViewProps) {
         connections.push(...childResult.connections);
 
         // Update node's children list
-        node.children = childResult.nodes
-          .filter((n) => n.parent === nodeId)
-          .map((n) => n.id);
+        node.children = childResult.nodes.filter((n) => n.parent === nodeId).map((n) => n.id);
 
         // Adjust Y based on children height
         const childrenHeight =
-          childResult.nodes.filter((n) => n.parent === nodeId).length *
-          (nodeHeight + verticalGap);
+          childResult.nodes.filter((n) => n.parent === nodeId).length * (nodeHeight + verticalGap);
         currentY += Math.max(nodeHeight + verticalGap, childrenHeight);
       } else {
         currentY += nodeHeight + verticalGap;
@@ -243,7 +240,7 @@ export function VisualCodeView(props: VisualCodeViewProps) {
       const fromNode = nodes().find((n) => n.id === conn.from);
       const toNode = nodes().find((n) => n.id === conn.to);
 
-      if (!fromNode || !toNode) return null;
+      if (!(fromNode && toNode)) return null;
 
       const x1 = fromNode.x + fromNode.width;
       const y1 = fromNode.y + fromNode.height / 2;
@@ -352,9 +349,7 @@ export function VisualCodeView(props: VisualCodeViewProps) {
               <div class="flex items-center gap-2 px-3 py-2 h-full">
                 <span class="text-lg">{getNodeIcon(node.type)}</span>
                 <div class="flex-1 min-w-0">
-                  <div class="text-sm font-medium text-text-primary truncate">
-                    {node.name}
-                  </div>
+                  <div class="text-sm font-medium text-text-primary truncate">{node.name}</div>
                   <div class="text-xs text-text-tertiary">
                     Lines {node.startLine + 1}-{node.endLine + 1}
                   </div>

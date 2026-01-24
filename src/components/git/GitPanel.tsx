@@ -4,17 +4,10 @@
  * Source control panel with staging, committing, and branch management.
  */
 
-import {
-  createSignal,
-  createEffect,
-  createMemo,
-  For,
-  Show,
-  batch,
-} from "solid-js";
+import { batch, createEffect, createMemo, createSignal, For, Show } from "solid-js";
 import { createStore } from "solid-js/store";
+import type { GitCommitInfo, GitFileChange } from "../../ipc/commands";
 import * as ipc from "../../ipc/commands";
-import type { GitFileChange, GitCommitInfo } from "../../ipc/commands";
 
 interface GitPanelProps {
   repoPath: string;
@@ -196,9 +189,7 @@ export function GitPanel(props: GitPanelProps) {
         <div class="flex items-center gap-2">
           <span class="text-text-primary font-medium">Source Control</span>
           <Show when={branch()}>
-            <span class="text-xs text-accent bg-accent/20 px-2 py-0.5 rounded">
-              {branch()}
-            </span>
+            <span class="text-xs text-accent bg-accent/20 px-2 py-0.5 rounded">{branch()}</span>
           </Show>
         </div>
 
@@ -226,9 +217,7 @@ export function GitPanel(props: GitPanelProps) {
         >
           Changes
           <Show when={changes.length > 0}>
-            <span class="ml-1 text-xs bg-bg-tertiary px-1.5 rounded">
-              {changes.length}
-            </span>
+            <span class="ml-1 text-xs bg-bg-tertiary px-1.5 rounded">{changes.length}</span>
           </Show>
         </button>
         <button
@@ -247,10 +236,7 @@ export function GitPanel(props: GitPanelProps) {
       <Show when={error()}>
         <div class="px-3 py-2 bg-red-900/50 text-red-300 text-sm">
           {error()}
-          <button
-            class="ml-2 underline"
-            onClick={() => setError(null)}
-          >
+          <button class="ml-2 underline" onClick={() => setError(null)}>
             Dismiss
           </button>
         </div>
@@ -276,9 +262,7 @@ export function GitPanel(props: GitPanelProps) {
               onInput={(e) => setCommitMessage(e.currentTarget.value)}
             />
             <div class="flex items-center justify-between mt-2">
-              <span class="text-xs text-text-tertiary">
-                {stagedFiles().length} staged
-              </span>
+              <span class="text-xs text-text-tertiary">{stagedFiles().length} staged</span>
               <button
                 class="px-3 py-1 bg-accent text-white text-sm rounded hover:bg-accent/80 disabled:opacity-50"
                 disabled={isCommitting() || stagedFiles().length === 0 || !commitMessage().trim()}
@@ -296,9 +280,7 @@ export function GitPanel(props: GitPanelProps) {
                 <span class="text-xs text-text-secondary font-medium uppercase">
                   Staged Changes
                 </span>
-                <span class="text-xs text-text-tertiary">
-                  {stagedFiles().length}
-                </span>
+                <span class="text-xs text-text-tertiary">{stagedFiles().length}</span>
               </div>
               <For each={stagedFiles()}>
                 {(file) => {
@@ -314,9 +296,7 @@ export function GitPanel(props: GitPanelProps) {
                       >
                         {getFileName(file.path)}
                       </span>
-                      <span class="text-xs text-text-tertiary truncate max-w-32">
-                        {file.path}
-                      </span>
+                      <span class="text-xs text-text-tertiary truncate max-w-32">{file.path}</span>
                       <button
                         class="opacity-0 group-hover:opacity-100 w-5 h-5 flex items-center justify-center text-text-tertiary hover:text-text-primary"
                         onClick={() => unstageFile(file.path)}
@@ -335,17 +315,10 @@ export function GitPanel(props: GitPanelProps) {
           <Show when={unstagedFiles().length > 0}>
             <div>
               <div class="flex items-center justify-between px-3 py-1.5 bg-bg-secondary">
-                <span class="text-xs text-text-secondary font-medium uppercase">
-                  Changes
-                </span>
+                <span class="text-xs text-text-secondary font-medium uppercase">Changes</span>
                 <div class="flex items-center gap-2">
-                  <span class="text-xs text-text-tertiary">
-                    {unstagedFiles().length}
-                  </span>
-                  <button
-                    class="text-xs text-accent hover:underline"
-                    onClick={stageAll}
-                  >
+                  <span class="text-xs text-text-tertiary">{unstagedFiles().length}</span>
+                  <button class="text-xs text-accent hover:underline" onClick={stageAll}>
                     Stage All
                   </button>
                 </div>
@@ -364,9 +337,7 @@ export function GitPanel(props: GitPanelProps) {
                       >
                         {getFileName(file.path)}
                       </span>
-                      <span class="text-xs text-text-tertiary truncate max-w-32">
-                        {file.path}
-                      </span>
+                      <span class="text-xs text-text-tertiary truncate max-w-32">{file.path}</span>
                       <div class="opacity-0 group-hover:opacity-100 flex items-center gap-1">
                         <button
                           class="w-5 h-5 flex items-center justify-center text-text-tertiary hover:text-text-primary"
@@ -413,9 +384,7 @@ export function GitPanel(props: GitPanelProps) {
                     {commit.short_id}
                   </span>
                   <div class="flex-1 min-w-0">
-                    <div class="text-sm text-text-primary truncate">
-                      {commit.message}
-                    </div>
+                    <div class="text-sm text-text-primary truncate">{commit.message}</div>
                     <div class="text-xs text-text-tertiary mt-0.5">
                       {commit.author} • {formatTime(commit.time)}
                     </div>

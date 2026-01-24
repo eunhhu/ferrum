@@ -8,16 +8,16 @@
  * - Peek View (inline definition preview)
  */
 
-import { createSignal, createEffect, onCleanup, Show } from "solid-js";
-import { Editor } from "./Editor";
-import { HoverTooltip } from "./HoverTooltip";
-import { Autocomplete } from "./Autocomplete";
-import { ContextActionPalette } from "./ContextActionPalette";
-import { PeekView } from "./PeekView";
-import { textMeasurer } from "../../utils/textMeasurer";
+import { createEffect, createSignal, onCleanup, Show } from "solid-js";
 import * as ipc from "../../ipc/commands";
 import { isTauriEnvironment } from "../../ipc/tauri-check";
-import { EDITOR_CONFIG, LEFT_OFFSET, type EditorProps } from "./types";
+import { textMeasurer } from "../../utils/textMeasurer";
+import { Autocomplete } from "./Autocomplete";
+import { ContextActionPalette } from "./ContextActionPalette";
+import { Editor } from "./Editor";
+import { HoverTooltip } from "./HoverTooltip";
+import { PeekView } from "./PeekView";
+import { EDITOR_CONFIG, type EditorProps, LEFT_OFFSET } from "./types";
 
 const { LINE_HEIGHT } = EDITOR_CONFIG;
 
@@ -42,9 +42,7 @@ export function EditorWithFeatures(props: EditorWithFeaturesProps) {
 
   // Autocomplete state
   const [autocompleteVisible, setAutocompleteVisible] = createSignal(false);
-  const [autocompleteItems, setAutocompleteItems] = createSignal<
-    ipc.LspCompletionItem[]
-  >([]);
+  const [autocompleteItems, setAutocompleteItems] = createSignal<ipc.LspCompletionItem[]>([]);
   const [autocompletePosition, setAutocompletePosition] = createSignal({
     x: 0,
     y: 0,
@@ -59,9 +57,7 @@ export function EditorWithFeatures(props: EditorWithFeaturesProps) {
 
   // Peek view state
   const [peekVisible, setPeekVisible] = createSignal(false);
-  const [peekLocation, setPeekLocation] = createSignal<ipc.LspLocation | null>(
-    null
-  );
+  const [peekLocation, setPeekLocation] = createSignal<ipc.LspLocation | null>(null);
   const [peekPosition, setPeekPosition] = createSignal({ x: 100, y: 100 });
 
   // Content for selection tracking
@@ -107,11 +103,7 @@ export function EditorWithFeatures(props: EditorWithFeaturesProps) {
     const charBeforeCursor = currentLine[cursorColumn() - 1] || "";
 
     // Trigger autocomplete on . or typing
-    if (
-      charBeforeCursor === "." ||
-      charBeforeCursor === "(" ||
-      /[a-zA-Z]/.test(charBeforeCursor)
-    ) {
+    if (charBeforeCursor === "." || charBeforeCursor === "(" || /[a-zA-Z]/.test(charBeforeCursor)) {
       scheduleAutocomplete();
     } else {
       setAutocompleteVisible(false);
@@ -119,12 +111,7 @@ export function EditorWithFeatures(props: EditorWithFeaturesProps) {
   }
 
   // Schedule hover info fetch
-  function scheduleHoverFetch(
-    line: number,
-    column: number,
-    x: number,
-    y: number
-  ) {
+  function scheduleHoverFetch(line: number, column: number, x: number, y: number) {
     clearTimeout(hoverDebounceTimer);
     hoverDebounceTimer = setTimeout(async () => {
       await fetchHoverInfo(line, column, x, y);
@@ -132,13 +119,8 @@ export function EditorWithFeatures(props: EditorWithFeaturesProps) {
   }
 
   // Fetch hover info from LSP
-  async function fetchHoverInfo(
-    line: number,
-    column: number,
-    x: number,
-    y: number
-  ) {
-    if (!props.filePath || !isTauriEnvironment()) return;
+  async function fetchHoverInfo(line: number, column: number, x: number, y: number) {
+    if (!(props.filePath && isTauriEnvironment())) return;
 
     try {
       const result = await ipc.lspHover(props.filePath, line, column);
@@ -165,14 +147,10 @@ export function EditorWithFeatures(props: EditorWithFeaturesProps) {
 
   // Fetch autocomplete from LSP
   async function fetchAutocomplete() {
-    if (!props.filePath || !isTauriEnvironment()) return;
+    if (!(props.filePath && isTauriEnvironment())) return;
 
     try {
-      const items = await ipc.lspCompletion(
-        props.filePath,
-        cursorLine(),
-        cursorColumn()
-      );
+      const items = await ipc.lspCompletion(props.filePath, cursorLine(), cursorColumn());
 
       if (items && items.length > 0) {
         setAutocompleteItems(items);
@@ -180,12 +158,8 @@ export function EditorWithFeatures(props: EditorWithFeaturesProps) {
         // Calculate position
         const lines = content().split("\n");
         const currentLine = lines[cursorLine()] || "";
-        textMeasurer.setFont(
-          `${EDITOR_CONFIG.FONT_SIZE}px ${EDITOR_CONFIG.FONT_FAMILY}`
-        );
-        const textWidth = textMeasurer.measure(
-          currentLine.substring(0, cursorColumn())
-        );
+        textMeasurer.setFont(`${EDITOR_CONFIG.FONT_SIZE}px ${EDITOR_CONFIG.FONT_FAMILY}`);
+        const textWidth = textMeasurer.measure(currentLine.substring(0, cursorColumn()));
 
         setAutocompletePosition({
           x: LEFT_OFFSET + textWidth - scrollLeft(),
@@ -212,10 +186,7 @@ export function EditorWithFeatures(props: EditorWithFeaturesProps) {
 
     // Find the word start position
     let wordStart = cursorColumn();
-    while (
-      wordStart > 0 &&
-      /[a-zA-Z0-9_$]/.test(currentLine[wordStart - 1] || "")
-    ) {
+    while (wordStart > 0 && /[a-zA-Z0-9_$]/.test(currentLine[wordStart - 1] || "")) {
       wordStart--;
     }
 
@@ -247,23 +218,13 @@ export function EditorWithFeatures(props: EditorWithFeaturesProps) {
     }
 
     const lineContent = lines[line] || "";
-    textMeasurer.setFont(
-      `${EDITOR_CONFIG.FONT_SIZE}px ${EDITOR_CONFIG.FONT_FAMILY}`
-    );
-    const column = textMeasurer.measureCursorIndex(
-      lineContent,
-      x - LEFT_OFFSET + scrollLeft()
-    );
+    textMeasurer.setFont(`${EDITOR_CONFIG.FONT_SIZE}px ${EDITOR_CONFIG.FONT_FAMILY}`);
+    const column = textMeasurer.measureCursorIndex(lineContent, x - LEFT_OFFSET + scrollLeft());
 
     // Only fetch hover if on a word character
     const char = lineContent[column] || "";
     if (/[a-zA-Z0-9_$]/.test(char)) {
-      scheduleHoverFetch(
-        line,
-        column,
-        e.clientX - rect.left,
-        e.clientY - rect.top
-      );
+      scheduleHoverFetch(line, column, e.clientX - rect.left, e.clientY - rect.top);
     } else {
       clearTimeout(hoverDebounceTimer);
       setHoverVisible(false);
@@ -376,11 +337,7 @@ export function EditorWithFeatures(props: EditorWithFeaturesProps) {
       />
 
       {/* Hover Tooltip */}
-      <HoverTooltip
-        visible={hoverVisible()}
-        content={hoverContent()}
-        position={hoverPosition()}
-      />
+      <HoverTooltip visible={hoverVisible()} content={hoverContent()} position={hoverPosition()} />
 
       {/* Autocomplete Dropdown */}
       <Show when={autocompleteVisible() && autocompleteItems().length > 0}>

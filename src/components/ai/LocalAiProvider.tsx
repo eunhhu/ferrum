@@ -9,7 +9,7 @@
  * - Model management (list, pull, delete)
  */
 
-import { createContext, useContext, ParentComponent } from "solid-js";
+import { createContext, type ParentComponent, useContext } from "solid-js";
 import { createStore } from "solid-js/store";
 
 // Local model definitions
@@ -95,10 +95,7 @@ interface LocalAiContextType {
   checkConnection: () => Promise<boolean>;
   listModels: () => Promise<LocalModel[]>;
   selectModel: (name: string) => void;
-  pullModel: (
-    name: string,
-    onProgress?: (progress: number) => void
-  ) => Promise<void>;
+  pullModel: (name: string, onProgress?: (progress: number) => void) => Promise<void>;
   deleteModel: (name: string) => Promise<void>;
   generate: (prompt: string, systemPrompt?: string) => Promise<string>;
   generateStream: (
@@ -118,8 +115,7 @@ const LocalAiContext = createContext<LocalAiContextType>();
 
 export const LocalAiProvider: ParentComponent = (props) => {
   const [state, setState] = createStore<LocalAiState>({
-    ollamaUrl:
-      localStorage.getItem("ferrum_ollama_url") || "http://localhost:11434",
+    ollamaUrl: localStorage.getItem("ferrum_ollama_url") || "http://localhost:11434",
     isConnected: false,
     isLoading: false,
     error: null,
@@ -169,10 +165,7 @@ export const LocalAiProvider: ParentComponent = (props) => {
       setState("isConnected", true);
       return models;
     } catch (e) {
-      setState(
-        "error",
-        e instanceof Error ? e.message : "Failed to list models"
-      );
+      setState("error", e instanceof Error ? e.message : "Failed to list models");
       return [];
     }
   };
@@ -224,9 +217,7 @@ export const LocalAiProvider: ParentComponent = (props) => {
               });
               onProgress?.(progress);
             } else if (data.status) {
-              setState("pullProgress", (prev) =>
-                prev ? { ...prev, status: data.status } : null
-              );
+              setState("pullProgress", (prev) => (prev ? { ...prev, status: data.status } : null));
             }
           } catch {
             // Ignore parse errors
@@ -256,10 +247,7 @@ export const LocalAiProvider: ParentComponent = (props) => {
     await listModels();
   };
 
-  const generate = async (
-    prompt: string,
-    systemPrompt?: string
-  ): Promise<string> => {
+  const generate = async (prompt: string, systemPrompt?: string): Promise<string> => {
     setState("isLoading", true);
     setState("error", null);
 
@@ -350,10 +338,7 @@ export const LocalAiProvider: ParentComponent = (props) => {
     }
   };
 
-  const chat = async (
-    messages: LocalAiMessage[],
-    systemPrompt?: string
-  ): Promise<string> => {
+  const chat = async (messages: LocalAiMessage[], systemPrompt?: string): Promise<string> => {
     setState("isLoading", true);
     setState("error", null);
 
@@ -464,11 +449,7 @@ export const LocalAiProvider: ParentComponent = (props) => {
     chatStream,
   };
 
-  return (
-    <LocalAiContext.Provider value={contextValue}>
-      {props.children}
-    </LocalAiContext.Provider>
-  );
+  return <LocalAiContext.Provider value={contextValue}>{props.children}</LocalAiContext.Provider>;
 };
 
 export const useLocalAi = () => {

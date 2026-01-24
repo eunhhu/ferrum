@@ -11,32 +11,23 @@
  */
 
 import {
-  createSignal,
+  batch,
   createEffect,
   createMemo,
+  createSignal,
   For,
-  Show,
-  onMount,
-  onCleanup,
-  batch,
   type JSX,
+  onCleanup,
+  onMount,
+  Show,
 } from "solid-js";
 import { createStore } from "solid-js/store";
 import * as ipc from "../../ipc/commands";
 import { isTauriEnvironment } from "../../ipc/tauri-check";
 import { highlightCode } from "../../utils/clientHighlighter";
+import { deleteBackwards, deleteRange, insertText } from "../../utils/editorHelpers";
 import { textMeasurer } from "../../utils/textMeasurer";
-import {
-  insertText,
-  deleteBackwards,
-  deleteRange,
-} from "../../utils/editorHelpers";
-import {
-  EDITOR_CONFIG,
-  LEFT_OFFSET,
-  type EditorProps,
-  type EditorState,
-} from "./types";
+import { EDITOR_CONFIG, type EditorProps, type EditorState, LEFT_OFFSET } from "./types";
 
 const { LINE_HEIGHT, VISIBLE_LINE_BUFFER, GUTTER_WIDTH } = EDITOR_CONFIG;
 
@@ -67,9 +58,7 @@ export function Editor(props: EditorProps) {
   const visibleRange = createMemo(() => {
     const startLine = Math.floor(state.scrollTop / LINE_HEIGHT);
     const containerHeight = containerRef?.clientHeight ?? 600;
-    const endLine = Math.ceil(
-      (state.scrollTop + containerHeight) / LINE_HEIGHT
-    );
+    const endLine = Math.ceil((state.scrollTop + containerHeight) / LINE_HEIGHT);
 
     return {
       start: Math.max(0, startLine - VISIBLE_LINE_BUFFER),
@@ -175,12 +164,7 @@ export function Editor(props: EditorProps) {
         setState("selectionAnchor", null); // Clear selection
       }
 
-      const { newLines, endLine, endColumn } = insertText(
-        currentLines,
-        text,
-        startLine,
-        startCol
-      );
+      const { newLines, endLine, endColumn } = insertText(currentLines, text, startLine, startCol);
       setState("lines", newLines);
       setState("cursor", { line: endLine, column: endColumn, offset: 0 });
       props.onContentChange?.(newLines.join("\n"));
@@ -211,11 +195,7 @@ export function Editor(props: EditorProps) {
         setState("selectionAnchor", null);
       } else {
         // Normal backspace
-        const result = deleteBackwards(
-          state.lines,
-          state.cursor.line,
-          state.cursor.column
-        );
+        const result = deleteBackwards(state.lines, state.cursor.line, state.cursor.column);
         newLines = result.newLines;
         endLine = result.endLine;
         endColumn = result.endColumn;
@@ -253,16 +233,7 @@ export function Editor(props: EditorProps) {
     }
 
     // Arrow key navigation
-    if (
-      [
-        "ArrowUp",
-        "ArrowDown",
-        "ArrowLeft",
-        "ArrowRight",
-        "Home",
-        "End",
-      ].includes(e.key)
-    ) {
+    if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "Home", "End"].includes(e.key)) {
       handleNavigation(e.key, e.shiftKey);
       // e.preventDefault(); // Prevent scrolling if needed, but let's keep default for now
     }
@@ -340,10 +311,7 @@ export function Editor(props: EditorProps) {
     let end = state.cursor;
 
     // Sort start/end
-    if (
-      start.line > end.line ||
-      (start.line === end.line && start.column > end.column)
-    ) {
+    if (start.line > end.line || (start.line === end.line && start.column > end.column)) {
       [start, end] = [end, start];
     }
 
@@ -368,10 +336,7 @@ export function Editor(props: EditorProps) {
       let width = textMeasurer.measure(lineContent.substring(startCol, endCol));
 
       // Add padding for newline selection if not at EOF
-      if (
-        line !== end.line ||
-        (endCol === lineContent.length && line < state.lines.length - 1)
-      ) {
+      if (line !== end.line || (endCol === lineContent.length && line < state.lines.length - 1)) {
         width += 7.85;
       }
 
@@ -431,7 +396,7 @@ export function Editor(props: EditorProps) {
 
   // Ensure cursor is visible (auto-scroll when cursor moves out of view)
   function ensureCursorVisible() {
-    if (!editorRef || !containerRef) return;
+    if (!(editorRef && containerRef)) return;
 
     const cursorTop = state.cursor.line * LINE_HEIGHT;
     const cursorBottom = cursorTop + LINE_HEIGHT;
@@ -465,10 +430,7 @@ export function Editor(props: EditorProps) {
 
     // Calculate line index
     const lineIndex = Math.floor(y / LINE_HEIGHT);
-    const safeLineIndex = Math.max(
-      0,
-      Math.min(lineIndex, state.lines.length - 1)
-    );
+    const safeLineIndex = Math.max(0, Math.min(lineIndex, state.lines.length - 1));
 
     // Calculate column index by measuring text
     const lineContent = state.lines[safeLineIndex] ?? "";
@@ -565,23 +527,17 @@ export function Editor(props: EditorProps) {
       return (
         <>
           <span>{before}</span>
-          <span class="underline decoration-blue-500">
-            {state.compositionText}
-          </span>
+          <span class="underline decoration-blue-500">{state.compositionText}</span>
           <span>{after}</span>
         </>
       );
     }
 
     // Find highlights for this line
-    const lineStart = state.lines
-      .slice(0, lineNumber)
-      .reduce((sum, l) => sum + l.length + 1, 0);
+    const lineStart = state.lines.slice(0, lineNumber).reduce((sum, l) => sum + l.length + 1, 0);
     const lineEnd = lineStart + content.length;
 
-    const lineHighlights = state.highlights.filter(
-      (h) => h.start < lineEnd && h.end > lineStart
-    );
+    const lineHighlights = state.highlights.filter((h) => h.start < lineEnd && h.end > lineStart);
 
     if (lineHighlights.length === 0) {
       return <span>{content || " "}</span>;
@@ -626,16 +582,9 @@ export function Editor(props: EditorProps) {
       onMouseDown={handleMouseDown}
     >
       {/* Scrollable viewport */}
-      <div
-        ref={editorRef}
-        class="absolute inset-0 overflow-auto"
-        onScroll={handleScroll}
-      >
+      <div ref={editorRef} class="absolute inset-0 overflow-auto" onScroll={handleScroll}>
         {/* Content container with total height */}
-        <div
-          class="relative"
-          style={{ height: `${contentHeight()}px`, "min-width": "100%" }}
-        >
+        <div class="relative" style={{ height: `${contentHeight()}px`, "min-width": "100%" }}>
           {/* Selection Layer - Behind text */}
           <For each={selectionRects()}>
             {(rect) => (

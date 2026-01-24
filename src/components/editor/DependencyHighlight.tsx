@@ -5,7 +5,7 @@
  * between symbols in the current file using tree-sitter based analysis.
  */
 
-import { createSignal, createEffect, For, Show, onCleanup } from "solid-js";
+import { createEffect, createSignal, For, onCleanup, Show } from "solid-js";
 import { analyzeDependencies, type DependencyLink } from "../../ipc/commands";
 import { isTauriEnvironment } from "../../ipc/tauri-check";
 
@@ -19,10 +19,7 @@ interface DependencyHighlightProps {
 }
 
 // Cache for dependency analysis results
-const dependencyCache = new Map<
-  string,
-  { deps: DependencyLink[]; timestamp: number }
->();
+const dependencyCache = new Map<string, { deps: DependencyLink[]; timestamp: number }>();
 const CACHE_TTL = 10000; // 10 seconds
 
 export function DependencyHighlight(props: DependencyHighlightProps) {
@@ -40,7 +37,7 @@ export function DependencyHighlight(props: DependencyHighlightProps) {
 
   // Load dependencies when enabled and buffer changes
   createEffect(() => {
-    if (!props.enabled || !props.bufferId) {
+    if (!(props.enabled && props.bufferId)) {
       setDependencies([]);
       return;
     }
@@ -78,8 +75,7 @@ export function DependencyHighlight(props: DependencyHighlightProps) {
       // Update cache
       dependencyCache.set(bufferId, { deps, timestamp: Date.now() });
     } catch (e) {
-      const errorMsg =
-        e instanceof Error ? e.message : "Failed to analyze dependencies";
+      const errorMsg = e instanceof Error ? e.message : "Failed to analyze dependencies";
       console.error("Failed to analyze dependencies:", e);
       setError(errorMsg);
       setDependencies([]);
@@ -124,10 +120,8 @@ export function DependencyHighlight(props: DependencyHighlightProps) {
 
   const isLinkVisible = (link: DependencyLink): boolean => {
     return (
-      (link.from_line >= props.visibleStartLine &&
-        link.from_line <= props.visibleEndLine) ||
-      (link.to_line >= props.visibleStartLine &&
-        link.to_line <= props.visibleEndLine)
+      (link.from_line >= props.visibleStartLine && link.from_line <= props.visibleEndLine) ||
+      (link.to_line >= props.visibleStartLine && link.to_line <= props.visibleEndLine)
     );
   };
 
@@ -147,10 +141,7 @@ export function DependencyHighlight(props: DependencyHighlightProps) {
 
     for (const dep of deps) {
       // Add source symbol
-      if (
-        dep.from_line >= props.visibleStartLine &&
-        dep.from_line <= props.visibleEndLine
-      ) {
+      if (dep.from_line >= props.visibleStartLine && dep.from_line <= props.visibleEndLine) {
         const key = `${dep.from_symbol}-${dep.from_line}`;
         if (!symbolMap.has(key)) {
           symbolMap.set(key, {
@@ -161,10 +152,7 @@ export function DependencyHighlight(props: DependencyHighlightProps) {
         }
       }
       // Add target symbol
-      if (
-        dep.to_line >= props.visibleStartLine &&
-        dep.to_line <= props.visibleEndLine
-      ) {
+      if (dep.to_line >= props.visibleStartLine && dep.to_line <= props.visibleEndLine) {
         const key = `${dep.to_symbol}-${dep.to_line}`;
         if (!symbolMap.has(key)) {
           symbolMap.set(key, {
@@ -235,11 +223,9 @@ export function DependencyHighlight(props: DependencyHighlightProps) {
           <For each={dependencies().filter(isLinkVisible)}>
             {(link) => {
               const y1 =
-                (link.from_line - props.visibleStartLine) * props.lineHeight +
-                props.lineHeight / 2;
+                (link.from_line - props.visibleStartLine) * props.lineHeight + props.lineHeight / 2;
               const y2 =
-                (link.to_line - props.visibleStartLine) * props.lineHeight +
-                props.lineHeight / 2;
+                (link.to_line - props.visibleStartLine) * props.lineHeight + props.lineHeight / 2;
               const x1 = 40;
               const x2 = 40;
 
@@ -299,23 +285,18 @@ export function DependencyHighlight(props: DependencyHighlightProps) {
         <Show when={hoveredSymbol()}>
           {(symbolName) => {
             const relatedDeps = dependencies().filter(
-              (d) =>
-                d.from_symbol === symbolName() || d.to_symbol === symbolName()
+              (d) => d.from_symbol === symbolName() || d.to_symbol === symbolName()
             );
             if (relatedDeps.length === 0) return null;
 
             return (
               <div class="absolute left-12 top-2 z-50 bg-bg-secondary border border-border rounded-lg shadow-xl px-3 py-2 text-xs max-w-xs">
-                <div class="font-medium text-text-primary mb-1">
-                  {symbolName()}
-                </div>
+                <div class="font-medium text-text-primary mb-1">{symbolName()}</div>
                 <div class="text-text-tertiary space-y-0.5">
                   <For each={relatedDeps.slice(0, 5)}>
                     {(dep) => (
                       <div class="flex items-center gap-1.5">
-                        <span
-                          class={`w-1.5 h-1.5 rounded-full ${getLinkDotColor(dep.type)}`}
-                        />
+                        <span class={`w-1.5 h-1.5 rounded-full ${getLinkDotColor(dep.type)}`} />
                         <span>
                           {dep.from_symbol === symbolName()
                             ? `→ ${dep.to_symbol}`
@@ -326,9 +307,7 @@ export function DependencyHighlight(props: DependencyHighlightProps) {
                     )}
                   </For>
                   <Show when={relatedDeps.length > 5}>
-                    <div class="text-text-quaternary">
-                      +{relatedDeps.length - 5} more
-                    </div>
+                    <div class="text-text-quaternary">+{relatedDeps.length - 5} more</div>
                   </Show>
                 </div>
               </div>

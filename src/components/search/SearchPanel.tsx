@@ -4,13 +4,7 @@
  * Provides file search and text search functionality.
  */
 
-import {
-  createSignal,
-  createEffect,
-  For,
-  Show,
-  batch,
-} from "solid-js";
+import { batch, createEffect, createSignal, For, Show } from "solid-js";
 import { createStore } from "solid-js/store";
 import * as ipc from "../../ipc/commands";
 
@@ -226,9 +220,7 @@ export function SearchPanel(props: SearchPanelProps) {
             when={fileResults.length > 0}
             fallback={
               <Show when={query().trim()}>
-                <div class="p-4 text-center text-text-tertiary text-sm">
-                  No files found
-                </div>
+                <div class="p-4 text-center text-text-tertiary text-sm">No files found</div>
               </Show>
             }
           >
@@ -240,12 +232,8 @@ export function SearchPanel(props: SearchPanelProps) {
                 >
                   <span class="text-sm">📄</span>
                   <div class="flex-1 min-w-0">
-                    <div class="text-text-primary text-sm truncate">
-                      {getFileName(result.path)}
-                    </div>
-                    <div class="text-text-tertiary text-xs truncate">
-                      {result.path}
-                    </div>
+                    <div class="text-text-primary text-sm truncate">{getFileName(result.path)}</div>
+                    <div class="text-text-tertiary text-xs truncate">{result.path}</div>
                   </div>
                 </div>
               )}
@@ -259,9 +247,7 @@ export function SearchPanel(props: SearchPanelProps) {
             when={Object.keys(groupedTextResults()).length > 0}
             fallback={
               <Show when={query().trim()}>
-                <div class="p-4 text-center text-text-tertiary text-sm">
-                  No results found
-                </div>
+                <div class="p-4 text-center text-text-tertiary text-sm">No results found</div>
               </Show>
             }
           >
@@ -305,11 +291,7 @@ export function SearchPanel(props: SearchPanelProps) {
                             {result.line}
                           </span>
                           <div class="text-sm font-mono truncate flex-1">
-                            {highlightMatch(
-                              result.content,
-                              result.match_start,
-                              result.match_end
-                            )}
+                            {highlightMatch(result.content, result.match_start, result.match_end)}
                           </div>
                         </div>
                       )}

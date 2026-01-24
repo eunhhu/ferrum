@@ -13,13 +13,11 @@ export const EDITOR_CONFIG = {
   GUTTER_WIDTH: 50,
   CONTENT_PADDING: 10,
   HIGHLIGHT_DEBOUNCE_MS: 100,
-  FONT_FAMILY:
-    "'Fira Code', 'JetBrains Mono', Menlo, Monaco, 'Courier New', monospace",
+  FONT_FAMILY: "'Fira Code', 'JetBrains Mono', Menlo, Monaco, 'Courier New', monospace",
   FONT_SIZE: 13,
 } as const;
 
-export const LEFT_OFFSET =
-  EDITOR_CONFIG.GUTTER_WIDTH + EDITOR_CONFIG.CONTENT_PADDING;
+export const LEFT_OFFSET = EDITOR_CONFIG.GUTTER_WIDTH + EDITOR_CONFIG.CONTENT_PADDING;
 
 // Cursor position in the editor
 export interface Cursor {

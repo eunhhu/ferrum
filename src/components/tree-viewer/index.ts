@@ -1,2 +1,2 @@
-export { TreeViewer } from "./TreeViewer";
 export { StickyHeader } from "./StickyHeader";
+export { TreeViewer } from "./TreeViewer";

@@ -4,8 +4,8 @@
  * Watches directories for file system changes using Tauri backend.
  */
 
+import { listen, type UnlistenFn } from "@tauri-apps/api/event";
 import { createSignal, onCleanup } from "solid-js";
-import { listen, UnlistenFn } from "@tauri-apps/api/event";
 import * as ipc from "../ipc/commands";
 
 /** File system event types */
@@ -43,34 +43,33 @@ export function useFileWatcher(onEvent?: (event: FsEvent) => void) {
   async function setupListeners() {
     if (unlistenChange) return;
 
-    unlistenChange = await listen<FsEvent | { type: string; path: string; from?: string; to?: string }>(
-      "fs:change",
-      (event) => {
-        // Normalize event payload
-        let fsEvent: FsEvent;
-        const payload = event.payload;
+    unlistenChange = await listen<
+      FsEvent | { type: string; path: string; from?: string; to?: string }
+    >("fs:change", (event) => {
+      // Normalize event payload
+      let fsEvent: FsEvent;
+      const payload = event.payload;
 
-        if (payload.type === "Renamed" && "from" in payload && "to" in payload) {
-          fsEvent = {
-            type: "Renamed",
-            path: payload.from as string,
-            to: payload.to as string,
-          };
-        } else {
-          fsEvent = {
-            type: payload.type as FsEventType,
-            path: payload.path,
-          };
-        }
-
-        setState((prev) => ({
-          ...prev,
-          lastEvent: fsEvent,
-        }));
-
-        onEvent?.(fsEvent);
+      if (payload.type === "Renamed" && "from" in payload && "to" in payload) {
+        fsEvent = {
+          type: "Renamed",
+          path: payload.from as string,
+          to: payload.to as string,
+        };
+      } else {
+        fsEvent = {
+          type: payload.type as FsEventType,
+          path: payload.path,
+        };
       }
-    );
+
+      setState((prev) => ({
+        ...prev,
+        lastEvent: fsEvent,
+      }));
+
+      onEvent?.(fsEvent);
+    });
 
     unlistenStart = await listen<string>("fs:watch_started", (event) => {
       setState((prev) => {

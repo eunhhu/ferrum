@@ -5,7 +5,7 @@
  * Activated with Cmd+Shift+P (Mac) or Ctrl+Shift+P (Windows/Linux)
  */
 
-import { createSignal, createMemo, createEffect, For, Show } from "solid-js";
+import { createEffect, createMemo, createSignal, For, Show } from "solid-js";
 import type { Command } from "../../types";
 
 interface CommandPaletteProps {
@@ -57,7 +57,7 @@ export function CommandPalette(props: CommandPaletteProps) {
         e.preventDefault();
         setSelectedIndex((i) => Math.max(i - 1, 0));
         break;
-      case "Enter":
+      case "Enter": {
         e.preventDefault();
         const selected = commands[selectedIndex()];
         if (selected) {
@@ -65,6 +65,7 @@ export function CommandPalette(props: CommandPaletteProps) {
           props.onClose();
         }
         break;
+      }
       case "Escape":
         e.preventDefault();
         props.onClose();
@@ -82,10 +83,7 @@ export function CommandPalette(props: CommandPaletteProps) {
   return (
     <Show when={props.isOpen}>
       {/* Backdrop */}
-      <div
-        class="fixed inset-0 bg-black/50 z-50"
-        onClick={() => props.onClose()}
-      />
+      <div class="fixed inset-0 bg-black/50 z-50" onClick={() => props.onClose()} />
 
       {/* Palette */}
       <div class="fixed top-20 left-1/2 -translate-x-1/2 w-[600px] max-w-[90vw] z-50">
@@ -113,9 +111,7 @@ export function CommandPalette(props: CommandPaletteProps) {
             <Show
               when={filteredCommands().length > 0}
               fallback={
-                <div class="px-4 py-8 text-center text-text-tertiary">
-                  No commands found
-                </div>
+                <div class="px-4 py-8 text-center text-text-tertiary">No commands found</div>
               }
             >
               <For each={filteredCommands()}>
@@ -134,9 +130,7 @@ export function CommandPalette(props: CommandPaletteProps) {
                   >
                     <div class="flex items-center gap-3">
                       <Show when={command.category}>
-                        <span class="text-xs text-text-tertiary">
-                          {command.category}
-                        </span>
+                        <span class="text-xs text-text-tertiary">{command.category}</span>
                       </Show>
                       <span class="text-text-primary">{command.title}</span>
                     </div>

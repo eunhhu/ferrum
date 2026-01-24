@@ -9,8 +9,8 @@
  * - Connection status
  */
 
-import { createSignal, createEffect, For, Show, onMount } from "solid-js";
-import { useLocalAi, RECOMMENDED_MODELS } from "./LocalAiProvider";
+import { createEffect, createSignal, For, onMount, Show } from "solid-js";
+import { RECOMMENDED_MODELS, useLocalAi } from "./LocalAiProvider";
 
 interface LocalAiPanelProps {
   onInsertCode?: (code: string) => void;
@@ -20,9 +20,9 @@ interface LocalAiPanelProps {
 export function LocalAiPanel(props: LocalAiPanelProps) {
   const localAi = useLocalAi();
   const [input, setInput] = createSignal("");
-  const [messages, setMessages] = createSignal<
-    { role: "user" | "assistant"; content: string }[]
-  >([]);
+  const [messages, setMessages] = createSignal<{ role: "user" | "assistant"; content: string }[]>(
+    []
+  );
   const [streamingContent, setStreamingContent] = createSignal("");
   const [showSettings, setShowSettings] = createSignal(false);
   const [showModelManager, setShowModelManager] = createSignal(false);
@@ -58,10 +58,7 @@ export function LocalAiPanel(props: LocalAiPanelProps) {
     setStreamingContent("");
 
     try {
-      const allMessages = [
-        ...messages(),
-        { role: "user" as const, content: fullMessage },
-      ];
+      const allMessages = [...messages(), { role: "user" as const, content: fullMessage }];
 
       const response = await localAi.chatStream(
         allMessages,
@@ -71,10 +68,7 @@ export function LocalAiPanel(props: LocalAiPanelProps) {
         }
       );
 
-      setMessages((prev) => [
-        ...prev,
-        { role: "assistant", content: response },
-      ]);
+      setMessages((prev) => [...prev, { role: "assistant", content: response }]);
       setStreamingContent("");
     } catch (e) {
       console.error("Chat failed:", e);
@@ -176,9 +170,7 @@ export function LocalAiPanel(props: LocalAiPanelProps) {
                 </pre>
               </div>
             ) : (
-              <p class="text-text-secondary whitespace-pre-wrap">
-                {part.content}
-              </p>
+              <p class="text-text-secondary whitespace-pre-wrap">{part.content}</p>
             )
           }
         </For>
@@ -237,9 +229,7 @@ export function LocalAiPanel(props: LocalAiPanelProps) {
       <Show when={showSettings()}>
         <div class="p-3 border-b border-border bg-bg-secondary space-y-2">
           <div>
-            <label class="block text-xs text-text-tertiary mb-1">
-              Ollama URL
-            </label>
+            <label class="block text-xs text-text-tertiary mb-1">Ollama URL</label>
             <div class="flex gap-2">
               <input
                 type="text"
@@ -261,6 +251,7 @@ export function LocalAiPanel(props: LocalAiPanelProps) {
                 href="https://ollama.ai"
                 target="_blank"
                 class="text-green-400 hover:underline"
+                rel="noopener"
               >
                 ollama.ai
               </a>
@@ -272,15 +263,11 @@ export function LocalAiPanel(props: LocalAiPanelProps) {
       {/* Model Manager */}
       <Show when={showModelManager()}>
         <div class="p-3 border-b border-border bg-bg-secondary space-y-3 max-h-64 overflow-y-auto">
-          <div class="text-xs font-medium text-text-primary">
-            Installed Models
-          </div>
+          <div class="text-xs font-medium text-text-primary">Installed Models</div>
           <Show
             when={localAi.state.availableModels.length > 0}
             fallback={
-              <p class="text-xs text-text-tertiary">
-                No models installed. Pull a model below.
-              </p>
+              <p class="text-xs text-text-tertiary">No models installed. Pull a model below.</p>
             }
           >
             <div class="space-y-1">
@@ -289,9 +276,7 @@ export function LocalAiPanel(props: LocalAiPanelProps) {
                   <div class="flex items-center justify-between py-1 px-2 bg-bg-tertiary rounded">
                     <div>
                       <div class="text-sm text-text-primary">{model.name}</div>
-                      <div class="text-[10px] text-text-tertiary">
-                        {formatSize(model.size)}
-                      </div>
+                      <div class="text-[10px] text-text-tertiary">{formatSize(model.size)}</div>
                     </div>
                     <button
                       class="text-xs text-red-400 hover:text-red-300"
@@ -306,9 +291,7 @@ export function LocalAiPanel(props: LocalAiPanelProps) {
           </Show>
 
           <div class="pt-2 border-t border-border">
-            <div class="text-xs font-medium text-text-primary mb-2">
-              Recommended Models
-            </div>
+            <div class="text-xs font-medium text-text-primary mb-2">Recommended Models</div>
             <div class="space-y-1">
               <For each={RECOMMENDED_MODELS}>
                 {(model) => {
@@ -318,18 +301,14 @@ export function LocalAiPanel(props: LocalAiPanelProps) {
                   return (
                     <div class="flex items-center justify-between py-1 px-2 bg-bg-tertiary/50 rounded">
                       <div>
-                        <div class="text-sm text-text-primary">
-                          {model.displayName}
-                        </div>
+                        <div class="text-sm text-text-primary">{model.displayName}</div>
                         <div class="text-[10px] text-text-tertiary">
                           {model.size} • {model.description}
                         </div>
                       </div>
                       <Show
                         when={!isInstalled}
-                        fallback={
-                          <span class="text-xs text-green-400">Installed</span>
-                        }
+                        fallback={<span class="text-xs text-green-400">Installed</span>}
                       >
                         <button
                           class="text-xs text-green-400 hover:text-green-300"
@@ -348,9 +327,7 @@ export function LocalAiPanel(props: LocalAiPanelProps) {
 
           {/* Custom pull */}
           <div class="pt-2 border-t border-border">
-            <div class="text-xs font-medium text-text-primary mb-1">
-              Pull Custom Model
-            </div>
+            <div class="text-xs font-medium text-text-primary mb-1">Pull Custom Model</div>
             <div class="flex gap-2">
               <input
                 type="text"
@@ -384,9 +361,9 @@ export function LocalAiPanel(props: LocalAiPanelProps) {
                   style={{
                     width: `${
                       localAi.state.pullProgress?.total
-                        ? (localAi.state.pullProgress.completed /
-                            localAi.state.pullProgress.total) *
-                          100
+                        ? (
+                            localAi.state.pullProgress.completed / localAi.state.pullProgress.total
+                          ) * 100
                         : 0
                     }%`,
                   }}
@@ -401,8 +378,7 @@ export function LocalAiPanel(props: LocalAiPanelProps) {
       <Show when={!localAi.state.isConnected}>
         <div class="p-3 bg-yellow-900/20 border-b border-yellow-700/50 text-yellow-300 text-sm">
           <p>
-            ⚠️ Cannot connect to Ollama at {localAi.state.ollamaUrl}. Make sure
-            Ollama is running.
+            ⚠️ Cannot connect to Ollama at {localAi.state.ollamaUrl}. Make sure Ollama is running.
           </p>
           <button
             class="mt-1 text-xs underline hover:no-underline"
@@ -420,8 +396,8 @@ export function LocalAiPanel(props: LocalAiPanelProps) {
             <div class="text-4xl mb-2">🖥️</div>
             <h3 class="text-lg font-medium text-text-primary mb-1">Local AI</h3>
             <p class="text-sm text-text-tertiary max-w-xs mx-auto">
-              Chat with local AI models running on your machine. No API keys, no
-              cloud, completely private.
+              Chat with local AI models running on your machine. No API keys, no cloud, completely
+              private.
             </p>
             <Show when={props.selectedCode}>
               <p class="text-xs text-green-400 mt-2">
@@ -433,9 +409,7 @@ export function LocalAiPanel(props: LocalAiPanelProps) {
 
         <For each={messages()}>
           {(message) => (
-            <div
-              class={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}
-            >
+            <div class={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}>
               <div
                 class={`max-w-[85%] rounded-lg px-3 py-2 ${
                   message.role === "user"
@@ -476,8 +450,7 @@ export function LocalAiPanel(props: LocalAiPanelProps) {
       <div class="p-3 border-t border-border">
         <Show when={props.selectedCode}>
           <div class="mb-2 px-2 py-1 bg-green-600/10 border border-green-600/30 rounded text-xs text-green-400">
-            📎 Code attached ({props.selectedCode?.split("\n").length ?? 0}{" "}
-            lines)
+            📎 Code attached ({props.selectedCode?.split("\n").length ?? 0} lines)
           </div>
         </Show>
 
@@ -494,11 +467,7 @@ export function LocalAiPanel(props: LocalAiPanelProps) {
           <button
             class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             onClick={handleSend}
-            disabled={
-              localAi.state.isLoading ||
-              !input().trim() ||
-              !localAi.state.isConnected
-            }
+            disabled={localAi.state.isLoading || !input().trim() || !localAi.state.isConnected}
           >
             Send
           </button>

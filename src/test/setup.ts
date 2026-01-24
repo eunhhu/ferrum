@@ -7,15 +7,15 @@
  * - Window/Document APIs
  */
 
-import { beforeAll, afterEach, vi } from "vitest";
 import { cleanup } from "@solidjs/testing-library";
+import { afterEach, beforeAll, vi } from "vitest";
 
 // Mock CanvasRenderingContext2D
 class MockCanvasRenderingContext2D {
-  font: string = "";
-  fillStyle: string = "";
-  strokeStyle: string = "";
-  lineWidth: number = 1;
+  font = "";
+  fillStyle = "";
+  strokeStyle = "";
+  lineWidth = 1;
   textAlign: CanvasTextAlign = "start";
   textBaseline: CanvasTextBaseline = "alphabetic";
 
@@ -54,14 +54,7 @@ class MockCanvasRenderingContext2D {
   translate(_x: number, _y: number): void {}
   rotate(_angle: number): void {}
   scale(_x: number, _y: number): void {}
-  setTransform(
-    _a: number,
-    _b: number,
-    _c: number,
-    _d: number,
-    _e: number,
-    _f: number
-  ): void {}
+  setTransform(_a: number, _b: number, _c: number, _d: number, _e: number, _f: number): void {}
   getTransform(): DOMMatrix {
     return new DOMMatrix();
   }
@@ -85,12 +78,7 @@ class MockCanvasRenderingContext2D {
   isPointInStroke(_x: number, _y: number): boolean {
     return false;
   }
-  createLinearGradient(
-    _x0: number,
-    _y0: number,
-    _x1: number,
-    _y1: number
-  ): CanvasGradient {
+  createLinearGradient(_x0: number, _y0: number, _x1: number, _y1: number): CanvasGradient {
     return { addColorStop: () => {} } as CanvasGradient;
   }
   createRadialGradient(
@@ -118,33 +106,33 @@ class MockCanvasRenderingContext2D {
     return [];
   }
   setLineDash(_segments: number[]): void {}
-  lineDashOffset: number = 0;
-  globalAlpha: number = 1;
+  lineDashOffset = 0;
+  globalAlpha = 1;
   globalCompositeOperation: GlobalCompositeOperation = "source-over";
-  shadowBlur: number = 0;
-  shadowColor: string = "transparent";
-  shadowOffsetX: number = 0;
-  shadowOffsetY: number = 0;
+  shadowBlur = 0;
+  shadowColor = "transparent";
+  shadowOffsetX = 0;
+  shadowOffsetY = 0;
   lineCap: CanvasLineCap = "butt";
   lineJoin: CanvasLineJoin = "miter";
-  miterLimit: number = 10;
+  miterLimit = 10;
   canvas: HTMLCanvasElement = {} as HTMLCanvasElement;
   direction: CanvasDirection = "ltr";
-  filter: string = "none";
-  imageSmoothingEnabled: boolean = true;
+  filter = "none";
+  imageSmoothingEnabled = true;
   imageSmoothingQuality: ImageSmoothingQuality = "low";
   fontKerning: CanvasFontKerning = "auto";
   fontStretch: CanvasFontStretch = "normal";
   fontVariantCaps: CanvasFontVariantCaps = "normal";
-  letterSpacing: string = "0px";
-  wordSpacing: string = "0px";
+  letterSpacing = "0px";
+  wordSpacing = "0px";
   textRendering: CanvasTextRendering = "auto";
 }
 
 // Mock HTMLCanvasElement
 class MockHTMLCanvasElement {
-  width: number = 300;
-  height: number = 150;
+  width = 300;
+  height = 150;
   private context2d = new MockCanvasRenderingContext2D();
 
   getContext(contextId: string): MockCanvasRenderingContext2D | null {
@@ -163,10 +151,7 @@ class MockHTMLCanvasElement {
 
 // Override document.createElement for canvas
 const originalCreateElement = document.createElement.bind(document);
-document.createElement = function (
-  tagName: string,
-  options?: ElementCreationOptions
-) {
+document.createElement = (tagName: string, options?: ElementCreationOptions) => {
   if (tagName.toLowerCase() === "canvas") {
     return new MockHTMLCanvasElement() as unknown as HTMLCanvasElement;
   }
@@ -174,74 +159,72 @@ document.createElement = function (
 };
 
 // Mock Tauri API
-const mockTauriInvoke = vi.fn(
-  async (cmd: string, args?: Record<string, unknown>) => {
-    console.log(`Mock Tauri invoke: ${cmd}`, args);
+const mockTauriInvoke = vi.fn(async (cmd: string, args?: Record<string, unknown>) => {
+  console.log(`Mock Tauri invoke: ${cmd}`, args);
 
-    switch (cmd) {
-      case "get_highlights":
-        return { highlights: [] };
+  switch (cmd) {
+    case "get_highlights":
+      return { highlights: [] };
 
-      case "get_depth_regions":
-        return [
-          { start_line: 0, end_line: 10, depth: 0 },
-          { start_line: 1, end_line: 5, depth: 1 },
-          { start_line: 2, end_line: 3, depth: 2 },
-        ];
+    case "get_depth_regions":
+      return [
+        { start_line: 0, end_line: 10, depth: 0 },
+        { start_line: 1, end_line: 5, depth: 1 },
+        { start_line: 2, end_line: 3, depth: 2 },
+      ];
 
-      case "get_fold_state":
-        return {
-          folded_lines: [],
-          fold_ranges: {},
-        };
+    case "get_fold_state":
+      return {
+        folded_lines: [],
+        fold_ranges: {},
+      };
 
-      case "toggle_fold":
-        return true;
+    case "toggle_fold":
+      return true;
 
-      case "buffer_undo":
-      case "buffer_redo":
-        return { content: args?.content || "" };
+    case "buffer_undo":
+    case "buffer_redo":
+      return { content: args?.content || "" };
 
-      case "expand_selection":
-      case "shrink_selection":
-        return {
-          start_line: 0,
-          start_character: 0,
-          end_line: 0,
-          end_character: 10,
-        };
+    case "expand_selection":
+    case "shrink_selection":
+      return {
+        start_line: 0,
+        start_character: 0,
+        end_line: 0,
+        end_character: 10,
+      };
 
-      case "lsp_goto_definition":
-      case "lsp_references":
-        return [];
+    case "lsp_goto_definition":
+    case "lsp_references":
+      return [];
 
-      case "lsp_hover":
-        return null;
+    case "lsp_hover":
+      return null;
 
-      case "analyze_dependencies":
-        return { imports: [], calls: [], references: [] };
+    case "analyze_dependencies":
+      return { imports: [], calls: [], references: [] };
 
-      case "analyze_error_flow":
-        return { try_blocks: [], catch_blocks: [], throw_statements: [] };
+    case "analyze_error_flow":
+      return { try_blocks: [], catch_blocks: [], throw_statements: [] };
 
-      case "get_document_symbols":
-        return [];
+    case "get_document_symbols":
+      return [];
 
-      case "lsp_document_symbols":
-        return [];
+    case "lsp_document_symbols":
+      return [];
 
-      case "get_git_blame":
-        return [];
+    case "get_git_blame":
+      return [];
 
-      case "lsp_completion":
-        return { items: [] };
+    case "lsp_completion":
+      return { items: [] };
 
-      default:
-        console.warn(`Unhandled mock invoke: ${cmd}`);
-        return null;
-    }
+    default:
+      console.warn(`Unhandled mock invoke: ${cmd}`);
+      return null;
   }
-);
+});
 
 // Setup Tauri mock before all tests
 beforeAll(() => {
