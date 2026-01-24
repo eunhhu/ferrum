@@ -21,7 +21,7 @@ const shortcuts = [
 ];
 
 export function EditorArea() {
-  const { tabs, getActiveTab, updateContent, setCursorPosition } = editorStore;
+  const { tabs, getActiveTab, updateContent, setCursorPosition, saveFile } = editorStore;
 
   const handleOpenFolder = async () => {
     // Trigger file explorer open folder
@@ -46,6 +46,9 @@ export function EditorArea() {
                 }}
                 onCursorChange={(line, column) => {
                   setCursorPosition({ line, column });
+                }}
+                onSave={() => {
+                  saveFile(tab().id);
                 }}
               />
             )}

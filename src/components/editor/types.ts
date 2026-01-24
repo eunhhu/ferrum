@@ -47,6 +47,7 @@ export interface EditorProps {
   onContentChange?: (content: string) => void;
   onCursorChange?: (line: number, column: number) => void;
   onScrollChange?: (scrollTop: number, visibleStartLine: number) => void;
+  onSave?: (() => void) | undefined;
 }
 
 // Selection rectangle for rendering

@@ -1,5 +1,4 @@
 import { createSignal, For, Show } from "solid-js";
-import * as ipc from "../../ipc/commands";
 import { isTauriEnvironment } from "../../ipc/tauri-check";
 import { editorStore, filesStore } from "../../stores";
 import type { FileNode } from "../../types";
@@ -567,8 +566,8 @@ export function FileExplorer() {
 
     filesStore.setSelectedPath(node.path);
     try {
-      const file = await ipc.readFile(node.path);
-      editorStore.openFile(node.path, file.content);
+      // Use buffer-backed file opening for proper backend integration
+      await editorStore.openFileWithBuffer(node.path);
     } catch (e) {
       console.error("Failed to open file:", e);
     }

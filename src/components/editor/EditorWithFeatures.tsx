@@ -334,6 +334,7 @@ export function EditorWithFeatures(props: EditorWithFeaturesProps) {
         onContentChange={handleContentChange}
         onCursorChange={handleCursorChange}
         onScrollChange={handleScrollChange}
+        onSave={props.onSave}
       />
 
       {/* Hover Tooltip */}

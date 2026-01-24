@@ -212,6 +212,13 @@ export function Editor(props: EditorProps) {
   function handleKeyDown(e: KeyboardEvent) {
     const isMod = e.metaKey || e.ctrlKey;
 
+    // Save (Cmd+S)
+    if (isMod && e.key === "s") {
+      e.preventDefault();
+      props.onSave?.();
+      return;
+    }
+
     // Undo/Redo
     if (isMod) {
       if (e.key === "z") {
